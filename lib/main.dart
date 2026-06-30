@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';   // ← Importante
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
-import 'screens/auth/login_screen.dart';   // Asegúrate que la ruta sea correcta
+import 'screens/auth/login_screen.dart';
 import 'screens/main_screen.dart';
 import 'services/notification_service.dart';
 
@@ -44,22 +44,37 @@ class _CunitechAppState extends State<CunitechApp> {
     supabase.auth.onAuthStateChange.listen((data) {
       final event = data.event;
 
-      // Pequeño delay para que el contexto esté listo
-      Future.microtask(() {
+      print('🔐 Auth Event: $event'); // Para debugging
+
+      if (!mounted) return;
+
+      // Pequeño delay para que el estado se actualice
+      Future.delayed(const Duration(milliseconds: 500), () {
         if (!mounted) return;
 
-        switch (event) {
-          case AuthChangeEvent.signedIn:
-          case AuthChangeEvent.tokenRefreshed:
-            Navigator.of(context).pushReplacementNamed('/main');
-            break;
+        try {
+          switch (event) {
+            case AuthChangeEvent.signedIn:
+            case AuthChangeEvent.tokenRefreshed:
+              // Verifica que estamos en la ruta correcta
+              if (ModalRoute.of(context)?.settings.name != '/main') {
+                Navigator.of(context).pushReplacementNamed('/main');
+                print('✅ Navegando a /main');
+              }
+              break;
 
-          case AuthChangeEvent.signedOut:
-            Navigator.of(context).pushReplacementNamed('/');
-            break;
+            case AuthChangeEvent.signedOut:
+              if (ModalRoute.of(context)?.settings.name != '/') {
+                Navigator.of(context).pushReplacementNamed('/');
+                print('✅ Navegando a login');
+              }
+              break;
 
-          default:
-            break;
+            default:
+              break;
+          }
+        } catch (e) {
+          print('❌ Navigation error: $e');
         }
       });
     });

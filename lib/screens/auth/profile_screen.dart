@@ -54,7 +54,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   CircleAvatar(
                     radius: 50,
-                    backgroundColor: AppTheme.accent.withOpacity(0.1),
+                    backgroundColor: AppTheme.accent.withValues(alpha: 0.1),
                     child: const Text(
                       "AC",
                       style: TextStyle(
@@ -231,3 +231,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Navigator.pop(context);
   }
 }
+

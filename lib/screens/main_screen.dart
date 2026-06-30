@@ -54,7 +54,6 @@ class _MainScreenState extends State<MainScreen> {
         );
       }
     } catch (e) {
-      print("❌ Error al cerrar sesión: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
@@ -90,7 +89,7 @@ class _MainScreenState extends State<MainScreen> {
           child: ListTile(
             leading: CircleAvatar(
               radius: 20,
-              backgroundColor: AppTheme.accent.withOpacity(0.1),
+              backgroundColor: AppTheme.accent.withValues(alpha: 0.1),
               child: const Text("AC", style: TextStyle(fontWeight: FontWeight.bold)),
             ),
             title: const Text("Admin"),
@@ -146,6 +145,7 @@ class _MainScreenState extends State<MainScreen> {
             _logout();
             break;
         }
+        Navigator.pop(context);
       }
     });
   }
@@ -256,7 +256,7 @@ class _MainScreenState extends State<MainScreen> {
                       children: [
                         CircleAvatar(
                           radius: 20,
-                          backgroundColor: AppTheme.accent.withOpacity(0.1),
+                          backgroundColor: AppTheme.accent.withValues(alpha: 0.1),
                           child: const Text("AC", style: TextStyle(fontWeight: FontWeight.w600)),
                         ),
                         const SizedBox(width: 12),

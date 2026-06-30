@@ -1,40 +1,71 @@
 import 'package:flutter/material.dart';
-import '../../models/rabbit.dart';
+import 'package:get/get.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/rabbit.dart';
+import '../../controllers/rabbit_controller.dart';
 
-class RabbitsScreen extends StatelessWidget {
+class RabbitsScreen extends StatefulWidget {
   const RabbitsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final rabbits = [
-      Rabbit(id: 'R001', breed: 'Nueva Zelanda', ageMonths: 12, weightKg: 4.5, gender: 'Macho', healthStatus: 'Saludable', registrationDate: DateTime(2025, 5, 1)),
-      Rabbit(id: 'R002', breed: 'California', ageMonths: 8, weightKg: 4.2, gender: 'Hembra', healthStatus: 'Saludable', registrationDate: DateTime(2025, 9, 1)),
-      Rabbit(id: 'R003', breed: 'Nueva Zelanda', ageMonths: 6, weightKg: 3.8, gender: 'Macho', healthStatus: 'En Tratamiento', registrationDate: DateTime(2025, 11, 1)),
-    ];
+  State<RabbitsScreen> createState() => _RabbitsScreenState();
+}
 
+class _RabbitsScreenState extends State<RabbitsScreen> {
+  final rabbitController = Get.find<RabbitController>();
+  late TextEditingController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       color: AppTheme.bgLight,
       child: Column(
         children: [
-          // Header interno (ya que el top bar está en MainScreen)
+          // Header con filtros
           Padding(
             padding: const EdgeInsets.fromLTRB(32, 24, 32, 16),
             child: Row(
               children: [
-                Text(
-                  'Conejos',
-                  style: Theme.of(context).textTheme.headlineMedium,
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Buscar conejo...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      setState(() {});
+                    },
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 12),
                 TextButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    // Abrir diálogo de filtros
+                  },
                   icon: const Icon(Icons.filter_list_rounded),
                   label: const Text('Filtrar'),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    // Abrir diálogo para crear nuevo conejo
+                  },
                   icon: const Icon(Icons.add_rounded),
                   label: const Text('Nuevo Conejo'),
                 ),
@@ -44,19 +75,44 @@ class RabbitsScreen extends StatelessWidget {
 
           // Lista de conejos
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              itemCount: rabbits.length,
-              itemBuilder: (context, index) {
-                final rabbit = rabbits[index];
-                return _RabbitCard(
-                  rabbit: rabbit,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => RabbitDetailScreen(rabbit: rabbit),
+            child: Obx(
+              () {
+                if (rabbitController.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final rabbits = _searchController.text.isEmpty
+                    ? rabbitController.rabbits
+                    : rabbitController.searchRabbits(_searchController.text);
+
+                if (rabbits.isEmpty) {
+                  return Center(
+                    child: Text(
+                      _searchController.text.isEmpty
+                          ? 'No hay conejos registrados'
+                          : 'No se encontraron resultados',
+                      style: TextStyle(color: AppTheme.textSecondary),
                     ),
-                  ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  itemCount: rabbits.length,
+                  itemBuilder: (context, index) {
+                    final rabbit = rabbits[index];
+                    return _RabbitCard(
+                      rabbit: rabbit,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => RabbitDetailScreen(rabbit: rabbit),
+                        ),
+                      ),
+                      onDelete: () => _showDeleteDialog(rabbit),
+                      onEdit: () => _showEditDialog(rabbit),
+                    );
+                  },
                 );
               },
             ),
@@ -65,13 +121,47 @@ class RabbitsScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _showDeleteDialog(Rabbit rabbit) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Eliminar conejo'),
+        content: Text('¿Deseas eliminar a ${rabbit.name} (#${rabbit.id})?'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              rabbitController.deleteRabbit(rabbit.id);
+              Get.back();
+            },
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditDialog(Rabbit rabbit) {
+    // TODO: Implementar diálogo de edición
+    Get.snackbar('Info', 'Edición en desarrollo');
+  }
 }
 
 class _RabbitCard extends StatelessWidget {
   final Rabbit rabbit;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
+  final VoidCallback onEdit;
 
-  const _RabbitCard({required this.rabbit, required this.onTap});
+  const _RabbitCard({
+    required this.rabbit,
+    required this.onTap,
+    required this.onDelete,
+    required this.onEdit,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -95,9 +185,9 @@ class _RabbitCard extends StatelessWidget {
                 // Avatar
                 CircleAvatar(
                   radius: 32,
-                  backgroundColor: AppTheme.accent.withOpacity(0.1),
+                  backgroundColor: AppTheme.accent.withValues(alpha: 0.1),
                   child: Icon(
-                    Icons.pets,
+                    rabbit.gender == 'Macho' ? Icons.male : Icons.female,
                     size: 28,
                     color: AppTheme.accent,
                   ),
@@ -112,7 +202,7 @@ class _RabbitCard extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            rabbit.id,
+                            '${rabbit.name} #${rabbit.id}',
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           const SizedBox(width: 12),
@@ -139,21 +229,41 @@ class _RabbitCard extends StatelessWidget {
                             label: '${rabbit.weightKg} kg',
                           ),
                           const SizedBox(width: 12),
-                          _InfoChip(
-                            icon: rabbit.gender == 'Macho' ? Icons.male : Icons.female,
-                            label: rabbit.gender,
-                          ),
+                          if (rabbit.isBreeder)
+                            _InfoChip(
+                              icon: Icons.favorite_rounded,
+                              label: '${rabbit.litterCount} partos',
+                            ),
                         ],
                       ),
                     ],
                   ),
                 ),
 
-                // Acción
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 24,
-                  color: AppTheme.textTertiary,
+                // Acciones
+                PopupMenuButton(
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      onTap: onEdit,
+                      child: const Row(
+                        children: [
+                          Icon(Icons.edit),
+                          SizedBox(width: 8),
+                          Text('Editar'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      onTap: onDelete,
+                      child: const Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Eliminar', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -177,7 +287,7 @@ class _HealthBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
@@ -214,17 +324,28 @@ class _InfoChip extends StatelessWidget {
   }
 }
 
-class RabbitDetailScreen extends StatelessWidget {
+// ─────────────────────────────────────────────
+// RABBIT DETAIL SCREEN
+// ─────────────────────────────────────────────
+
+class RabbitDetailScreen extends StatefulWidget {
   final Rabbit rabbit;
 
   const RabbitDetailScreen({super.key, required this.rabbit});
+
+  @override
+  State<RabbitDetailScreen> createState() => _RabbitDetailScreenState();
+}
+
+class _RabbitDetailScreenState extends State<RabbitDetailScreen> {
+  final rabbitController = Get.find<RabbitController>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.bgLight,
       appBar: AppBar(
-        title: Text(rabbit.id),
+        title: Text('${widget.rabbit.name} #${widget.rabbit.id}'),
         backgroundColor: AppTheme.surfaceLight,
         elevation: 0,
         foregroundColor: AppTheme.textPrimary,
@@ -246,9 +367,11 @@ class RabbitDetailScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 52,
-                    backgroundColor: AppTheme.accent.withOpacity(0.1),
+                    backgroundColor: AppTheme.accent.withValues(alpha: 0.1),
                     child: Icon(
-                      Icons.pets,
+                      widget.rabbit.gender == 'Macho'
+                          ? Icons.male
+                          : Icons.female,
                       size: 56,
                       color: AppTheme.accent,
                     ),
@@ -259,13 +382,16 @@ class RabbitDetailScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          rabbit.id,
+                          widget.rabbit.name,
                           style: Theme.of(context).textTheme.headlineLarge,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          rabbit.breed,
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          '${widget.rabbit.breed} #${widget.rabbit.id}',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineMedium
+                              ?.copyWith(
                                 color: AppTheme.textSecondary,
                               ),
                         ),
@@ -273,18 +399,20 @@ class RabbitDetailScreen extends StatelessWidget {
                         Row(
                           children: [
                             _DetailChip(
-                              label: '${rabbit.ageMonths} meses',
+                              label: '${widget.rabbit.ageMonths} meses',
                               icon: Icons.cake_rounded,
                             ),
                             const SizedBox(width: 16),
                             _DetailChip(
-                              label: '${rabbit.weightKg} kg',
+                              label: '${widget.rabbit.weightKg} kg',
                               icon: Icons.monitor_weight_outlined,
                             ),
                             const SizedBox(width: 16),
                             _DetailChip(
-                              label: rabbit.gender,
-                              icon: rabbit.gender == 'Macho' ? Icons.male : Icons.female,
+                              label: widget.rabbit.gender,
+                              icon: widget.rabbit.gender == 'Macho'
+                                  ? Icons.male
+                                  : Icons.female,
                             ),
                           ],
                         ),
@@ -306,50 +434,87 @@ class RabbitDetailScreen extends StatelessWidget {
 
             _InfoCard(
               title: "Estado Sanitario",
-              value: rabbit.healthStatus,
+              value: widget.rabbit.healthStatus,
               icon: Icons.health_and_safety_rounded,
-              color: rabbit.healthStatus.toLowerCase() == 'saludable'
+              color: widget.rabbit.healthStatus.toLowerCase() == 'saludable'
                   ? AppTheme.success
                   : AppTheme.warning,
             ),
             _InfoCard(
               title: "Género",
-              value: rabbit.gender,
-              icon: rabbit.gender == 'Macho' ? Icons.male : Icons.female,
+              value: widget.rabbit.gender,
+              icon: widget.rabbit.gender == 'Macho' ? Icons.male : Icons.female,
             ),
+            _InfoCard(
+              title: "Raza",
+              value: widget.rabbit.breed,
+              icon: Icons.pets_rounded,
+            ),
+            if (widget.rabbit.isBreeder) ...[
+              _InfoCard(
+                title: "Partos",
+                value: '${widget.rabbit.litterCount}',
+                icon: Icons.favorite_rounded,
+              ),
+              if (widget.rabbit.expectedBirthDate != null)
+                _InfoCard(
+                  title: "Próximo Parto",
+                  value:
+                      '${widget.rabbit.expectedBirthDate!.day}/${widget.rabbit.expectedBirthDate!.month}/${widget.rabbit.expectedBirthDate!.year}',
+                  icon: Icons.calendar_today_rounded,
+                ),
+            ],
             _InfoCard(
               title: "Fecha de Registro",
-              value: "${rabbit.registrationDate.day}/${rabbit.registrationDate.month}/${rabbit.registrationDate.year}",
+              value:
+                  "${widget.rabbit.registrationDate.day}/${widget.rabbit.registrationDate.month}/${widget.rabbit.registrationDate.year}",
               icon: Icons.calendar_today_rounded,
             ),
-            _InfoCard(
-              title: "Última Alimentación",
-              value: "Hace 2 días",
-              icon: Icons.restaurant_rounded,
-            ),
-            _InfoCard(
-              title: "Último Tratamiento",
-              value: "10 Mayo 2026",
-              icon: Icons.medical_services_rounded,
-            ),
+            if (widget.rabbit.lastFeedingDate != null)
+              _InfoCard(
+                title: "Última Alimentación",
+                value:
+                    "${widget.rabbit.lastFeedingDate!.day}/${widget.rabbit.lastFeedingDate!.month}/${widget.rabbit.lastFeedingDate!.year}",
+                icon: Icons.restaurant_rounded,
+              ),
+            if (widget.rabbit.notes != null && widget.rabbit.notes!.isNotEmpty)
+              _InfoCard(
+                title: "Notas",
+                value: widget.rabbit.notes!,
+                icon: Icons.note_rounded,
+              ),
 
             const SizedBox(height: 40),
 
-            // Historial
-            Text(
-              'Historial Reciente',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'El historial completo se mostrará aquí...',
-              style: TextStyle(color: Colors.grey),
+            // Botones de acción
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () =>
+                        rabbitController.recordFeeding(widget.rabbit.id),
+                    icon: const Icon(Icons.restaurant_rounded),
+                    label: const Text('Registrar Alimentación'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () =>
+                        rabbitController.recordTreatment(widget.rabbit.id),
+                    icon: const Icon(Icons.medical_services_rounded),
+                    label: const Text('Registrar Tratamiento'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          // TODO: Abrir diálogo de edición
+        },
         backgroundColor: AppTheme.accent,
         child: const Icon(Icons.edit_rounded),
       ),
@@ -411,7 +576,7 @@ class _InfoCard extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: (color ?? AppTheme.accent).withOpacity(0.1),
+            color: (color ?? AppTheme.accent).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: color ?? AppTheme.accent),

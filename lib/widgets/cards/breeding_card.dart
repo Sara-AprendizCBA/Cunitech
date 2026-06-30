@@ -9,9 +9,7 @@ class BreedingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final daysToBirth = mating.expectedBirthDate != null
-        ? mating.expectedBirthDate!.difference(DateTime.now()).inDays
-        : null;
+    final daysToBirth = mating.expectedBirthDate?.difference(DateTime.now()).inDays;
 
     final bool isUrgent = daysToBirth != null && daysToBirth <= 7;
 
@@ -37,7 +35,7 @@ class BreedingCard extends StatelessWidget {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: AppTheme.accent.withOpacity(0.1),
+                    color: AppTheme.accent.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Icon(
@@ -123,8 +121,8 @@ class _StatusChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: isGestation
-            ? AppTheme.accent.withOpacity(0.1)
-            : AppTheme.info.withOpacity(0.1),
+            ? AppTheme.accent.withValues(alpha: 0.1)
+            : AppTheme.info.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(

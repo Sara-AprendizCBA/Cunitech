@@ -1,7 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/theme/app_theme.dart';
 
 enum UserRole {
   admin,
@@ -30,6 +29,7 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _obscureConfirmPassword = true;
 
   UserRole selectedRole = UserRole.admin;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -42,20 +42,25 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWideScreen = MediaQuery.of(context).size.width > 900;
+    final isWideScreen = MediaQuery.of(context).size.width > 1000;
 
     return Scaffold(
-      backgroundColor: AppTheme.bgLight,
+      backgroundColor: const Color(0xFFFAF7F4),
       body: Row(
         children: [
+          // ========== HERO IMAGE - LEFT SIDE ==========
           if (isWideScreen)
             Expanded(
               flex: 5,
               child: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: AssetImage('assets/images/Conejos.jpg'),
+                    image: const AssetImage('assets/images/Conejos.jpg'),
                     fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Colors.black.withValues(alpha: 0.3),
+                      BlendMode.multiply,
+                    ),
                   ),
                 ),
                 child: Container(
@@ -64,186 +69,200 @@ class _AuthScreenState extends State<AuthScreen> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.black.withOpacity(0.35),
-                        AppTheme.accent.withOpacity(0.85),
+                        const Color(0xFFD4A574).withValues(alpha: 0.2),
+                        const Color(0xFF1D5B3F).withValues(alpha: 0.4),
                       ],
                     ),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(72),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset(
-                          'assets/images/Logo 1.png',
-                          height: 148,
-                          fit: BoxFit.contain,
-                        ).animate().fadeIn(duration: 900.ms).scale(
-                              begin: const Offset(0.8, 0.8),
-                              duration: 1000.ms,
-                              curve: Curves.easeOutBack,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          const Color(0xFFD4A574).withValues(alpha: 0.2),
+                          const Color(0xFF1D5B3F).withValues(alpha: 0.4),
+                        ],
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 64, vertical: 80),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Logo + Brand Name
+                          _buildHeroLogo(),
+                          const SizedBox(height: 64),
+                          Text(
+                            "Gestión Profesional\nde Criaderos",
+                            style: TextStyle(
+                              fontSize: 52,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: -1.2,
+                              height: 1.2,
+                              fontFamily: 'Merriweather',
                             ),
-                        const SizedBox(height: 48),
-                        const Text(
-                          "CUNITECH",
-                          style: TextStyle(
-                            fontSize: 42,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: -1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          "Gestión profesional de criaderos",
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                color: Colors.white.withOpacity(0.95),
-                                fontWeight: FontWeight.w500,
-                                height: 1.3,
-                              ),
-                        ),
-                        const SizedBox(height: 80),
-                        _buildBrandStat("142", "Conejos registrados"),
-                        const SizedBox(height: 36),
-                        _buildBrandStat("98.4%", "Tasa de supervivencia"),
-                        const SizedBox(height: 36),
-                        _buildBrandStat("31", "Partos este mes"),
-                      ],
+                          ).animate().fadeIn(duration: 600.ms),
+                          const SizedBox(height: 32),
+                          Text(
+                            "Controla tu granja con precisión veterinaria, eficiencia operativa y tranquilidad profesional.",
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.white.withValues(alpha: 0.9),
+                              height: 1.6,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ).animate().fadeIn(duration: 800.ms, delay: 100.ms),
+                          const SizedBox(height: 80),
+                          _buildHeroStats(),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
+
+          // ========== LOGIN CARD - RIGHT SIDE ==========
           Expanded(
             flex: isWideScreen ? 5 : 10,
             child: Container(
-              color: AppTheme.surfaceLight,
+              color: const Color(0xFFFAF7F4),
               child: Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 52, vertical: 40),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isWideScreen ? 56 : 32,
+                    vertical: 40,
+                  ),
                   child: SizedBox(
-                    width: 460,
+                    width: 480,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        if (!isWideScreen)
-                          Center(
-                            child: Image.asset(
-                              'assets/images/Logo 1.png',
-                              height: 92,
-                            ),
-                          ),
-                        const SizedBox(height: 40),
+                        // Logo Mobile
+                        if (!isWideScreen) ...[
+                          _buildMobileLogo(),
+                          const SizedBox(height: 48),
+                        ],
+
+                        // Role Selector
                         _buildRoleSelector(),
-                        const SizedBox(height: 44),
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: AppTheme.borderLight,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Row(
-                            children: [
-                              _buildTabButton("Iniciar Sesión", isLogin),
-                              _buildTabButton("Registrarse", !isLogin),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 52),
+                        const SizedBox(height: 48),
+
+                        // Tab Buttons
+                        _buildAuthTabs(),
+                        const SizedBox(height: 48),
+
+                        // Header Text
                         Text(
-                          isLogin ? "Bienvenido de nuevo" : "Crear cuenta",
-                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.6,
-                              ),
+                          isLogin ? "Bienvenido de nuevo" : "Crear nueva cuenta",
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1D5B3F),
+                            letterSpacing: -0.8,
+                          ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 8),
                         Text(
                           isLogin
-                              ? "Accede a tu sistema de gestión de conejos"
-                              : "Registra tu granja y comienza a controlar todo",
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: AppTheme.textSecondary,
-                              ),
+                              ? "Accede a tu sistema integral de gestión"
+                              : "Registra tu granja y empieza ahora",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: const Color(0xFF6B7280),
+                            fontWeight: FontWeight.w400,
+                            height: 1.5,
+                          ),
                         ),
-                        const SizedBox(height: 48),
+                        const SizedBox(height: 44),
+
+                        // Error Message
+                        if (_errorMessage != null)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEE2E2),
+                              border: Border.all(color: const Color(0xFFFCA5A5)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              _errorMessage!,
+                              style: const TextStyle(
+                                color: Color(0xFFDD5624),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        if (_errorMessage != null) const SizedBox(height: 24),
+
+                        // Form
                         Form(
                           key: _formKey,
                           child: Column(
                             children: [
-                              if (!isLogin)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 24),
-                                  child: TextFormField(
-                                    controller: _nameController,
-                                    decoration: InputDecoration(
-                                      labelText: "Nombre de la Granja",
-                                      hintText: "Granja Los Conejos",
-                                      prefixIcon: const Icon(Icons.business_rounded),
-                                    ),
-                                  ),
+                              if (!isLogin) ...[
+                                _buildTextField(
+                                  controller: _nameController,
+                                  label: "Nombre de la Granja",
+                                  hint: "Granja Los Conejos",
+                                  icon: Icons.business_rounded,
                                 ),
-                              TextFormField(
+                                const SizedBox(height: 20),
+                              ],
+                              _buildTextField(
                                 controller: _emailController,
-                                decoration: InputDecoration(
-                                  labelText: "Correo electrónico",
-                                  hintText: "admin@cunitech.co",
-                                  prefixIcon: const Icon(Icons.email_rounded),
-                                ),
+                                label: "Correo electrónico",
+                                hint: "admin@cunitech.co",
+                                icon: Icons.email_rounded,
+                                keyboardType: TextInputType.emailAddress,
                               ),
-                              const SizedBox(height: 24),
-                              TextFormField(
+                              const SizedBox(height: 20),
+                              _buildPasswordField(
                                 controller: _passwordController,
-                                obscureText: _obscurePassword,
-                                decoration: InputDecoration(
-                                  labelText: "Contraseña",
-                                  hintText: "••••••••",
-                                  prefixIcon: const Icon(Icons.lock_rounded),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                                  ),
-                                ),
+                                label: "Contraseña",
+                                obscure: _obscurePassword,
+                                onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
                               ),
-                              if (!isLogin)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 24),
-                                  child: TextFormField(
-                                    controller: _confirmPasswordController,
-                                    obscureText: _obscureConfirmPassword,
-                                    decoration: InputDecoration(
-                                      labelText: "Confirmar Contraseña",
-                                      hintText: "••••••••",
-                                      prefixIcon: const Icon(Icons.lock_rounded),
-                                      suffixIcon: IconButton(
-                                        icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
-                                        onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
-                                      ),
-                                    ),
-                                  ),
+                              if (!isLogin) ...[
+                                const SizedBox(height: 20),
+                                _buildPasswordField(
+                                  controller: _confirmPasswordController,
+                                  label: "Confirmar Contraseña",
+                                  obscure: _obscureConfirmPassword,
+                                  onToggle: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                                 ),
-                              const SizedBox(height: 40),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 64,
-                                child: ElevatedButton(
-                                  onPressed: _isLoading ? null : _authenticate,
-                                  style: ElevatedButton.styleFrom(
-                                    elevation: 2,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                  ),
-                                  child: _isLoading
-                                      ? const CircularProgressIndicator(color: Colors.white)
-                                      : Text(
-                                          isLogin ? "INICIAR SESIÓN" : "CREAR CUENTA",
-                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                                        ),
-                                ),
-                              ),
+                              ],
+                              const SizedBox(height: 44),
+                              _buildAuthButton(),
                             ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+                        GestureDetector(
+                          onTap: () => setState(() => isLogin = !isLogin),
+                          child: RichText(
+                            text: TextSpan(
+                              text: isLogin ? "¿No tienes cuenta? " : "¿Ya tienes cuenta? ",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: const Color(0xFF6B7280),
+                                fontWeight: FontWeight.w400,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: isLogin ? "Regístrate" : "Inicia sesión",
+                                  style: TextStyle(
+                                    color: const Color(0xFF1D9E75),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -258,22 +277,172 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Widget _buildRoleSelector() {
+  // ========== HERO LOGO ==========
+  Widget _buildHeroLogo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.3),
+                  width: 2,
+                ),
+              ),
+              child: const Icon(
+                Icons.pets_rounded,
+                color: Colors.white,
+                size: 32,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'CUNITECH',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    fontFamily: 'Merriweather',
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                Text(
+                  'Rabbit Farm Management',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    ).animate().fadeIn(duration: 600.ms);
+  }
+
+  // ========== MOBILE LOGO ==========
+  Widget _buildMobileLogo() {
+    return Column(
+      children: [
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            color: const Color(0xFF1D9E75).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: const Color(0xFF1D9E75).withValues(alpha: 0.2),
+              width: 2,
+            ),
+          ),
+          child: const Icon(
+            Icons.pets_rounded,
+            color: Color(0xFF1D9E75),
+            size: 40,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'CUNITECH',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1D5B3F),
+            fontFamily: 'Merriweather',
+            letterSpacing: 1,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ========== HERO STATS ==========
+  Widget _buildHeroStats() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _buildStatItem("142+", "Conejos"),
+        _buildStatItem("98.4%", "Supervivencia"),
+        _buildStatItem("31", "Partos/mes"),
+      ],
+    ).animate().fadeIn(duration: 1000.ms, delay: 200.ms);
+  }
+
+  Widget _buildStatItem(String value, String label) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Selecciona tu rol",
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          value,
+          style: const TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.white.withValues(alpha: 0.8),
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ========== ROLE SELECTOR ==========
+  Widget _buildRoleSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          "¿Cuál es tu rol?",
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF6B7280),
+            letterSpacing: 0.3,
+          ),
         ),
         const SizedBox(height: 16),
         Row(
           children: [
-            _buildRoleCard(UserRole.admin, "Administrador", Icons.shield_rounded, "Control total"),
+            _buildRoleCard(
+              UserRole.admin,
+              "Administrador",
+              Icons.shield_rounded,
+              "Control\ntotal",
+            ),
             const SizedBox(width: 12),
-            _buildRoleCard(UserRole.veterinario, "Veterinario", Icons.medical_services_rounded, "Salud"),
+            _buildRoleCard(
+              UserRole.veterinario,
+              "Veterinario",
+              Icons.local_hospital_rounded,
+              "Salud",
+            ),
             const SizedBox(width: 12),
-            _buildRoleCard(UserRole.ayudante, "Ayudante", Icons.handshake_rounded, "Operaciones"),
+            _buildRoleCard(
+              UserRole.ayudante,
+              "Ayudante",
+              Icons.handshake_rounded,
+              "Operaciones",
+            ),
           ],
         ),
       ],
@@ -285,31 +454,86 @@ class _AuthScreenState extends State<AuthScreen> {
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => selectedRole = role),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.accent.withOpacity(0.1) : AppTheme.surfaceLight,
-            borderRadius: BorderRadius.circular(20),
+            color: isSelected
+                ? const Color(0xFF1D9E75).withValues(alpha: 0.08)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected ? AppTheme.accent : AppTheme.borderLight,
-              width: isSelected ? 2 : 1,
+              color: isSelected
+                  ? const Color(0xFF1D9E75)
+                  : const Color(0xFFE5E7EB),
+              width: isSelected ? 2 : 1.5,
             ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF1D9E75).withValues(alpha: 0.12),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
           ),
           child: Column(
             children: [
-              Icon(icon, size: 32, color: isSelected ? AppTheme.accent : AppTheme.textSecondary),
-              const SizedBox(height: 12),
+              Icon(
+                icon,
+                size: 28,
+                color: isSelected
+                    ? const Color(0xFF1D9E75)
+                    : const Color(0xFF9CA3AF),
+              ),
+              const SizedBox(height: 8),
               Text(
                 title,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                  color: isSelected ? AppTheme.accent : null,
+                  fontSize: 12,
+                  color: isSelected
+                      ? const Color(0xFF1D9E75)
+                      : const Color(0xFF374151),
                 ),
               ),
-              Text(subtitle, style: TextStyle(fontSize: 12, color: AppTheme.textTertiary)),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: const Color(0xFF9CA3AF),
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // ========== AUTH TABS ==========
+  Widget _buildAuthTabs() {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          _buildTabButton("Iniciar Sesión", isLogin),
+          _buildTabButton("Registrarse", !isLogin),
+        ],
       ),
     );
   }
@@ -318,19 +542,31 @@ class _AuthScreenState extends State<AuthScreen> {
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => isLogin = !isLogin),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: selected ? AppTheme.surfaceLight : Colors.transparent,
-            borderRadius: BorderRadius.circular(999),
+            color: selected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : [],
           ),
           child: Text(
             text,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: selected ? AppTheme.textPrimary : AppTheme.textSecondary,
+              color: selected
+                  ? const Color(0xFF1D5B3F)
+                  : const Color(0xFF9CA3AF),
             ),
           ),
         ),
@@ -338,39 +574,278 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Widget _buildBrandStat(String value, String label) {
-    return Row(
+  // ========== CUSTOM TEXT FIELD ==========
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(value, style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w700, color: Colors.white)),
-        const SizedBox(width: 16),
-        Expanded(child: Text(label, style: const TextStyle(fontSize: 15, color: Colors.white70))),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF374151),
+            letterSpacing: 0.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            decoration: InputDecoration(
+              hintText: hint,
+              prefixIcon: Icon(icon, color: const Color(0xFF9CA3AF), size: 20),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFFE5E7EB),
+                  width: 1.5,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFFE5E7EB),
+                  width: 1.5,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFF1D9E75),
+                  width: 2,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+              hintStyle: const TextStyle(
+                color: Color(0xFFD1D5DB),
+                fontSize: 14,
+              ),
+            ),
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+        ),
       ],
     );
   }
 
+  // ========== PASSWORD FIELD ==========
+  Widget _buildPasswordField({
+    required TextEditingController controller,
+    required String label,
+    required bool obscure,
+    required VoidCallback onToggle,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF374151),
+            letterSpacing: 0.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            obscureText: obscure,
+            decoration: InputDecoration(
+              hintText: "••••••••",
+              prefixIcon: const Icon(Icons.lock_rounded, color: Color(0xFF9CA3AF), size: 20),
+              suffixIcon: GestureDetector(
+                onTap: onToggle,
+                child: Icon(
+                  obscure ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                  color: const Color(0xFF9CA3AF),
+                  size: 20,
+                ),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFFE5E7EB),
+                  width: 1.5,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFFE5E7EB),
+                  width: 1.5,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFF1D9E75),
+                  width: 2,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+              hintStyle: const TextStyle(
+                color: Color(0xFFD1D5DB),
+                fontSize: 14,
+              ),
+            ),
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ========== AUTH BUTTON ==========
+  Widget _buildAuthButton() {
+    return GestureDetector(
+      onTap: _isLoading ? null : _authenticate,
+      child: Container(
+        width: double.infinity,
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: _isLoading
+                ? [
+                    const Color(0xFF1D9E75).withValues(alpha: 0.6),
+                    const Color(0xFF1D7563).withValues(alpha: 0.6),
+                  ]
+                : [
+                    const Color(0xFF1D9E75),
+                    const Color(0xFF1D7563),
+                  ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1D9E75).withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Center(
+          child: _isLoading
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : Text(
+                  isLogin ? "INICIAR SESIÓN" : "CREAR CUENTA",
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+
+  // ==================== SUPABASE AUTHENTICATION ====================
   Future<void> _authenticate() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
     try {
+      final supabase = Supabase.instance.client;
+
       if (isLogin) {
-        await Supabase.instance.client.auth.signInWithPassword(
+        // ========== LOGIN ==========
+        await supabase.auth.signInWithPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
-        if (mounted) Navigator.pushReplacementNamed(context, '/main');
-      } else {
-        if (_passwordController.text != _confirmPasswordController.text) {
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                "✅ Bienvenido",
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              backgroundColor: Color(0xFF059669),
+              duration: Duration(milliseconds: 1500),
+            ),
+          );
+
+          // ========== NAVEGACIÓN DIRECTA ==========
+          await Future.delayed(const Duration(milliseconds: 800));
+
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Las contraseñas no coinciden")),
-            );
+            Navigator.of(context).pushReplacementNamed('/main');
           }
+        }
+      } else {
+        // ========== SIGNUP ==========
+        if (_passwordController.text != _confirmPasswordController.text) {
+          setState(() {
+            _errorMessage = "Las contraseñas no coinciden";
+            _isLoading = false;
+          });
           return;
         }
 
-        await Supabase.instance.client.auth.signUp(
+        if (_nameController.text.trim().isEmpty) {
+          setState(() {
+            _errorMessage = "El nombre de la granja es requerido";
+            _isLoading = false;
+          });
+          return;
+        }
+
+        await supabase.auth.signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
           data: {
@@ -381,35 +856,51 @@ class _AuthScreenState extends State<AuthScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Registro exitoso. Revisa tu correo para confirmar."),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: Text(
+                "✅ Registro exitoso. Verifica tu correo para confirmar.",
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              backgroundColor: const Color(0xFF059669),
+              duration: const Duration(seconds: 2),
             ),
           );
-          setState(() => isLogin = true);
+        }
+
+        // Reset form and switch to login
+        if (mounted) {
+          setState(() {
+            isLogin = true;
+            _nameController.clear();
+            _passwordController.clear();
+            _confirmPasswordController.clear();
+          });
         }
       }
     } on AuthException catch (e) {
-      String message = e.message;
+      String errorMsg = e.message;
+
       if (e.message.contains("Email not confirmed")) {
-        message = "Por favor confirma tu correo electrónico";
+        errorMsg = "Confirma tu correo electrónico antes de acceder.";
       } else if (e.message.contains("Invalid login credentials")) {
-        message = "Correo o contraseña incorrectos";
+        errorMsg = "Correo o contraseña incorrectos.";
+      } else if (e.message.contains("User already registered")) {
+        errorMsg = "Este correo ya está registrado.";
+      } else if (e.message.contains("Password")) {
+        errorMsg = "La contraseña no cumple los requisitos de seguridad.";
       }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
-        );
-      }
+      setState(() {
+        _errorMessage = errorMsg;
+      });
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e")),
-        );
-      }
+      setState(() {
+        _errorMessage = "Error de conexión. Verifica tu internet: $e";
+      });
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 }

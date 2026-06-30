@@ -164,7 +164,7 @@ class ReportsScreen extends StatelessWidget {
                     ),
                     belowBarData: BarAreaData(
                       show: true,
-                      color: AppTheme.accent.withOpacity(0.08),
+                      color: AppTheme.accent.withValues(alpha: 0.08),
                     ),
                   ),
                 ],
@@ -236,7 +236,7 @@ class ReportsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, size: 28, color: color),
@@ -291,7 +291,7 @@ class ReportsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: AppTheme.accent.withOpacity(0.1),
+              color: AppTheme.accent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppTheme.radiusMd),
             ),
             child: const Row(
