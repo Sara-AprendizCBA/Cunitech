@@ -1,6 +1,5 @@
 // lib/screens/main_screen.dart
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/theme/app_theme.dart';
 import '../core/theme/theme_controller.dart';
@@ -42,24 +41,15 @@ class _MainScreenState extends State<MainScreen> {
 
   // ==================== CERRAR SESIÓN ====================
   Future<void> _logout() async {
-    try {
-      await Supabase.instance.client.auth.signOut();
+    if (!mounted) return;
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Sesión cerrada correctamente"),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
-        );
-      }
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Sesión cerrada correctamente"),
+        backgroundColor: Colors.green,
+      ),
+    );
+    Navigator.of(context).pushReplacementNamed('/');
   }
 
   // Ir a Perfil

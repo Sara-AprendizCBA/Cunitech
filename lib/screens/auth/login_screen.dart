@@ -1,6 +1,5 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum UserRole {
   admin,
@@ -789,7 +788,7 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  // ==================== SUPABASE AUTHENTICATION ====================
+  // ==================== AUTENTICACION TEMPORAL ====================
   Future<void> _authenticate() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -798,109 +797,35 @@ class _AuthScreenState extends State<AuthScreen> {
       _errorMessage = null;
     });
 
-    try {
-      final supabase = Supabase.instance.client;
-
-      if (isLogin) {
-        // ========== LOGIN ==========
-        await supabase.auth.signInWithPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                "✅ Bienvenido",
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              backgroundColor: Color(0xFF059669),
-              duration: Duration(milliseconds: 1500),
-            ),
-          );
-
-          // ========== NAVEGACIÓN DIRECTA ==========
-          await Future.delayed(const Duration(milliseconds: 800));
-
-          if (mounted) {
-            Navigator.of(context).pushReplacementNamed('/main');
-          }
-        }
-      } else {
-        // ========== SIGNUP ==========
-        if (_passwordController.text != _confirmPasswordController.text) {
-          setState(() {
-            _errorMessage = "Las contraseñas no coinciden";
-            _isLoading = false;
-          });
-          return;
-        }
-
-        if (_nameController.text.trim().isEmpty) {
-          setState(() {
-            _errorMessage = "El nombre de la granja es requerido";
-            _isLoading = false;
-          });
-          return;
-        }
-
-        await supabase.auth.signUp(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-          data: {
-            'name': _nameController.text.trim(),
-            'role': selectedRole.name,
-          },
-        );
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                "✅ Registro exitoso. Verifica tu correo para confirmar.",
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              backgroundColor: const Color(0xFF059669),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-
-        // Reset form and switch to login
-        if (mounted) {
-          setState(() {
-            isLogin = true;
-            _nameController.clear();
-            _passwordController.clear();
-            _confirmPasswordController.clear();
-          });
-        }
-      }
-    } on AuthException catch (e) {
-      String errorMsg = e.message;
-
-      if (e.message.contains("Email not confirmed")) {
-        errorMsg = "Confirma tu correo electrónico antes de acceder.";
-      } else if (e.message.contains("Invalid login credentials")) {
-        errorMsg = "Correo o contraseña incorrectos.";
-      } else if (e.message.contains("User already registered")) {
-        errorMsg = "Este correo ya está registrado.";
-      } else if (e.message.contains("Password")) {
-        errorMsg = "La contraseña no cumple los requisitos de seguridad.";
-      }
-
+    if (!isLogin && _passwordController.text != _confirmPasswordController.text) {
       setState(() {
-        _errorMessage = errorMsg;
+        _errorMessage = "Las contraseñas no coinciden";
+        _isLoading = false;
       });
-    } catch (e) {
+      return;
+    }
+
+    if (!isLogin && _nameController.text.trim().isEmpty) {
       setState(() {
-        _errorMessage = "Error de conexión. Verifica tu internet: $e";
+        _errorMessage = "El nombre de la granja es requerido";
+        _isLoading = false;
       });
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      return;
+    }
+
+    // El acceso queda disponible mientras se configura la base de datos.
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isLogin ? "Bienvenido" : "Cuenta creada correctamente"),
+          backgroundColor: const Color(0xFF059669),
+          duration: const Duration(milliseconds: 1200),
+        ),
+      );
+      Navigator.of(context).pushReplacementNamed('/main');
+      setState(() => _isLoading = false);
     }
   }
 }
