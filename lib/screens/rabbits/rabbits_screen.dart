@@ -12,12 +12,15 @@ class RabbitsScreen extends StatefulWidget {
 }
 
 class _RabbitsScreenState extends State<RabbitsScreen> {
-  final rabbitController = Get.find<RabbitController>();
+  late final RabbitController rabbitController;
   late TextEditingController _searchController;
 
   @override
   void initState() {
     super.initState();
+    rabbitController = Get.isRegistered<RabbitController>()
+        ? Get.find<RabbitController>()
+        : Get.put(RabbitController());
     _searchController = TextEditingController();
   }
 
@@ -29,6 +32,8 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
     return Container(
       color: AppTheme.bgLight,
       child: Column(
@@ -36,9 +41,45 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
           // Header con filtros
           Padding(
             padding: const EdgeInsets.fromLTRB(32, 24, 32, 16),
-            child: Row(
-              children: [
-                Expanded(
+            child: isMobile
+                ? Column(
+                    children: [
+                      TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Buscar conejo...',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                          ),
+                        ),
+                        onChanged: (value) => setState(() {}),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton.icon(
+                              onPressed: () {},
+                              icon: const Icon(Icons.filter_list_rounded),
+                              label: const Text('Filtrar'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _showRabbitForm(),
+                              icon: const Icon(Icons.add_rounded),
+                              label: const Text('Nuevo'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Expanded(
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
@@ -63,14 +104,24 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton.icon(
-                  onPressed: () {
-                    // Abrir diálogo para crear nuevo conejo
-                  },
+                  onPressed: () => _showRabbitForm(),
                   icon: const Icon(Icons.add_rounded),
                   label: const Text('Nuevo Conejo'),
-                ),
-              ],
-            ),
+                      ),
+                      const SizedBox(width: 12),
+                      TextButton.icon(
+                        onPressed: () {},
+                        icon: const Icon(Icons.filter_list_rounded),
+                        label: const Text('Filtrar'),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        onPressed: () => _showRabbitForm(),
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Nuevo Conejo'),
+                      ),
+                    ],
+                  ),
           ),
 
           // Lista de conejos
@@ -145,8 +196,131 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
   }
 
   void _showEditDialog(Rabbit rabbit) {
-    // TODO: Implementar diálogo de edición
-    Get.snackbar('Info', 'Edición en desarrollo');
+    _showRabbitForm(rabbit: rabbit);
+  }
+
+  Future<void> _showRabbitForm({Rabbit? rabbit}) async {
+    final result = await Get.dialog<Rabbit>(
+      _RabbitFormDialog(rabbit: rabbit),
+      barrierDismissible: false,
+    );
+    if (result == null) return;
+    if (rabbit == null) {
+      await rabbitController.createRabbit(result);
+    } else {
+      await rabbitController.updateRabbit(rabbit.id, result);
+    }
+  }
+}
+
+class _RabbitFormDialog extends StatefulWidget {
+  final Rabbit? rabbit;
+
+  const _RabbitFormDialog({this.rabbit});
+
+  @override
+  State<_RabbitFormDialog> createState() => _RabbitFormDialogState();
+}
+
+class _RabbitFormDialogState extends State<_RabbitFormDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _idController;
+  late final TextEditingController _nameController;
+  late final TextEditingController _breedController;
+  late final TextEditingController _ageController;
+  late final TextEditingController _weightController;
+  late final TextEditingController _notesController;
+  late String _gender;
+  late String _healthStatus;
+  late bool _isBreeder;
+
+  @override
+  void initState() {
+    super.initState();
+    final rabbit = widget.rabbit;
+    _idController = TextEditingController(text: rabbit?.id ?? '');
+    _nameController = TextEditingController(text: rabbit?.name ?? '');
+    _breedController = TextEditingController(text: rabbit?.breed ?? '');
+    _ageController = TextEditingController(text: rabbit?.ageMonths.toString() ?? '');
+    _weightController = TextEditingController(text: rabbit?.weightKg.toString() ?? '');
+    _notesController = TextEditingController(text: rabbit?.notes ?? '');
+    _gender = rabbit?.gender ?? 'Hembra';
+    _healthStatus = rabbit?.healthStatus ?? 'Saludable';
+    _isBreeder = rabbit?.isBreeder ?? false;
+  }
+
+  @override
+  void dispose() {
+    _idController.dispose();
+    _nameController.dispose();
+    _breedController.dispose();
+    _ageController.dispose();
+    _weightController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  String? _required(String? value) => value == null || value.trim().isEmpty ? 'Obligatorio' : null;
+
+  String? _positiveNumber(String? value, {required bool decimal}) {
+    if (_required(value) != null) return 'Obligatorio';
+    final parsed = decimal ? double.tryParse(value!) : int.tryParse(value!);
+    return parsed == null || parsed <= 0 ? 'Ingresa un valor mayor que cero' : null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.rabbit == null ? 'Nuevo Conejo' : 'Editar Conejo'),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(controller: _idController, enabled: widget.rabbit == null, decoration: const InputDecoration(labelText: 'ID'), validator: _required),
+                TextFormField(controller: _nameController, decoration: const InputDecoration(labelText: 'Nombre'), validator: _required),
+                TextFormField(controller: _breedController, decoration: const InputDecoration(labelText: 'Raza'), validator: _required),
+                TextFormField(controller: _ageController, decoration: const InputDecoration(labelText: 'Edad (meses)'), keyboardType: TextInputType.number, validator: (value) => _positiveNumber(value, decimal: false)),
+                TextFormField(controller: _weightController, decoration: const InputDecoration(labelText: 'Peso (kg)'), keyboardType: const TextInputType.numberWithOptions(decimal: true), validator: (value) => _positiveNumber(value, decimal: true)),
+                DropdownButtonFormField<String>(value: _gender, decoration: const InputDecoration(labelText: 'Género'), items: const [DropdownMenuItem(value: 'Hembra', child: Text('Hembra')), DropdownMenuItem(value: 'Macho', child: Text('Macho'))], onChanged: (value) => setState(() => _gender = value!),),
+                DropdownButtonFormField<String>(value: _healthStatus, decoration: const InputDecoration(labelText: 'Estado sanitario'), items: const [DropdownMenuItem(value: 'Saludable', child: Text('Saludable')), DropdownMenuItem(value: 'En tratamiento', child: Text('En tratamiento')), DropdownMenuItem(value: 'Enfermo', child: Text('Enfermo'))], onChanged: (value) => setState(() => _healthStatus = value!),),
+                CheckboxListTile(contentPadding: EdgeInsets.zero, title: const Text('Es reproductor'), value: _isBreeder, onChanged: (value) => setState(() => _isBreeder = value ?? false)),
+                TextFormField(controller: _notesController, maxLines: 2, decoration: const InputDecoration(labelText: 'Notas')),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Get.back(), child: const Text('Cancelar')),
+        ElevatedButton(onPressed: _submit, child: const Text('Guardar')),
+      ],
+    );
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    final current = widget.rabbit;
+    Get.back(result: Rabbit(
+      id: _idController.text.trim(),
+      name: _nameController.text.trim(),
+      breed: _breedController.text.trim(),
+      ageMonths: int.parse(_ageController.text),
+      weightKg: double.parse(_weightController.text),
+      gender: _gender,
+      healthStatus: _healthStatus,
+      registrationDate: current?.registrationDate ?? DateTime.now(),
+      lastFeedingDate: current?.lastFeedingDate,
+      lastTreatmentDate: current?.lastTreatmentDate,
+      notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+      isBreeder: _isBreeder,
+      litterCount: current?.litterCount ?? 0,
+      lastMatingDate: current?.lastMatingDate,
+      expectedBirthDate: current?.expectedBirthDate,
+    ));
   }
 }
 
@@ -512,13 +686,17 @@ class _RabbitDetailScreenState extends State<RabbitDetailScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Abrir diálogo de edición
-        },
+        onPressed: () => _showEditDialog(),
         backgroundColor: AppTheme.accent,
         child: const Icon(Icons.edit_rounded),
       ),
     );
+  }
+
+  void _showEditDialog() {
+    Get.dialog<Rabbit>(_RabbitFormDialog(rabbit: widget.rabbit), barrierDismissible: false).then((updated) {
+      if (updated != null) rabbitController.updateRabbit(widget.rabbit.id, updated);
+    });
   }
 }
 

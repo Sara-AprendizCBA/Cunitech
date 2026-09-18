@@ -225,7 +225,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("✓ Perfil actualizado correctamente"),
-        backgroundColor: Colors.green,
+        backgroundColor: const Color(0xFF9E7C5E),
       ),
     );
     Navigator.pop(context);

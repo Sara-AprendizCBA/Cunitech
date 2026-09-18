@@ -46,7 +46,7 @@ class _MainScreenState extends State<MainScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("Sesión cerrada correctamente"),
-        backgroundColor: Colors.green,
+        backgroundColor: const Color(0xFF9E7C5E),
       ),
     );
     Navigator.of(context).pushReplacementNamed('/');
@@ -142,9 +142,32 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 800;
+
     return Scaffold(
       backgroundColor: AppTheme.bgLight,
-      body: Row(
+      bottomNavigationBar: isMobile
+          ? NavigationBar(
+              selectedIndex: _currentIndex,
+              onDestinationSelected: (index) => setState(() => _currentIndex = index),
+              destinations: _navItems
+                  .map(
+                    (item) => NavigationDestination(
+                      icon: Icon(item['icon'] as IconData),
+                      label: item['label'] as String,
+                    ),
+                  )
+                  .toList(),
+            )
+          : null,
+      body: isMobile
+          ? Column(
+              children: [
+                _buildMobileTopBar(context),
+                Expanded(child: _screens[_currentIndex]),
+              ],
+            )
+          : Row(
         children: [
           // Sidebar
           Container(
@@ -300,6 +323,38 @@ class _MainScreenState extends State<MainScreen> {
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileTopBar(BuildContext context) {
+    return Container(
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceLight,
+        border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              _navItems[_currentIndex]['label'] as String,
+              style: Theme.of(context).textTheme.titleLarge,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            tooltip: 'Notificaciones',
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {},
+          ),
+          IconButton(
+            tooltip: 'Perfil',
+            icon: const Icon(Icons.account_circle_outlined),
+            onPressed: _showProfileMenu,
           ),
         ],
       ),

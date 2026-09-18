@@ -29,10 +29,12 @@ class _FeedingScreenState extends State<FeedingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
     return Container(
       color: AppTheme.bgLight,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
+        padding: EdgeInsets.all(isMobile ? 16 : 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -81,6 +83,8 @@ class _FeedingScreenState extends State<FeedingScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -102,7 +106,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
             ],
           ),
         ),
-        Container(
+        if (!isMobile) Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: AppTheme.accent.withValues(alpha: 0.1),
@@ -127,8 +131,10 @@ class _FeedingScreenState extends State<FeedingScreen> {
   }
 
   Widget _buildDailyProgressCard(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(isMobile ? 20 : 32),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -137,8 +143,9 @@ class _FeedingScreenState extends State<FeedingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            runSpacing: 12,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,7 +191,6 @@ class _FeedingScreenState extends State<FeedingScreen> {
 
           const SizedBox(height: 20),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 "67 kg",

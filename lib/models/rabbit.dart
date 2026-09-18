@@ -123,7 +123,7 @@ class Rabbit {
   }
 
   String get statusColor {
-    if (healthStatus.contains("Saludable")) return "green";
+    if (healthStatus.contains("Saludable")) return "#9E7C5E";
     if (healthStatus.contains("Tratamiento")) return "orange";
     return "red";
   }

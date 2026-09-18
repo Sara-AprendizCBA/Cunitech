@@ -61,7 +61,6 @@ class KitController extends GetxController {
       final newKit = await _kitService.createKit(kit);
       kits.add(newKit);
       await loadStats();
-      Get.back();
       Get.snackbar('Éxito', 'Cría registrada correctamente',
           snackPosition: SnackPosition.TOP);
     } catch (e) {

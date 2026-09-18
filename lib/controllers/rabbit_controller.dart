@@ -66,7 +66,6 @@ class RabbitController extends GetxController {
       error(null);
       final newRabbit = await _rabbitService.createRabbit(rabbit);
       rabbits.add(newRabbit);
-      Get.back();
       Get.snackbar('Éxito', 'Conejo creado correctamente',
           snackPosition: SnackPosition.TOP);
     } catch (e) {
@@ -89,7 +88,6 @@ class RabbitController extends GetxController {
       if (index != -1) {
         rabbits[index] = updated;
       }
-      Get.back();
       Get.snackbar('Éxito', 'Conejo actualizado correctamente',
           snackPosition: SnackPosition.TOP);
     } catch (e) {

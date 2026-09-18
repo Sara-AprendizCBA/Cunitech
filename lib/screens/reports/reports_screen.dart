@@ -7,10 +7,12 @@ class ReportsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
     return Container(
       color: AppTheme.bgLight,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
+        padding: EdgeInsets.all(isMobile ? 16 : 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -32,7 +34,15 @@ class ReportsScreen extends StatelessWidget {
             const SizedBox(height: 48),
 
             // Additional Insights
-            Row(
+            isMobile
+                ? Column(
+                    children: [
+                      _buildInsightCard(context),
+                      const SizedBox(height: 16),
+                      _buildRecentActivity(context),
+                    ],
+                  )
+                : Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(child: _buildInsightCard(context)),
@@ -47,6 +57,8 @@ class ReportsScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -66,7 +78,7 @@ class ReportsScreen extends StatelessWidget {
             ),
           ],
         ),
-        ElevatedButton.icon(
+        if (!isMobile) ElevatedButton.icon(
           onPressed: () {},
           icon: const Icon(Icons.download_rounded),
           label: const Text('Exportar Reporte'),
@@ -177,39 +189,25 @@ class ReportsScreen extends StatelessWidget {
   }
 
   Widget _buildSummaryGrid(BuildContext context) {
-    return Row(
+    final isMobile = MediaQuery.of(context).size.width < 700;
+    final cards = [
+      _buildReportSummary(context, "Mortalidad", "2.4%", Icons.trending_down_rounded, AppTheme.success, "−0.3% vs mes anterior"),
+      _buildReportSummary(context, "Peso Promedio", "4.1 kg", Icons.scale_rounded, AppTheme.accent, "+0.2 kg vs mes anterior"),
+      _buildReportSummary(context, "Tasa de Gestación", "87%", Icons.favorite_rounded, const Color(0xFF9E7C5E), "+4% vs mes anterior"),
+    ];
+
+    return isMobile
+        ? Column(children: [for (final card in cards) ...[card, const SizedBox(height: 12)]])
+        : Row(
       children: [
+        Expanded(child: cards[0]),
+        const SizedBox(width: 24),
         Expanded(
-          child: _buildReportSummary(
-            context,
-            "Mortalidad",
-            "2.4%",
-            Icons.trending_down_rounded,
-            AppTheme.success,
-            "−0.3% vs mes anterior",
-          ),
+          child: cards[1],
         ),
         const SizedBox(width: 24),
         Expanded(
-          child: _buildReportSummary(
-            context,
-            "Peso Promedio",
-            "4.1 kg",
-            Icons.scale_rounded,
-            AppTheme.accent,
-            "+0.2 kg vs mes anterior",
-          ),
-        ),
-        const SizedBox(width: 24),
-        Expanded(
-          child: _buildReportSummary(
-            context,
-            "Tasa de Gestación",
-            "87%",
-            Icons.favorite_rounded,
-            const Color(0xFF8B5CF6),
-            "+4% vs mes anterior",
-          ),
+          child: cards[2],
         ),
       ],
     );

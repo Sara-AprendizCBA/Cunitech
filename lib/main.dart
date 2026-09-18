@@ -54,13 +54,7 @@ class _CunitechAppState extends State<CunitechApp> {
 
         try {
           switch (event) {
-            case AuthChangeEvent.signedIn:
             case AuthChangeEvent.tokenRefreshed:
-              // Verifica que estamos en la ruta correcta
-              if (ModalRoute.of(context)?.settings.name != '/main') {
-                Navigator.of(context).pushReplacementNamed('/main');
-                print('✅ Navegando a /main');
-              }
               break;
 
             case AuthChangeEvent.signedOut:

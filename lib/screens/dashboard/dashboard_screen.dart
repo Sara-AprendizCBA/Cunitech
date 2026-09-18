@@ -17,6 +17,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
     return Container(
       color: AppTheme.bgLight,
       child: Obx(() {
@@ -26,12 +28,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
+          padding: EdgeInsets.all(isMobile ? 16 : 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(context),
-              const SizedBox(height: 40),
+              SizedBox(height: isMobile ? 24 : 40),
               _sectionLabel(context, 'RESUMEN GENERAL'),
               const SizedBox(height: 16),
               _buildMetricsGrid(context),
@@ -82,14 +84,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildMetricsGrid(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        mainAxisSpacing: 20,
-        crossAxisSpacing: 20,
-        childAspectRatio: 1.85,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isMobile ? 2 : 4,
+        mainAxisSpacing: isMobile ? 12 : 20,
+        crossAxisSpacing: isMobile ? 12 : 20,
+        childAspectRatio: isMobile ? 1.15 : 1.85,
       ),
       itemCount: 4,
       itemBuilder: (_, i) {
@@ -161,6 +165,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildTableHeader(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
     return Row(
       children: [
         Expanded(
@@ -169,7 +175,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             style: Theme.of(context).textTheme.titleSmall?.copyWith(letterSpacing: 0.8),
           ),
         ),
-        TextButton.icon(
+        if (!isMobile) TextButton.icon(
           onPressed: () {},
           icon: const Icon(Icons.add_rounded, size: 18),
           label: const Text('Nueva Coneja'),
@@ -216,11 +222,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
           onTap: () {},
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            padding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.of(context).size.width < 700 ? 16 : 24,
+              vertical: 18,
+            ),
             child: Row(
               children: [
                 _RabbitAvatar(initial: rabbit['name'][0], color: AppTheme.accent),
-                const SizedBox(width: 20),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,8 +241,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                 ),
-                Text('${rabbit['weightKg']} kg', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(width: 16),
+                if (MediaQuery.of(context).size.width >= 700)
+                  Text('${rabbit['weightKg']} kg', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(width: 8),
                 Icon(Icons.chevron_right_rounded, size: 20, color: AppTheme.textTertiary),
               ],
             ),
@@ -333,7 +343,7 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-        decoration: BoxDecoration(color: const Color(0xFFE6F9EF), borderRadius: BorderRadius.circular(999)),
-        child: Text(status, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF15803D))),
+        decoration: BoxDecoration(color: const Color(0xFFD4A76A), borderRadius: BorderRadius.circular(999)),
+        child: Text(status, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
       );
 }

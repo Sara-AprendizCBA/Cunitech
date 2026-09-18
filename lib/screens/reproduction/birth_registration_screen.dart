@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../models/birth.dart';
 import '../../models/mating.dart';
+import '../../controllers/birth_controller.dart';
 
 class BirthRegistrationScreen extends StatefulWidget {
   final Mating? mating; // Opcional: si viene desde una monta
@@ -13,6 +15,7 @@ class BirthRegistrationScreen extends StatefulWidget {
 
 class _BirthRegistrationScreenState extends State<BirthRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
+  late final BirthController _birthController;
 
   late TextEditingController _motherController;
   late TextEditingController _fatherController;
@@ -27,6 +30,9 @@ class _BirthRegistrationScreenState extends State<BirthRegistrationScreen> {
   @override
   void initState() {
     super.initState();
+    _birthController = Get.isRegistered<BirthController>()
+        ? Get.find<BirthController>()
+        : Get.put(BirthController());
     _motherController = TextEditingController(text: widget.mating?.doeId ?? '');
     _fatherController = TextEditingController(text: widget.mating?.buckId ?? '');
     _litterSizeController = TextEditingController();
@@ -50,7 +56,7 @@ class _BirthRegistrationScreenState extends State<BirthRegistrationScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Registro de Nacimientos"),
-        backgroundColor: const Color(0xFF4CAF50),
+        backgroundColor: const Color(0xFF1E40AF),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -176,29 +182,42 @@ class _BirthRegistrationScreenState extends State<BirthRegistrationScreen> {
 
   void _saveBirth() {
     if (_formKey.currentState!.validate()) {
+      final litterSize = int.tryParse(_litterSizeController.text);
+      final averageWeight = double.tryParse(_avgWeightController.text);
+
+      if (litterSize == null || litterSize <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('El total de crías debe ser mayor que cero')),
+        );
+        return;
+      }
+      if (averageWeight == null || averageWeight < 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ingresa un peso promedio válido')),
+        );
+        return;
+      }
+      if (_liveKits + _deadKits > litterSize) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Las crías vivas y muertas no pueden superar el total')),
+        );
+        return;
+      }
+
       final newBirth = Birth(
         id: "N-${DateTime.now().millisecondsSinceEpoch}",
         matingId: widget.mating?.id ?? "Manual",
         motherId: _motherController.text,
         fatherId: _fatherController.text.isEmpty ? null : _fatherController.text,
         birthDate: _birthDate,
-        litterSize: int.parse(_litterSizeController.text),
-        averageWeight: double.tryParse(_avgWeightController.text) ?? 0,
+        litterSize: litterSize,
+        averageWeight: averageWeight,
         liveKits: _liveKits,
         deadKits: _deadKits,
         notes: _notesController.text,
       );
 
-      // Aquí iría el guardado real (Riverpod / Database)
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("¡Nacimiento registrado exitosamente!"),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      Navigator.pop(context, newBirth); // Retorna el nacimiento registrado
+      _birthController.createBirth(newBirth);
     }
   }
 }

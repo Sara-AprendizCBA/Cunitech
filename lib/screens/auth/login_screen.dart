@@ -1,5 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/theme/app_theme.dart';
 
 enum UserRole {
   admin,
@@ -30,6 +32,8 @@ class _AuthScreenState extends State<AuthScreen> {
   UserRole selectedRole = UserRole.admin;
   String? _errorMessage;
 
+  final SupabaseClient _supabase = Supabase.instance.client;
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -44,7 +48,7 @@ class _AuthScreenState extends State<AuthScreen> {
     final isWideScreen = MediaQuery.of(context).size.width > 1000;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F4),
+      backgroundColor: const Color(0xFFFEFBF7),
       body: Row(
         children: [
           // ========== HERO IMAGE - LEFT SIDE ==========
@@ -69,7 +73,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       end: Alignment.bottomCenter,
                       colors: [
                         const Color(0xFFD4A574).withValues(alpha: 0.2),
-                        const Color(0xFF1D5B3F).withValues(alpha: 0.4),
+                        const Color(0xFF1E40AF).withValues(alpha: 0.4),
                       ],
                     ),
                   ),
@@ -80,7 +84,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         end: Alignment.bottomCenter,
                         colors: [
                           const Color(0xFFD4A574).withValues(alpha: 0.2),
-                          const Color(0xFF1D5B3F).withValues(alpha: 0.4),
+                          const Color(0xFF9E7C5E).withValues(alpha: 0.4),
                         ],
                       ),
                     ),
@@ -128,7 +132,7 @@ class _AuthScreenState extends State<AuthScreen> {
           Expanded(
             flex: isWideScreen ? 5 : 10,
             child: Container(
-              color: const Color(0xFFFAF7F4),
+              color: const Color(0xFFFEFBF7),
               child: Center(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.symmetric(
@@ -160,7 +164,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1D5B3F),
+                            color: const Color(0xFF9E7C5E),
                             letterSpacing: -0.8,
                           ),
                         ),
@@ -171,7 +175,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               : "Registra tu granja y empieza ahora",
                           style: TextStyle(
                             fontSize: 16,
-                            color: const Color(0xFF6B7280),
+                            color: const Color(0xFF5A5A5A),
                             fontWeight: FontWeight.w400,
                             height: 1.5,
                           ),
@@ -249,14 +253,14 @@ class _AuthScreenState extends State<AuthScreen> {
                               text: isLogin ? "¿No tienes cuenta? " : "¿Ya tienes cuenta? ",
                               style: TextStyle(
                                 fontSize: 14,
-                                color: const Color(0xFF6B7280),
+                                color: const Color(0xFF5A5A5A),
                                 fontWeight: FontWeight.w400,
                               ),
                               children: [
                                 TextSpan(
                                   text: isLogin ? "Regístrate" : "Inicia sesión",
                                   style: TextStyle(
-                                    color: const Color(0xFF1D9E75),
+                                    color: const Color(0xFFe0e27c),
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -339,16 +343,16 @@ class _AuthScreenState extends State<AuthScreen> {
           width: 64,
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFF1D9E75).withValues(alpha: 0.1),
+            color: const Color(0xFFe0e27c).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: const Color(0xFF1D9E75).withValues(alpha: 0.2),
+              color: const Color(0xFFe0e27c).withValues(alpha: 0.2),
               width: 2,
             ),
           ),
           child: const Icon(
             Icons.pets_rounded,
-            color: Color(0xFF1D9E75),
+            color: Color(0xFFe0e27c),
             size: 40,
           ),
         ),
@@ -358,7 +362,7 @@ class _AuthScreenState extends State<AuthScreen> {
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1D5B3F),
+            color: const Color(0xFFe0e27c),
             fontFamily: 'Merriweather',
             letterSpacing: 1,
           ),
@@ -415,7 +419,7 @@ class _AuthScreenState extends State<AuthScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF6B7280),
+            color: const Color(0xFF5A5A5A),
             letterSpacing: 0.3,
           ),
         ),
@@ -458,19 +462,19 @@ class _AuthScreenState extends State<AuthScreen> {
           padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
           decoration: BoxDecoration(
             color: isSelected
-                ? const Color(0xFF1D9E75).withValues(alpha: 0.08)
+                ? const Color(0xFF9E7C5E).withValues(alpha: 0.08)
                 : Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isSelected
-                  ? const Color(0xFF1D9E75)
+                  ? const Color(0xFF9E7C5E)
                   : const Color(0xFFE5E7EB),
               width: isSelected ? 2 : 1.5,
             ),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: const Color(0xFF1D9E75).withValues(alpha: 0.12),
+                      color: const Color(0xFF9E7C5E).withValues(alpha: 0.12),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -489,8 +493,8 @@ class _AuthScreenState extends State<AuthScreen> {
                 icon,
                 size: 28,
                 color: isSelected
-                    ? const Color(0xFF1D9E75)
-                    : const Color(0xFF9CA3AF),
+                    ? const Color(0xFF829A12)
+                    : const Color(0xFFCBD5E1),
               ),
               const SizedBox(height: 8),
               Text(
@@ -500,8 +504,8 @@ class _AuthScreenState extends State<AuthScreen> {
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                   fontSize: 12,
                   color: isSelected
-                      ? const Color(0xFF1D9E75)
-                      : const Color(0xFF374151),
+                      ? const Color(0xFF9E7C5E)
+                      : const Color(0xFF2C2C2C),
                 ),
               ),
               Text(
@@ -564,8 +568,8 @@ class _AuthScreenState extends State<AuthScreen> {
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: selected
-                  ? const Color(0xFF1D5B3F)
-                  : const Color(0xFF9CA3AF),
+                  ? const Color(0xFFe0e27c)
+                  : const Color(0xFFCBD5E1),
             ),
           ),
         ),
@@ -610,9 +614,9 @@ class _AuthScreenState extends State<AuthScreen> {
             keyboardType: keyboardType,
             decoration: InputDecoration(
               hintText: hint,
-              prefixIcon: Icon(icon, color: const Color(0xFF9CA3AF), size: 20),
+              prefixIcon: Icon(icon, color: const Color(0xFFCBD5E1), size: 20),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: const Color(0xFFF5F3F0),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
@@ -630,7 +634,7 @@ class _AuthScreenState extends State<AuthScreen> {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
-                  color: Color(0xFF1D9E75),
+                  color: Color(0xFFe0e27c),
                   width: 2,
                 ),
               ),
@@ -686,7 +690,7 @@ class _AuthScreenState extends State<AuthScreen> {
             obscureText: obscure,
             decoration: InputDecoration(
               hintText: "••••••••",
-              prefixIcon: const Icon(Icons.lock_rounded, color: Color(0xFF9CA3AF), size: 20),
+              prefixIcon: const Icon(Icons.lock_rounded, color: Color(0xFFCBD5E1), size: 20),
               suffixIcon: GestureDetector(
                 onTap: onToggle,
                 child: Icon(
@@ -696,7 +700,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
               ),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: const Color(0xFFF5F3F0),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
@@ -714,7 +718,7 @@ class _AuthScreenState extends State<AuthScreen> {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
-                  color: Color(0xFF1D9E75),
+                  color: Color(0xFFe0e27c),
                   width: 2,
                 ),
               ),
@@ -745,12 +749,12 @@ class _AuthScreenState extends State<AuthScreen> {
           gradient: LinearGradient(
             colors: _isLoading
                 ? [
-                    const Color(0xFF1D9E75).withValues(alpha: 0.6),
+                    const Color(0xFF9E7C5E).withValues(alpha: 0.6),
                     const Color(0xFF1D7563).withValues(alpha: 0.6),
                   ]
                 : [
-                    const Color(0xFF1D9E75),
-                    const Color(0xFF1D7563),
+                    const Color(0xFF9E7C5E),
+                    const Color(0xFF9E7C5E),
                   ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -758,7 +762,7 @@ class _AuthScreenState extends State<AuthScreen> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1D9E75).withValues(alpha: 0.3),
+              color: const Color(0xFF9E7C5E).withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -788,7 +792,19 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  // ==================== AUTENTICACION TEMPORAL ====================
+  // ========== HELPER: Convierte el enum de rol a String para Supabase ==========
+  String _rolToString(UserRole role) {
+    switch (role) {
+      case UserRole.admin:
+        return 'admin';
+      case UserRole.veterinario:
+        return 'veterinario';
+      case UserRole.ayudante:
+        return 'ayudante';
+    }
+  }
+
+  // ==================== AUTENTICACIÓN CON SUPABASE (VIA EDGE FUNCTION) ====================
   Future<void> _authenticate() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -813,19 +829,97 @@ class _AuthScreenState extends State<AuthScreen> {
       return;
     }
 
-    // El acceso queda disponible mientras se configura la base de datos.
-    await Future<void>.delayed(const Duration(milliseconds: 250));
+    try {
+      if (isLogin) {
+        // ---------- LOGIN VIA EDGE FUNCTION ----------
+        final FunctionResponse response = await _supabase.functions.invoke(
+          'login',
+          body: {
+            'email': _emailController.text.trim(),
+            'password': _passwordController.text,
+          },
+        );
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(isLogin ? "Bienvenido" : "Cuenta creada correctamente"),
-          backgroundColor: const Color(0xFF059669),
-          duration: const Duration(milliseconds: 1200),
-        ),
-      );
-      Navigator.of(context).pushReplacementNamed('/main');
-      setState(() => _isLoading = false);
+        if (response.status == 200) {
+          final data = response.data;
+          if (data is Map && data['session'] is Map) {
+            final session = data['session'] as Map;
+            final refreshToken = session['refresh_token'];
+            if (refreshToken is String && refreshToken.isNotEmpty) {
+              await _supabase.auth.setSession(refreshToken);
+            }
+          }
+        } else {
+          final errorMsg = response.data is Map
+              ? (response.data['error'] ?? 'Credenciales inválidas').toString()
+              : 'Error al iniciar sesión (${response.status})';
+          throw Exception(errorMsg);
+        }
+      } else {
+        // ---------- REGISTER ----------
+        final response = await _supabase.auth.signUp(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+
+        final user = response.user;
+        if (user == null) {
+          throw Exception("No se pudo crear la cuenta");
+        }
+
+        // Insertamos los datos extra en la tabla usuario
+        await _supabase.from('usuario').insert({
+          'id_usuario': user.id,
+          'nombre': _nameController.text.trim(),
+          'rol': _rolToString(selectedRole),
+        });
+
+        // Supabase puede iniciar sesión automáticamente al registrarse.
+        if (response.session != null) {
+          await _supabase.auth.signOut();
+        }
+
+        if (mounted) {
+          setState(() {
+            isLogin = true;
+            _nameController.clear();
+            _passwordController.clear();
+            _confirmPasswordController.clear();
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Cuenta creada correctamente. Inicia sesión."),
+              backgroundColor: AppTheme.accent,
+              duration: Duration(milliseconds: 1800),
+            ),
+          );
+        }
+        return;
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isLogin ? "Bienvenido" : "Cuenta creada correctamente"),
+            backgroundColor: AppTheme.accent,
+            duration: const Duration(milliseconds: 1200),
+          ),
+        );
+        Navigator.of(context).pushReplacementNamed('/main');
+      }
+    } on AuthException catch (e) {
+      setState(() {
+        _errorMessage = e.message;
+      });
+    } catch (e) {
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      setState(() {
+        _errorMessage = msg;
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 }
