@@ -3,12 +3,17 @@ import '../models/rabbit.dart';
 
 class RabbitService {
   final _supabase = Supabase.instance.client;
-  static const _tableName = 'rabbits';
+  static const _tableName = 'conejo';
+  static const _idColumn = 'id_conejo';
 
-  /// Obtener todos los conejos
+  /// id_conejo es int4 en la BD; en la app se maneja como String
+  Object _id(String id) => int.tryParse(id) ?? id;
+
+  /// CONSULTAR: todos los conejos
   Future<List<Rabbit>> getAllRabbits() async {
     try {
-      final response = await _supabase.from(_tableName).select();
+      final response =
+          await _supabase.from(_tableName).select().order(_idColumn);
       return (response as List)
           .map((json) => Rabbit.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -18,11 +23,14 @@ class RabbitService {
     }
   }
 
-  /// Obtener un conejo por ID
+  /// CONSULTAR: un conejo por ID
   Future<Rabbit?> getRabbitById(String id) async {
     try {
-      final response =
-          await _supabase.from(_tableName).select().eq('id', id).single();
+      final response = await _supabase
+          .from(_tableName)
+          .select()
+          .eq(_idColumn, _id(id))
+          .single();
       return Rabbit.fromJson(response as Map<String, dynamic>);
     } catch (e) {
       print('Error fetching rabbit: $e');
@@ -30,14 +38,11 @@ class RabbitService {
     }
   }
 
-  /// Obtener conejas reproductoras
+  /// Conejas (hembras)
   Future<List<Rabbit>> getBreedersOnly() async {
     try {
-      final response = await _supabase
-          .from(_tableName)
-          .select()
-          .eq('is_breeder', true)
-          .eq('gender', 'Hembra');
+      final response =
+          await _supabase.from(_tableName).select().eq('genero', 'Hembra');
       return (response as List)
           .map((json) => Rabbit.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -47,7 +52,7 @@ class RabbitService {
     }
   }
 
-  /// Crear un nuevo conejo
+  /// CREAR
   Future<Rabbit> createRabbit(Rabbit rabbit) async {
     try {
       final response = await _supabase
@@ -62,15 +67,13 @@ class RabbitService {
     }
   }
 
-  /// Actualizar conejo
+  /// EDITAR
   Future<Rabbit> updateRabbit(String id, Rabbit rabbit) async {
     try {
-      final data = rabbit.toJson();
-      data.remove('id');
       final response = await _supabase
           .from(_tableName)
-          .update(data)
-          .eq('id', id)
+          .update(rabbit.toJson())
+          .eq(_idColumn, _id(id))
           .select()
           .single();
       return Rabbit.fromJson(response as Map<String, dynamic>);
@@ -80,75 +83,27 @@ class RabbitService {
     }
   }
 
-  /// Eliminar conejo
+  /// ELIMINAR
   Future<void> deleteRabbit(String id) async {
     try {
-      await _supabase.from(_tableName).delete().eq('id', id);
+      await _supabase.from(_tableName).delete().eq(_idColumn, _id(id));
     } catch (e) {
       print('Error deleting rabbit: $e');
       rethrow;
     }
   }
 
-  /// Actualizar último registro de alimentación
-  Future<void> updateLastFeeding(String rabbbitId) async {
-    try {
-      await _supabase
-          .from(_tableName)
-          .update({'last_feeding_date': DateTime.now().toIso8601String()})
-          .eq('id', rabbbitId);
-    } catch (e) {
-      print('Error updating feeding: $e');
-      rethrow;
-    }
-  }
-
-  /// Actualizar última fecha de tratamiento
-  Future<void> updateLastTreatment(String rabbbitId) async {
-    try {
-      await _supabase
-          .from(_tableName)
-          .update({'last_treatment_date': DateTime.now().toIso8601String()})
-          .eq('id', rabbbitId);
-    } catch (e) {
-      print('Error updating treatment: $e');
-      rethrow;
-    }
-  }
-
-  /// Actualizar fecha de parto esperada
+  // Estas columnas no existen en la tabla conejo (no usar en la presentación)
+  Future<void> updateLastFeeding(String rabbitId) async {}
+  Future<void> updateLastTreatment(String rabbitId) async {}
   Future<void> updateExpectedBirthDate(
-      String rabbbitId, DateTime expectedDate) async {
-    try {
-      await _supabase
-          .from(_tableName)
-          .update({'expected_birth_date': expectedDate.toIso8601String()})
-          .eq('id', rabbbitId);
-    } catch (e) {
-      print('Error updating expected birth date: $e');
-      rethrow;
-    }
-  }
+      String rabbitId, DateTime expectedDate) async {}
+  Future<void> incrementLitterCount(String rabbitId) async {}
 
-  /// Incrementar contador de partos
-  Future<void> incrementLitterCount(String rabbbitId) async {
-    try {
-      final rabbit = await getRabbitById(rabbbitId);
-      if (rabbit != null) {
-        await updateRabbit(
-            rabbbitId, rabbit.copyWith(litterCount: rabbit.litterCount + 1));
-      }
-    } catch (e) {
-      print('Error incrementing litter count: $e');
-      rethrow;
-    }
-  }
-
-  /// Obtener estadísticas generales
+  /// Estadísticas generales
   Future<Map<String, dynamic>> getStatistics() async {
     try {
       final allRabbits = await getAllRabbits();
-
       final totalRabbits = allRabbits.length;
       final totalBreeders = allRabbits.where((r) => r.isBreeder).length;
       final healthyCount =
@@ -162,7 +117,9 @@ class RabbitService {
         'breeders': totalBreeders,
         'healthy': healthyCount,
         'sick': sickCount,
-        'survival_rate': totalRabbits > 0 ? ((healthyCount / totalRabbits) * 100).toStringAsFixed(1) : '0',
+        'survival_rate': totalRabbits > 0
+            ? ((healthyCount / totalRabbits) * 100).toStringAsFixed(1)
+            : '0',
       };
     } catch (e) {
       print('Error getting statistics: $e');

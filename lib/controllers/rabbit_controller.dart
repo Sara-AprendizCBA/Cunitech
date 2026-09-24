@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/rabbit.dart';
 import '../services/rabbit_service.dart';
 
@@ -70,7 +71,7 @@ class RabbitController extends GetxController {
           snackPosition: SnackPosition.TOP);
     } catch (e) {
       error('Error creando conejo: $e');
-      Get.snackbar('Error', 'No se pudo crear el conejo',
+      Get.snackbar('Error', 'No se pudo crear el conejo: $e',
           snackPosition: SnackPosition.TOP);
       print('Error: $e');
     } finally {
@@ -101,6 +102,7 @@ class RabbitController extends GetxController {
   }
 
   /// Eliminar conejo
+    /// Eliminar conejo
   Future<void> deleteRabbit(String id) async {
     try {
       isLoading(true);
@@ -109,6 +111,15 @@ class RabbitController extends GetxController {
       rabbits.removeWhere((r) => r.id == id);
       Get.snackbar('Éxito', 'Conejo eliminado correctamente',
           snackPosition: SnackPosition.TOP);
+    } on PostgrestException catch (e) {
+      // 23503 = tiene registros relacionados (lactancia, reproducción,
+      // tratamiento, o es madre/padre de otro conejo)
+      final msg = e.code == '23503'
+          ? 'No se puede eliminar: tiene registros relacionados'
+          : 'No se pudo eliminar el conejo';
+      error('Error eliminando conejo: ${e.message}');
+      Get.snackbar('Error', msg, snackPosition: SnackPosition.TOP);
+      print('Error: $e');
     } catch (e) {
       error('Error eliminando conejo: $e');
       Get.snackbar('Error', 'No se pudo eliminar el conejo',
@@ -118,7 +129,6 @@ class RabbitController extends GetxController {
       isLoading(false);
     }
   }
-
   /// Registrar alimentación
   Future<void> recordFeeding(String rabbbitId) async {
     try {
