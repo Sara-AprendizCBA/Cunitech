@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/theme/app_theme.dart';
@@ -80,7 +81,7 @@ class _CunitechAppState extends State<CunitechApp> {
     return AnimatedBuilder(
       animation: _themeController,
       builder: (context, child) {
-        return MaterialApp(
+        return GetMaterialApp(
           title: 'CUNITECH',
           debugShowCheckedModeBanner: false,
 
