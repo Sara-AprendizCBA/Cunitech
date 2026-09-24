@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../controllers/rabbit_controller.dart';
-import '../../models/rabbit.dart';
+import '../../../controllers/rabbit_controller.dart';
+import '../../../models/rabbit.dart';
 
 /// Formulario para CREAR (rabbit == null) y EDITAR (rabbit != null)
 class RabbitFormDialog extends StatefulWidget {
