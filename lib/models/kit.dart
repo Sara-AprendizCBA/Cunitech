@@ -1,7 +1,8 @@
 class Kit {
   final String id;
-  final String motherId;
-  final String? fatherId;
+  final int? motherId;
+  final int? fatherId;
+  final String? birthId;
   final DateTime birthDate;
   final double birthWeight;
   final double currentWeight;
@@ -11,8 +12,9 @@ class Kit {
 
   Kit({
     required this.id,
-    required this.motherId,
+    this.motherId,
     this.fatherId,
+    this.birthId,
     required this.birthDate,
     required this.birthWeight,
     required this.currentWeight,
@@ -25,8 +27,9 @@ class Kit {
   factory Kit.fromJson(Map<String, dynamic> json) {
     return Kit(
       id: json['id'] as String? ?? '',
-      motherId: json['mother_id'] as String? ?? '',
-      fatherId: json['father_id'] as String?,
+      motherId: json['mother_id'] as int?,
+      fatherId: json['father_id'] as int?,
+      birthId: json['birth_id'] as String?,
       birthDate: json['birth_date'] != null
           ? DateTime.parse(json['birth_date'] as String)
           : DateTime.now(),
@@ -43,9 +46,9 @@ class Kit {
   /// Convertir a JSON para Supabase
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'mother_id': motherId,
       'father_id': fatherId,
+      'birth_id': birthId,
       'birth_date': birthDate.toIso8601String(),
       'birth_weight': birthWeight,
       'current_weight': currentWeight,
@@ -58,8 +61,9 @@ class Kit {
   /// Copiar con cambios
   Kit copyWith({
     String? id,
-    String? motherId,
-    String? fatherId,
+    int? motherId,
+    int? fatherId,
+    String? birthId,
     DateTime? birthDate,
     double? birthWeight,
     double? currentWeight,
@@ -71,6 +75,7 @@ class Kit {
       id: id ?? this.id,
       motherId: motherId ?? this.motherId,
       fatherId: fatherId ?? this.fatherId,
+      birthId: birthId ?? this.birthId,
       birthDate: birthDate ?? this.birthDate,
       birthWeight: birthWeight ?? this.birthWeight,
       currentWeight: currentWeight ?? this.currentWeight,
