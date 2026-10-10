@@ -1,3 +1,4 @@
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/rabbit.dart';
 
@@ -6,14 +7,42 @@ class RabbitService {
   static const _tableName = 'conejo';
   static const _idColumn = 'id_conejo';
 
+  String get _userId => _supabase.auth.currentUser!.id;
+
   /// id_conejo es int4 en la BD; en la app se maneja como String
   Object _id(String id) => int.tryParse(id) ?? id;
+
+  Future<String?> uploadPhoto(XFile file) async {
+    try {
+      final userId = _supabase.auth.currentUser!.id;
+      final bytes = await file.readAsBytes();
+      final ext = file.name.split('.').last;
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final path = '$userId/$fileName';
+
+      await _supabase.storage
+          .from('rabbit-photos')
+          .uploadBinary(
+            path,
+            bytes,
+            fileOptions: const FileOptions(upsert: true),
+          );
+
+      return _supabase.storage.from('rabbit-photos').getPublicUrl(path);
+    } catch (e) {
+      print('Error uploading photo: $e');
+      return null;
+    }
+  }
 
   /// CONSULTAR: todos los conejos
   Future<List<Rabbit>> getAllRabbits() async {
     try {
-      final response =
-          await _supabase.from(_tableName).select().order(_idColumn);
+      final response = await _supabase
+          .from(_tableName)
+          .select()
+          .eq('user_id', _userId)
+          .order(_idColumn);
       return (response as List)
           .map((json) => Rabbit.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -30,6 +59,7 @@ class RabbitService {
           .from(_tableName)
           .select()
           .eq(_idColumn, _id(id))
+          .eq('user_id', _userId)
           .single();
       return Rabbit.fromJson(response as Map<String, dynamic>);
     } catch (e) {
@@ -41,8 +71,11 @@ class RabbitService {
   /// Conejas (hembras)
   Future<List<Rabbit>> getBreedersOnly() async {
     try {
-      final response =
-          await _supabase.from(_tableName).select().eq('genero', 'Hembra');
+      final response = await _supabase
+          .from(_tableName)
+          .select()
+          .eq('genero', 'Hembra')
+          .eq('user_id', _userId);
       return (response as List)
           .map((json) => Rabbit.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -74,6 +107,7 @@ class RabbitService {
           .from(_tableName)
           .update(rabbit.toJson())
           .eq(_idColumn, _id(id))
+          .eq('user_id', _userId)
           .select()
           .single();
       return Rabbit.fromJson(response as Map<String, dynamic>);
@@ -86,7 +120,11 @@ class RabbitService {
   /// ELIMINAR
   Future<void> deleteRabbit(String id) async {
     try {
-      await _supabase.from(_tableName).delete().eq(_idColumn, _id(id));
+      await _supabase
+          .from(_tableName)
+          .delete()
+          .eq(_idColumn, _id(id))
+          .eq('user_id', _userId);
     } catch (e) {
       print('Error deleting rabbit: $e');
       rethrow;
@@ -97,7 +135,9 @@ class RabbitService {
   Future<void> updateLastFeeding(String rabbitId) async {}
   Future<void> updateLastTreatment(String rabbitId) async {}
   Future<void> updateExpectedBirthDate(
-      String rabbitId, DateTime expectedDate) async {}
+    String rabbitId,
+    DateTime expectedDate,
+  ) async {}
   Future<void> incrementLitterCount(String rabbitId) async {}
 
   /// Estadísticas generales
@@ -106,8 +146,9 @@ class RabbitService {
       final allRabbits = await getAllRabbits();
       final totalRabbits = allRabbits.length;
       final totalBreeders = allRabbits.where((r) => r.isBreeder).length;
-      final healthyCount =
-          allRabbits.where((r) => r.healthStatus == 'Saludable').length;
+      final healthyCount = allRabbits
+          .where((r) => r.healthStatus == 'Saludable')
+          .length;
       final sickCount = allRabbits
           .where((r) => r.healthStatus.contains('Tratamiento'))
           .length;

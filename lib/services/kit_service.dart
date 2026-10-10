@@ -1,19 +1,24 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/utils/logger.dart';
 import '../models/kit.dart';
 
 class KitService {
   final _supabase = Supabase.instance.client;
   static const _tableName = 'kits';
+  String get _userId => _supabase.auth.currentUser!.id;
 
   /// Obtener todas las crías
   Future<List<Kit>> getAllKits() async {
     try {
-      final response = await _supabase.from(_tableName).select();
+        final response = await _supabase
+          .from(_tableName)
+          .select()
+          .eq('user_id', _userId);
       return (response as List)
           .map((json) => Kit.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('Error fetching kits: $e');
+      logger.e('Error fetching kits', error: e);
       rethrow;
     }
   }
@@ -24,13 +29,14 @@ class KitService {
       final response = await _supabase
           .from(_tableName)
           .select()
-          .eq('mother_id', motherId)
+          .eq('mother_id', int.parse(motherId))
+          .eq('user_id', _userId)
           .order('birth_date', ascending: false);
       return (response as List)
           .map((json) => Kit.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('Error fetching kits by mother: $e');
+      logger.e('Error fetching kits by mother', error: e);
       rethrow;
     }
   }
@@ -38,11 +44,15 @@ class KitService {
   /// Obtener una cría por ID
   Future<Kit?> getKitById(String id) async {
     try {
-      final response =
-          await _supabase.from(_tableName).select().eq('id', id).single();
+        final response = await _supabase
+          .from(_tableName)
+          .select()
+          .eq('user_id', _userId)
+          .eq('id', id)
+          .single();
       return Kit.fromJson(response as Map<String, dynamic>);
     } catch (e) {
-      print('Error fetching kit: $e');
+      logger.e('Error fetching kit', error: e);
       return null;
     }
   }
@@ -52,12 +62,12 @@ class KitService {
     try {
       final response = await _supabase
           .from(_tableName)
-          .insert(kit.toJson())
+          .insert({...kit.toJson(), 'user_id': _userId})
           .select()
           .single();
       return Kit.fromJson(response as Map<String, dynamic>);
     } catch (e) {
-      print('Error creating kit: $e');
+      logger.e('Error creating kit', error: e);
       rethrow;
     }
   }
@@ -71,11 +81,12 @@ class KitService {
           .from(_tableName)
           .update(data)
           .eq('id', id)
+          .eq('user_id', _userId)
           .select()
           .single();
       return Kit.fromJson(response as Map<String, dynamic>);
     } catch (e) {
-      print('Error updating kit: $e');
+      logger.e('Error updating kit', error: e);
       rethrow;
     }
   }
@@ -83,9 +94,13 @@ class KitService {
   /// Eliminar cría
   Future<void> deleteKit(String id) async {
     try {
-      await _supabase.from(_tableName).delete().eq('id', id);
+        await _supabase
+          .from(_tableName)
+          .delete()
+          .eq('id', id)
+          .eq('user_id', _userId);
     } catch (e) {
-      print('Error deleting kit: $e');
+      logger.e('Error deleting kit', error: e);
       rethrow;
     }
   }
@@ -93,13 +108,16 @@ class KitService {
   /// Obtener crías no destetadas
   Future<List<Kit>> getNotWeanedKits() async {
     try {
-      final response =
-          await _supabase.from(_tableName).select().isFilter('weaning_date', true);
+        final response = await _supabase
+          .from(_tableName)
+          .select()
+          .isFilter('weaning_date', null)
+          .eq('user_id', _userId);
       return (response as List)
           .map((json) => Kit.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('Error fetching not weaned kits: $e');
+      logger.e('Error fetching not weaned kits', error: e);
       rethrow;
     }
   }
@@ -110,9 +128,10 @@ class KitService {
       await _supabase
           .from(_tableName)
           .update({'current_weight': newWeight})
-          .eq('id', kitId);
+          .eq('id', kitId)
+          .eq('user_id', _userId);
     } catch (e) {
-      print('Error updating kit weight: $e');
+      logger.e('Error updating kit weight', error: e);
       rethrow;
     }
   }
@@ -123,9 +142,10 @@ class KitService {
       await _supabase
           .from(_tableName)
           .update({'weaning_date': DateTime.now().toIso8601String()})
-          .eq('id', kitId);
+          .eq('id', kitId)
+          .eq('user_id', _userId);
     } catch (e) {
-      print('Error marking kit as weaned: $e');
+      logger.e('Error marking kit as weaned', error: e);
       rethrow;
     }
   }
@@ -153,7 +173,7 @@ class KitService {
         'total_weight_gain': totalGain.toStringAsFixed(2),
       };
     } catch (e) {
-      print('Error getting kits stats: $e');
+      logger.e('Error getting kits stats', error: e);
       rethrow;
     }
   }

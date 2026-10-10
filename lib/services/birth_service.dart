@@ -1,19 +1,24 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/utils/logger.dart';
 import '../models/birth.dart';
 
 class BirthService {
   final _supabase = Supabase.instance.client;
   static const _tableName = 'births';
+  String get _userId => _supabase.auth.currentUser!.id;
 
   /// Obtener todos los partos
   Future<List<Birth>> getAllBirths() async {
     try {
-      final response = await _supabase.from(_tableName).select();
+        final response = await _supabase
+          .from(_tableName)
+          .select()
+          .eq('user_id', _userId);
       return (response as List)
           .map((json) => Birth.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('Error fetching births: $e');
+      logger.e('Error fetching births', error: e);
       rethrow;
     }
   }
@@ -24,13 +29,14 @@ class BirthService {
       final response = await _supabase
           .from(_tableName)
           .select()
-          .eq('mother_id', motherId)
+          .eq('mother_id', int.parse(motherId))
+          .eq('user_id', _userId)
           .order('birth_date', ascending: false);
       return (response as List)
           .map((json) => Birth.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('Error fetching births by mother: $e');
+      logger.e('Error fetching births by mother', error: e);
       rethrow;
     }
   }
@@ -38,11 +44,15 @@ class BirthService {
   /// Obtener un parto por ID
   Future<Birth?> getBirthById(String id) async {
     try {
-      final response =
-          await _supabase.from(_tableName).select().eq('id', id).single();
+        final response = await _supabase
+          .from(_tableName)
+          .select()
+          .eq('user_id', _userId)
+          .eq('id', id)
+          .single();
       return Birth.fromJson(response as Map<String, dynamic>);
     } catch (e) {
-      print('Error fetching birth: $e');
+      logger.e('Error fetching birth', error: e);
       return null;
     }
   }
@@ -52,12 +62,12 @@ class BirthService {
     try {
       final response = await _supabase
           .from(_tableName)
-          .insert(birth.toJson())
+          .insert({...birth.toJson(), 'user_id': _userId})
           .select()
           .single();
       return Birth.fromJson(response as Map<String, dynamic>);
     } catch (e) {
-      print('Error creating birth: $e');
+      logger.e('Error creating birth', error: e);
       rethrow;
     }
   }
@@ -71,11 +81,12 @@ class BirthService {
           .from(_tableName)
           .update(data)
           .eq('id', id)
+          .eq('user_id', _userId)
           .select()
           .single();
       return Birth.fromJson(response as Map<String, dynamic>);
     } catch (e) {
-      print('Error updating birth: $e');
+      logger.e('Error updating birth', error: e);
       rethrow;
     }
   }
@@ -83,9 +94,13 @@ class BirthService {
   /// Eliminar parto
   Future<void> deleteBirth(String id) async {
     try {
-      await _supabase.from(_tableName).delete().eq('id', id);
+        await _supabase
+          .from(_tableName)
+          .delete()
+          .eq('id', id)
+          .eq('user_id', _userId);
     } catch (e) {
-      print('Error deleting birth: $e');
+      logger.e('Error deleting birth', error: e);
       rethrow;
     }
   }
@@ -99,12 +114,13 @@ class BirthService {
           .from(_tableName)
           .select()
           .gte('birth_date', since)
+          .eq('user_id', _userId)
           .order('birth_date', ascending: false);
       return (response as List)
           .map((json) => Birth.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('Error fetching recent births: $e');
+      logger.e('Error fetching recent births', error: e);
       rethrow;
     }
   }
@@ -116,7 +132,7 @@ class BirthService {
       // Por ahora retornamos una lista vacía
       return [];
     } catch (e) {
-      print('Error fetching upcoming births: $e');
+      logger.e('Error fetching upcoming births', error: e);
       rethrow;
     }
   }
@@ -147,7 +163,7 @@ class BirthService {
             : '0',
       };
     } catch (e) {
-      print('Error getting reproduction stats: $e');
+      logger.e('Error getting reproduction stats', error: e);
       rethrow;
     }
   }
