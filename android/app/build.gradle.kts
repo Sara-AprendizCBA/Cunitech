@@ -8,7 +8,10 @@ plugins {
 android {
     namespace = "com.example.cunitech"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // Opción 1: NDK 27 (más reciente, la mayoría de proyectos)
+    ndkVersion = "27.0.3"
+
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
