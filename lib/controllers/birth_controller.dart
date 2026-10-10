@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import '../core/utils/logger.dart';
 import '../models/birth.dart';
 import '../services/birth_service.dart';
 
@@ -29,7 +30,7 @@ class BirthController extends GetxController {
       births.assignAll(data);
     } catch (e) {
       error('Error cargando partos: $e');
-      print('Error: $e');
+      logger.e('Error cargando partos', error: e);
     } finally {
       isLoading(false);
     }
@@ -44,7 +45,7 @@ class BirthController extends GetxController {
       recentBirths.assignAll(data);
     } catch (e) {
       error('Error cargando partos recientes: $e');
-      print('Error: $e');
+      logger.e('Error cargando partos recientes', error: e);
     } finally {
       isLoading(false);
     }
@@ -55,7 +56,7 @@ class BirthController extends GetxController {
     try {
       return await _birthService.getBirthsByMother(motherId);
     } catch (e) {
-      print('Error: $e');
+      logger.e('Error consultando partos por madre', error: e);
       return [];
     }
   }
@@ -66,7 +67,7 @@ class BirthController extends GetxController {
       final data = await _birthService.getReproductionStats();
       stats.assignAll(data);
     } catch (e) {
-      print('Error loading reproduction stats: $e');
+      logger.e('Error loading reproduction stats', error: e);
     }
   }
 
@@ -86,7 +87,7 @@ class BirthController extends GetxController {
       error('Error creando parto: $e');
       Get.snackbar('Error', 'No se pudo registrar el parto',
           snackPosition: SnackPosition.TOP);
-      print('Error: $e');
+      logger.e('Error creando parto', error: e);
     } finally {
       isLoading(false);
     }
@@ -110,7 +111,7 @@ class BirthController extends GetxController {
       error('Error actualizando parto: $e');
       Get.snackbar('Error', 'No se pudo actualizar el parto',
           snackPosition: SnackPosition.TOP);
-      print('Error: $e');
+      logger.e('Error actualizando parto', error: e);
     } finally {
       isLoading(false);
     }
@@ -130,7 +131,7 @@ class BirthController extends GetxController {
       error('Error eliminando parto: $e');
       Get.snackbar('Error', 'No se pudo eliminar el parto',
           snackPosition: SnackPosition.TOP);
-      print('Error: $e');
+      logger.e('Error eliminando parto', error: e);
     } finally {
       isLoading(false);
     }

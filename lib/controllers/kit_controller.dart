@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import '../core/utils/logger.dart';
 import '../models/kit.dart';
 import '../services/kit_service.dart';
 
@@ -27,7 +28,7 @@ class KitController extends GetxController {
       kits.assignAll(data);
     } catch (e) {
       error('Error cargando crías: $e');
-      print('Error: $e');
+      logger.e('Error cargando crías', error: e);
     } finally {
       isLoading(false);
     }
@@ -39,7 +40,7 @@ class KitController extends GetxController {
       final data = await _kitService.getKitsStats();
       stats.assignAll(data);
     } catch (e) {
-      print('Error loading kits stats: $e');
+      logger.e('Error loading kits stats', error: e);
     }
   }
 
@@ -48,7 +49,7 @@ class KitController extends GetxController {
     try {
       return await _kitService.getKitsByMother(motherId);
     } catch (e) {
-      print('Error: $e');
+      logger.e('Error consultando crías por madre', error: e);
       return [];
     }
   }
@@ -67,7 +68,7 @@ class KitController extends GetxController {
       error('Error creando cría: $e');
       Get.snackbar('Error', 'No se pudo registrar la cría',
           snackPosition: SnackPosition.TOP);
-      print('Error: $e');
+      logger.e('Error creando cría', error: e);
     } finally {
       isLoading(false);
     }
@@ -90,7 +91,7 @@ class KitController extends GetxController {
       error('Error actualizando cría: $e');
       Get.snackbar('Error', 'No se pudo actualizar la cría',
           snackPosition: SnackPosition.TOP);
-      print('Error: $e');
+      logger.e('Error actualizando cría', error: e);
     } finally {
       isLoading(false);
     }
@@ -110,7 +111,7 @@ class KitController extends GetxController {
       error('Error eliminando cría: $e');
       Get.snackbar('Error', 'No se pudo eliminar la cría',
           snackPosition: SnackPosition.TOP);
-      print('Error: $e');
+      logger.e('Error eliminando cría', error: e);
     } finally {
       isLoading(false);
     }
@@ -129,7 +130,7 @@ class KitController extends GetxController {
     } catch (e) {
       Get.snackbar('Error', 'No se pudo actualizar el peso',
           snackPosition: SnackPosition.TOP);
-      print('Error: $e');
+      logger.e('Error actualizando peso de cría', error: e);
     }
   }
 
@@ -145,7 +146,7 @@ class KitController extends GetxController {
     } catch (e) {
       Get.snackbar('Error', 'No se pudo marcar como destetada',
           snackPosition: SnackPosition.TOP);
-      print('Error: $e');
+      logger.e('Error marcando cría como destetada', error: e);
     }
   }
 

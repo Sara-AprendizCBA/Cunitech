@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/rabbit.dart';
 import '../models/birth.dart';
 import 'rabbit_controller.dart';
@@ -17,6 +19,7 @@ class DashboardController extends GetxController {
   final alerts = 0.obs;
   final upcomingBirths = <Birth>[].obs;
   final activeRabbits = <Rabbit>[].obs;
+  final overduePregnancies = <Rabbit>[].obs;
   final isLoading = false.obs;
 
   @override
@@ -24,7 +27,11 @@ class DashboardController extends GetxController {
     super.onInit();
     loadDashboardData();
     // Escuchar cambios en otros controladores
-    ever(rabbitController.rabbits, (_) => updateDashboardMetrics());
+    ever(rabbitController.rabbits, (_) {
+      updateDashboardMetrics();
+      loadActiveRabbits();
+      generateAlerts();
+    });
     ever(birthController.births, (_) => updateDashboardMetrics());
   }
 
@@ -32,7 +39,7 @@ class DashboardController extends GetxController {
   Future<void> loadDashboardData() async {
     try {
       isLoading(true);
-      
+
       // Cargar datos en paralelo
       await Future.wait([
         rabbitController.loadAllRabbits(),
@@ -41,12 +48,47 @@ class DashboardController extends GetxController {
         kitController.loadAllKits(),
       ]);
 
+      await loadActiveRabbits();
       updateDashboardMetrics();
-      generateAlerts();
+      await generateAlerts();
     } catch (e) {
       print('Error loading dashboard data: $e');
     } finally {
       isLoading(false);
+    }
+  }
+
+  /// Cargar conejas activas desde Supabase con filtros de usuario y estado
+  Future<void> loadActiveRabbits() async {
+    final supabase = Supabase.instance.client;
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) {
+      activeRabbits.clear();
+      return;
+    }
+
+    try {
+      final rows = await supabase
+          .from('conejo')
+          .select()
+          .eq('user_id', userId)
+          .eq('genero', 'Hembra')
+          .inFilter('reproductive_status', [
+            'Vacía',
+            'Servida',
+            'Gestante',
+            'Lactante',
+          ])
+          .neq('estado', 'Vendida')
+          .order('nombre');
+      activeRabbits.assignAll(
+        (rows as List)
+            .map((row) => Rabbit.fromJson(row as Map<String, dynamic>))
+            .toList(),
+      );
+    } catch (e) {
+      activeRabbits.clear();
+      debugPrint('Error loading active rabbits: $e');
     }
   }
 
@@ -60,33 +102,31 @@ class DashboardController extends GetxController {
 
     // Tasa de supervivencia promedio
     if (birthController.births.isNotEmpty) {
-      final totalRate = birthController.births
-          .fold<int>(0, (sum, b) => sum + b.survivalRate);
-      final avgRate = (totalRate / birthController.births.length).toStringAsFixed(1);
+      final totalRate = birthController.births.fold<int>(
+        0,
+        (sum, b) => sum + b.survivalRate,
+      );
+      final avgRate = (totalRate / birthController.births.length)
+          .toStringAsFixed(1);
       survivalRate.value = '$avgRate%';
     } else {
       survivalRate.value = '0%';
     }
 
-    // Conejas activas (reproductoras saludables)
-    final activeList = rabbitController.rabbits
-        .where((r) =>
-            r.isBreeder &&
-            r.healthStatus == 'Saludable' &&
-            r.gender == 'Hembra')
-        .toList();
-    activeRabbits.assignAll(activeList);
-
     // Próximos partos esperados
     final upcoming = rabbitController.rabbits
-        .where((r) => r.expectedBirthDate != null && r.expectedBirthDate!.isAfter(DateTime.now()))
+        .where(
+          (r) =>
+              r.expectedBirthDate != null &&
+              r.expectedBirthDate!.isAfter(DateTime.now()),
+        )
         .toList();
-    
+
     // Crear Birth objects simulados para mostrar en el banner
     final upcomingList = upcoming.map((r) {
       return Birth(
         id: r.id,
-        motherId: r.id,
+        motherId: int.tryParse(r.id),
         birthDate: r.expectedBirthDate ?? DateTime.now(),
         litterSize: 0,
         averageWeight: 0,
@@ -95,8 +135,8 @@ class DashboardController extends GetxController {
     upcomingBirths.assignAll(upcomingList);
   }
 
-  /// Generar alertas del sistema
-  void generateAlerts() {
+  /// Generar alertas locales y reproductivas desde Supabase
+  Future<void> generateAlerts() async {
     int alertCount = 0;
 
     // Alerta: conejos enfermos
@@ -108,33 +148,110 @@ class DashboardController extends GetxController {
     // Alerta: conejos no alimentados recientemente (más de 2 días)
     final notFedRabbits = rabbitController.rabbits.where((r) {
       if (r.lastFeedingDate == null) return true;
-      final daysSinceFeeding =
-          DateTime.now().difference(r.lastFeedingDate!).inDays;
+      final daysSinceFeeding = DateTime.now()
+          .difference(r.lastFeedingDate!)
+          .inDays;
       return daysSinceFeeding > 2;
     }).length;
     alertCount += notFedRabbits;
 
-    // Alerta: próximos partos en menos de 3 días
-    final soonBirths = rabbitController.rabbits.where((r) {
-      if (r.expectedBirthDate == null) return false;
-      final daysUntilBirth = r.expectedBirthDate!.difference(DateTime.now()).inDays;
-      return daysUntilBirth >= 0 && daysUntilBirth <= 3;
-    }).length;
-    alertCount += soonBirths;
+    await loadAlerts(baseAlertCount: alertCount);
+  }
 
-    alerts.value = alertCount;
+  String _dateOnly(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
+
+  /// Consultar alertas reproductivas con fechas de calendario locales
+  Future<void> loadAlerts({int baseAlertCount = 0}) async {
+    final supabase = Supabase.instance.client;
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) {
+      overduePregnancies.clear();
+      alerts.value = baseAlertCount;
+      return;
+    }
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final inSevenDays = today.add(const Duration(days: 7));
+    final overdueCutoff = today.subtract(const Duration(days: 33));
+    final palpationCutoff = today.subtract(const Duration(days: 14));
+
+    try {
+      final upcomingBirths = await supabase
+          .from('conejo')
+          .select('id_conejo')
+          .eq('user_id', userId)
+          .eq('reproductive_status', 'Gestante')
+          .gte('expected_birth_date', _dateOnly(tomorrow))
+          .lte('expected_birth_date', _dateOnly(inSevenDays));
+
+      final birthsToday = await supabase
+          .from('conejo')
+          .select('id_conejo')
+          .eq('user_id', userId)
+          .eq('reproductive_status', 'Gestante')
+          .eq('expected_birth_date', _dateOnly(today));
+
+      final overdueRows = await supabase
+          .from('conejo')
+          .select()
+          .eq('user_id', userId)
+          .eq('reproductive_status', 'Gestante')
+          .lt('mating_date', _dateOnly(overdueCutoff));
+
+      final unpalpatedBirths = await supabase
+          .from('conejo')
+          .select('id_conejo')
+          .eq('user_id', userId)
+          .eq('reproductive_status', 'Servida')
+          .lte('mating_date', _dateOnly(palpationCutoff));
+
+      overduePregnancies.assignAll(
+        (overdueRows as List)
+            .map((row) => Rabbit.fromJson(row as Map<String, dynamic>))
+            .toList(),
+      );
+      alerts.value =
+          baseAlertCount +
+          upcomingBirths.length +
+          birthsToday.length +
+          overdueRows.length +
+          unpalpatedBirths.length;
+    } catch (e) {
+      debugPrint('Error loading reproductive alerts: $e');
+      alerts.value = baseAlertCount;
+    }
   }
 
   /// Obtener próximo parto esperado
   Rabbit? getNextExpectedBirth() {
-    try {
-      return rabbitController.rabbits
-          .where((r) => r.expectedBirthDate != null && r.expectedBirthDate!.isAfter(DateTime.now()))
-          .reduce((a, b) =>
-              a.expectedBirthDate!.isBefore(b.expectedBirthDate!) ? a : b);
-    } catch (e) {
-      return null;
+    if (overduePregnancies.isNotEmpty) {
+      final overdue = overduePregnancies.toList()
+        ..sort(
+          (a, b) => (a.matingDate ?? DateTime.now()).compareTo(
+            b.matingDate ?? DateTime.now(),
+          ),
+        );
+      return overdue.first;
     }
+
+    final gestating =
+        activeRabbits
+            .where(
+              (rabbit) =>
+                  rabbit.gender == 'Hembra' &&
+                  rabbit.reproductiveStatus == 'Gestante' &&
+                  rabbit.expectedBirthDate != null,
+            )
+            .toList()
+          ..sort(
+            (a, b) => a.expectedBirthDate!.compareTo(b.expectedBirthDate!),
+          );
+    return gestating.isEmpty ? null : gestating.first;
   }
 
   /// Obtener conejos enfermos
@@ -178,8 +295,8 @@ class DashboardController extends GetxController {
       'total_kits': kits.length,
       'avg_survival_rate': births.isNotEmpty
           ? (births.fold<int>(0, (sum, b) => sum + b.survivalRate) /
-                  births.length)
-              .toStringAsFixed(1)
+                    births.length)
+                .toStringAsFixed(1)
           : '0',
     };
   }
