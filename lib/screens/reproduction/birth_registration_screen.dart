@@ -71,13 +71,23 @@ class _BirthRegistrationScreenState extends State<BirthRegistrationScreen> {
               TextFormField(
                 controller: _motherController,
                 decoration: const InputDecoration(labelText: "ID de la Coneja Madre *"),
-                validator: (value) => value!.isEmpty ? "Obligatorio" : null,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) return "Obligatorio";
+                  return int.tryParse(value.trim()) == null
+                      ? "Ingresa un ID numérico"
+                      : null;
+                },
               ),
               const SizedBox(height: 16),
 
               TextFormField(
                 controller: _fatherController,
                 decoration: const InputDecoration(labelText: "ID del Macho (Opcional)"),
+                validator: (value) => value != null &&
+                        value.trim().isNotEmpty &&
+                        int.tryParse(value.trim()) == null
+                    ? "Ingresa un ID numérico"
+                    : null,
               ),
               const SizedBox(height: 16),
 
@@ -205,10 +215,12 @@ class _BirthRegistrationScreenState extends State<BirthRegistrationScreen> {
       }
 
       final newBirth = Birth(
-        id: "N-${DateTime.now().millisecondsSinceEpoch}",
+        id: '',
         matingId: widget.mating?.id ?? "Manual",
-        motherId: _motherController.text,
-        fatherId: _fatherController.text.isEmpty ? null : _fatherController.text,
+        motherId: int.parse(_motherController.text.trim()),
+        fatherId: _fatherController.text.trim().isEmpty
+          ? null
+          : int.parse(_fatherController.text.trim()),
         birthDate: _birthDate,
         litterSize: litterSize,
         averageWeight: averageWeight,

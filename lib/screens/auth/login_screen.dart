@@ -21,8 +21,8 @@ class _AuthScreenState extends State<AuthScreen> {
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _emailController = TextEditingController(text: "admin@cunitech.co");
-  final _passwordController = TextEditingController(text: "123456");
+  final _emailController = TextEditingController(text: '');
+  final _passwordController = TextEditingController(text: '');
   final _confirmPasswordController = TextEditingController();
 
   bool _isLoading = false;
@@ -219,7 +219,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               _buildTextField(
                                 controller: _emailController,
                                 label: "Correo electrónico",
-                                hint: "admin@cunitech.co",
+                                hint: "Correo electrónico",
                                 icon: Icons.email_rounded,
                                 keyboardType: TextInputType.emailAddress,
                               ),

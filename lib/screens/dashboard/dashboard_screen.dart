@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../controllers/dashboard_controller.dart';
+import '../../models/rabbit.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -13,7 +16,24 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  final DashboardController dashboardController = Get.put(DashboardController());
+  final DashboardController dashboardController = Get.put(
+    DashboardController(),
+  );
+  Timer? _clockTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _clockTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _clockTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,22 +73,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildHeader(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Dashboard', style: Theme.of(context).textTheme.headlineLarge),
-              const SizedBox(height: 6),
-              Text(
-                '${DateTime.now().day} de ${_getMonthName(DateTime.now().month)} · Granja Mosquera',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
+          child: Text(
+            '${DateTime.now().day} de ${_getMonthName(DateTime.now().month)} · Granja Mosquera',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
         ),
-        const _Avatar('GR'),
       ],
     ).animate().fadeIn(duration: 400.ms);
   }
@@ -77,9 +90,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Text(
       text,
       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            letterSpacing: 0.8,
-            fontWeight: FontWeight.w600,
-          ),
+        letterSpacing: 0.8,
+        fontWeight: FontWeight.w600,
+      ),
     );
   }
 
@@ -97,12 +110,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       itemCount: 4,
       itemBuilder: (_, i) {
-        return Obx(() => _MetricCard(
-              label: _getMetricLabel(i),
-              value: _getMetricValue(i),
-              trend: _getMetricTrend(i),
-              positive: _getMetricPositive(i),
-            ));
+        return Obx(
+          () => _MetricCard(
+            label: _getMetricLabel(i),
+            value: _getMetricValue(i),
+            trend: _getMetricTrend(i),
+            positive: _getMetricPositive(i),
+          ),
+        );
       },
     );
   }
@@ -110,41 +125,61 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Métodos auxiliares para evitar leer .value fuera de Obx
   String _getMetricLabel(int i) {
     switch (i) {
-      case 0: return 'Total Conejos';
-      case 1: return 'Partos';
-      case 2: return 'Supervivencia';
-      case 3: return 'Alertas';
-      default: return '';
+      case 0:
+        return 'Total Conejos';
+      case 1:
+        return 'Partos';
+      case 2:
+        return 'Supervivencia';
+      case 3:
+        return 'Alertas';
+      default:
+        return '';
     }
   }
 
   String _getMetricValue(int i) {
     switch (i) {
-      case 0: return dashboardController.totalRabbits.value.toString();
-      case 1: return dashboardController.totalBirths.value.toString();
-      case 2: return dashboardController.survivalRate.value;
-      case 3: return dashboardController.alerts.value.toString();
-      default: return '0';
+      case 0:
+        return dashboardController.totalRabbits.value.toString();
+      case 1:
+        return dashboardController.totalBirths.value.toString();
+      case 2:
+        return dashboardController.survivalRate.value;
+      case 3:
+        return dashboardController.alerts.value.toString();
+      default:
+        return '0';
     }
   }
 
   String _getMetricTrend(int i) {
     switch (i) {
-      case 0: return '+12 este mes';
-      case 1: return '+8%';
-      case 2: return '−2%';
-      case 3: return 'Sin cambio';
-      default: return '';
+      case 0:
+        return '+12 este mes';
+      case 1:
+        return '+8%';
+      case 2:
+        return '−2%';
+      case 3:
+        return 'Sin cambio';
+      default:
+        return '';
     }
   }
 
   bool? _getMetricPositive(int i) {
     switch (i) {
-      case 0: return true;
-      case 1: return true;
-      case 2: return false;
-      case 3: return null;
-      default: return null;
+      case 0:
+        return true;
+      case 1:
+        return true;
+      case 2:
+        return false;
+      case 3:
+        return null;
+      default:
+        return null;
     }
   }
 
@@ -154,14 +189,102 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         decoration: BoxDecoration(
-          color: AppTheme.accent.withOpacity(0.5),
+          color: AppTheme.surfaceLight,
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+          border: Border.all(color: AppTheme.borderLight),
         ),
-        child: const Text('No hay partos próximos programados',
-            style: TextStyle(color: Colors.white)),
+        child: const Text(
+          'No hay partos próximos programados',
+          style: TextStyle(color: AppTheme.textSecondary),
+        ),
       );
     }
-    return const SizedBox(); // placeholder
+
+    final isOverdue = dashboardController.overduePregnancies.any(
+      (rabbit) => rabbit.id == nextBirth.id,
+    );
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final matingDate = nextBirth.matingDate;
+    final dueDate =
+        nextBirth.expectedBirthDate ??
+        (matingDate == null ? null : matingDate.add(const Duration(days: 31)));
+    final daysUntil = dueDate == null
+        ? null
+        : DateTime(
+            dueDate.year,
+            dueDate.month,
+            dueDate.day,
+          ).difference(today).inDays;
+
+    final Color background;
+    final Color foreground;
+    final IconData icon;
+    final String message;
+    if (isOverdue) {
+      background = const Color(0xFFFEE2E2);
+      foreground = const Color(0xFF991B1B);
+      icon = Icons.warning_rounded;
+      message = 'URGENTE: día 34+';
+    } else if (daysUntil == 0) {
+      background = const Color(0xFFB91C1C);
+      foreground = Colors.white;
+      icon = Icons.priority_high_rounded;
+      message = '¡PARTO HOY!';
+    } else if (daysUntil != null && daysUntil >= 1 && daysUntil <= 3) {
+      background = const Color(0xFFFEE2E2);
+      foreground = const Color(0xFF991B1B);
+      icon = Icons.notifications_active_rounded;
+      message = 'Preparar nido';
+    } else if (daysUntil != null && daysUntil <= 7) {
+      background = const Color(0xFFFEF3C7);
+      foreground = const Color(0xFF92400E);
+      icon = Icons.event_available_rounded;
+      message = 'Preparar nido pronto';
+    } else {
+      background = AppTheme.surfaceLight;
+      foreground = AppTheme.textSecondary;
+      icon = Icons.event_available_rounded;
+      message = daysUntil == null ? 'Parto esperado' : 'En $daysUntil días';
+    }
+
+    final formattedDueDate = dueDate == null
+        ? 'Fecha sin registrar'
+        : '${dueDate.day}/${dueDate.month}/${dueDate.year}';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        border: Border.all(color: foreground.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: foreground, size: 24),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  message,
+                  style: TextStyle(
+                    color: foreground,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${nextBirth.displayId} · $formattedDueDate',
+                  style: TextStyle(color: foreground),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildTableHeader(BuildContext context) {
@@ -172,15 +295,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Expanded(
           child: Text(
             'CONEJAS ACTIVAS',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(letterSpacing: 0.8),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(letterSpacing: 0.8),
           ),
         ),
-        if (!isMobile) TextButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.add_rounded, size: 18),
-          label: const Text('Nueva Coneja'),
-          style: TextButton.styleFrom(foregroundColor: AppTheme.accent),
-        ),
+        if (!isMobile)
+          TextButton.icon(
+            onPressed: () {},
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: const Text('Nueva Coneja'),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.accent),
+          ),
       ],
     );
   }
@@ -196,7 +322,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             borderRadius: BorderRadius.circular(AppTheme.radiusLg),
             border: Border.all(color: AppTheme.borderLight),
           ),
-          child: const Center(child: Text('No hay conejas reproductoras activas')),
+          child: const Center(
+            child: Text('No hay conejas reproductoras activas'),
+          ),
         );
       }
 
@@ -208,7 +336,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  Widget _buildRabbitCard(BuildContext context, dynamic rabbit, int index) {
+  Widget _buildRabbitCard(BuildContext context, Rabbit rabbit, int index) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -228,23 +356,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             child: Row(
               children: [
-                _RabbitAvatar(initial: rabbit['name'][0], color: AppTheme.accent),
+                _RabbitAvatar(
+                  initial: rabbit.displayId[0].toUpperCase(),
+                  color: AppTheme.accent,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('${rabbit['name']} #${rabbit['id']}',
-                          style: Theme.of(context).textTheme.titleMedium),
+                      Text(
+                        rabbit.displayId,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                       const SizedBox(height: 6),
-                      _StatusPill(status: rabbit['isBreeder'] == true ? 'Reproductora' : 'Normal'),
+                      _StatusPill(
+                        status: rabbit.isBreeder ? 'Reproductora' : 'Normal',
+                      ),
                     ],
                   ),
                 ),
                 if (MediaQuery.of(context).size.width >= 700)
-                  Text('${rabbit['weightKg']} kg', style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    '${rabbit.weightKg} kg',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 const SizedBox(width: 8),
-                Icon(Icons.chevron_right_rounded, size: 20, color: AppTheme.textTertiary),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: AppTheme.textTertiary,
+                ),
               ],
             ),
           ),
@@ -254,45 +396,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   String _getMonthName(int month) {
-    const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const months = [
+      'ene',
+      'feb',
+      'mar',
+      'abr',
+      'may',
+      'jun',
+      'jul',
+      'ago',
+      'sep',
+      'oct',
+      'nov',
+      'dic',
+    ];
     return months[month - 1];
   }
 }
 
 // ───────────────── WIDGETS AUXILIARES ─────────────────
-class _Avatar extends StatelessWidget {
-  final String initials;
-  const _Avatar(this.initials);
-
-  @override
-  Widget build(BuildContext context) => Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(color: AppTheme.accent, borderRadius: BorderRadius.circular(12)),
-        alignment: Alignment.center,
-        child: Text(initials, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
-      );
-}
-
 class _MetricCard extends StatelessWidget {
   final String label, value, trend;
   final bool? positive;
 
-  const _MetricCard({required this.label, required this.value, required this.trend, required this.positive});
+  const _MetricCard({
+    required this.label,
+    required this.value,
+    required this.trend,
+    required this.positive,
+  });
 
   @override
   Widget build(BuildContext context) {
     final trendColor = positive == null
         ? AppTheme.textTertiary
         : positive!
-            ? AppTheme.success
-            : AppTheme.danger;
+        ? AppTheme.success
+        : AppTheme.danger;
 
     final trendIcon = positive == null
         ? Icons.remove_rounded
         : positive!
-            ? Icons.trending_up_rounded
-            : Icons.trending_down_rounded;
+        ? Icons.trending_up_rounded
+        : Icons.trending_down_rounded;
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -304,15 +450,31 @@ class _MetricCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label.toUpperCase(), style: Theme.of(context).textTheme.labelMedium),
+          Text(
+            label.toUpperCase(),
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
           const SizedBox(height: 12),
-          Text(value, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700, fontSize: 32)),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: 32,
+            ),
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
               Icon(trendIcon, size: 16, color: trendColor),
               const SizedBox(width: 6),
-              Text(trend, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: trendColor)),
+              Text(
+                trend,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: trendColor,
+                ),
+              ),
             ],
           ),
         ],
@@ -328,12 +490,18 @@ class _RabbitAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(14)),
-        alignment: Alignment.center,
-        child: Text(initial, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: color)),
-      );
+    width: 48,
+    height: 48,
+    decoration: BoxDecoration(
+      color: color.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(14),
+    ),
+    alignment: Alignment.center,
+    child: Text(
+      initial,
+      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: color),
+    ),
+  );
 }
 
 class _StatusPill extends StatelessWidget {
@@ -342,8 +510,18 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-        decoration: BoxDecoration(color: const Color(0xFFD4A76A), borderRadius: BorderRadius.circular(999)),
-        child: Text(status, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+    decoration: BoxDecoration(
+      color: const Color(0xFFD4A76A),
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: Text(
+      status,
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
+      ),
+    ),
+  );
 }

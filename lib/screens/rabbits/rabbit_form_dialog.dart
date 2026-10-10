@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../controllers/dashboard_controller.dart';
 import '../../../controllers/rabbit_controller.dart';
 import '../../../models/rabbit.dart';
+import '../../../services/rabbit_service.dart';
 
 /// Formulario para CREAR (rabbit == null) y EDITAR (rabbit != null)
 class RabbitFormDialog extends StatefulWidget {
@@ -18,20 +22,45 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
   final _formKey = GlobalKey<FormState>();
   final rabbitController = Get.find<RabbitController>();
 
-  late final TextEditingController _nameCtrl;
   late final TextEditingController _breedCtrl;
   late final TextEditingController _weightCtrl;
+  late final TextEditingController _originCtrl;
+  late final TextEditingController _registryNumberCtrl;
+  late final TextEditingController _cageNumberCtrl;
+  late final TextEditingController _chapetaCtrl;
+  late final TextEditingController _lastWeightCtrl;
+  late final TextEditingController _actualLitterSizeController;
 
   final List<String> _genders = ['Macho', 'Hembra'];
   final List<String> _states = ['Saludable', 'En Tratamiento', 'Enfermo'];
+  final List<String> _reproductiveStatuses = [
+    'Vacía',
+    'Servida',
+    'Gestante',
+    'Lactante',
+    'Descarte',
+  ];
 
   late String _gender;
   late String _state;
+  late String _reproductiveStatus;
   DateTime? _birthDate;
-  late DateTime _entryDate;
+  DateTime? _identificationEntryDate;
+  DateTime? _expectedBirthDate;
+  DateTime? _matingDate;
+  DateTime? _palpationDate;
+  DateTime? _maxBirthDate;
+  DateTime? _actualBirthDate;
+  DateTime? _discardDate;
+  DateTime? _nextMatingDate;
+  String? _discardReason;
   int? _farmId;
   int? _motherId;
   int? _fatherId;
+  XFile? _pickedPhoto;
+  String? _currentPhotoUrl;
+  bool _isActiveBreeder = true;
+  bool _saving = false;
 
   late final Future<List<Map<String, dynamic>>> _farmsFuture;
 
@@ -41,21 +70,49 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
   void initState() {
     super.initState();
     final r = widget.rabbit;
+    _currentPhotoUrl = r?.photoUrl;
 
-    _nameCtrl = TextEditingController(text: r?.name ?? '');
     _breedCtrl = TextEditingController(text: r?.breed ?? '');
     _weightCtrl = TextEditingController(
-        text: (r != null && r.weightKg > 0) ? '${r.weightKg}' : '');
+      text: (r != null && r.weightKg > 0) ? '${r.weightKg}' : '',
+    );
+    _originCtrl = TextEditingController(text: r?.origin ?? '');
+    _registryNumberCtrl = TextEditingController(text: r?.registryNumber ?? '');
+    _cageNumberCtrl = TextEditingController(text: r?.cageNumber ?? '');
+    _chapetaCtrl = TextEditingController(text: r?.chapeta ?? '');
+    _lastWeightCtrl = TextEditingController(
+      text: r?.lastWeightKg?.toString() ?? '',
+    );
+    _actualLitterSizeController = TextEditingController(
+      text: r?.actualLitterSize?.toString() ?? '',
+    );
 
     if (r != null && !_genders.contains(r.gender)) _genders.add(r.gender);
     _gender = r?.gender ?? 'Macho';
+    _reproductiveStatus = r?.reproductiveStatus ?? 'Vacía';
+    if (!_reproductiveStatuses.contains(_reproductiveStatus)) {
+      _reproductiveStatus = 'Vacía';
+    }
+    _expectedBirthDate =
+        r?.expectedBirthDate ?? r?.matingDate?.add(const Duration(days: 31));
+    _matingDate = r?.matingDate;
+    _palpationDate =
+        r?.palpationDate ?? r?.matingDate?.add(const Duration(days: 12));
+    _maxBirthDate =
+        r?.maxBirthDate ?? r?.matingDate?.add(const Duration(days: 33));
+    _actualBirthDate = r?.actualBirthDate;
+    _discardReason = r?.discardReason;
+    _discardDate = r?.discardDate;
+    _nextMatingDate =
+        r?.nextMatingDate ?? r?.actualBirthDate?.add(const Duration(days: 42));
+    _isActiveBreeder = r?.isActiveBreeder ?? true;
 
     _state = r?.healthStatus ?? 'Saludable';
     if (_state.isEmpty) _state = 'Saludable';
     if (!_states.contains(_state)) _states.add(_state);
 
     _birthDate = r?.birthDate;
-    _entryDate = r?.registrationDate ?? DateTime.now();
+    _identificationEntryDate = r?.entryDate ?? r?.registrationDate;
     _farmId = (r != null && r.farmId != 0) ? r.farmId : null;
     _motherId = r?.motherId;
     _fatherId = r?.fatherId;
@@ -70,24 +127,198 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
     _breedCtrl.dispose();
     _weightCtrl.dispose();
+    _originCtrl.dispose();
+    _registryNumberCtrl.dispose();
+    _cageNumberCtrl.dispose();
+    _chapetaCtrl.dispose();
+    _lastWeightCtrl.dispose();
+    _actualLitterSizeController.dispose();
     super.dispose();
   }
 
   String _fmt(DateTime? d) =>
       d == null ? 'Seleccionar' : '${d.day}/${d.month}/${d.year}';
 
-  Future<void> _pickDate({required bool birth}) async {
+  String _formatDate(DateTime d) => '${d.day}/${d.month}/${d.year}';
+
+  Future<void> _pickDate({required ValueChanged<DateTime> setter}) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: (birth ? _birthDate : _entryDate) ?? DateTime.now(),
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && mounted) {
+      setState(() => setter(picked));
+    }
+  }
+
+  void _setMatingDate(DateTime date) {
+    _matingDate = date;
+    _expectedBirthDate = date.add(const Duration(days: 31));
+    _palpationDate = date.add(const Duration(days: 12));
+    _maxBirthDate = date.add(const Duration(days: 33));
+  }
+
+  void _setActualBirthDate(DateTime date) {
+    _actualBirthDate = date;
+    _nextMatingDate = date.add(const Duration(days: 42));
+  }
+
+  Widget _calculatedDateField(String label, DateTime? value) {
+    return TextFormField(
+      key: ValueKey('$label-${value?.toIso8601String() ?? ''}'),
+      initialValue: value == null
+          ? 'Pendiente de fecha de monta'
+          : _formatDate(value),
+      readOnly: true,
+      style: TextStyle(color: AppTheme.textSecondary),
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: AppTheme.surfaceLight,
+      ),
+    );
+  }
+
+  Future<bool> _confirmWarning(String title, String message) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Cancelar'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('Continuar'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<void> _showAgeNotice(String message) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Aviso reproductivo'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool> _validateMatingAttempt() async {
+    if (_gender != 'Hembra' ||
+        _reproductiveStatus != 'Servida' ||
+        widget.rabbit?.reproductiveStatus == 'Servida') {
+      return true;
+    }
+
+    final ageDays = DateTime.now().difference(_birthDate!).inDays;
+    if (ageDays < 120 &&
+        !await _confirmWarning(
+          'Coneja muy joven',
+          'La coneja tiene menos de 4 meses. ¿Continuar de todas formas?',
+        )) {
+      return false;
+    }
+
+    final previousRabbit = widget.rabbit;
+    final previousBirthDate = previousRabbit?.reproductiveStatus == 'Lactante'
+        ? previousRabbit?.actualBirthDate
+        : null;
+    if (previousBirthDate != null) {
+      final daysSinceBirth = DateTime.now()
+          .difference(previousBirthDate)
+          .inDays;
+      if (daysSinceBirth < 42 &&
+          !await _confirmWarning(
+            'Recuperación postparto',
+            'Solo han pasado $daysSinceBirth días desde el último parto. '
+                'Se recomiendan 42 días. ¿Continuar?',
+          )) {
+        return false;
+      }
+    }
+
+    if (ageDays > 5 * 365) {
+      await _showAgeNotice(
+        'La coneja tiene más de 5 años. Revisa su condición antes de servirla.',
+      );
+    }
+    return mounted;
+  }
+
+  Future<void> _pickPhoto(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final file = await picker.pickImage(
+        source: source,
+        maxWidth: 800,
+        imageQuality: 80,
+      );
+      if (file != null && mounted) {
+        setState(() => _pickedPhoto = file);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al obtener la foto: $e')));
+      }
+    }
+  }
+
+  Widget _buildPhotoPreview() {
+    if (_pickedPhoto != null) {
+      return FutureBuilder(
+        future: _pickedPhoto!.readAsBytes(),
+        builder: (_, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return Image.memory(snapshot.data!, fit: BoxFit.cover);
+        },
+      );
+    }
+    if (_currentPhotoUrl != null && _currentPhotoUrl!.isNotEmpty) {
+      return Image.network(
+        _currentPhotoUrl!,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const Icon(
+          Icons.broken_image_rounded,
+          size: 40,
+          color: Colors.grey,
+        ),
+      );
+    }
+    return const Center(
+      child: Icon(Icons.pets_rounded, size: 48, color: Colors.grey),
+    );
+  }
+
+  Future<void> _pickBirthDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _birthDate ?? DateTime.now(),
       firstDate: DateTime(2015),
       lastDate: DateTime.now(),
     );
     if (picked != null) {
-      setState(() => birth ? _birthDate = picked : _entryDate = picked);
+      setState(() => _birthDate = picked);
     }
   }
 
@@ -97,29 +328,107 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
       Get.snackbar('Falta un dato', 'Selecciona la fecha de nacimiento');
       return;
     }
+    if (!await _validateMatingAttempt()) return;
 
-    final old = widget.rabbit;
-    final weightText = _weightCtrl.text.trim().replaceAll(',', '.');
+    setState(() => _saving = true);
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
 
-    final rabbit = Rabbit(
-      id: old?.id ?? '',
-      name: _nameCtrl.text.trim(),
-      breed: _breedCtrl.text.trim(),
-      gender: _gender,
-      birthDate: _birthDate!,
-      weightKg: weightText.isEmpty ? 0 : double.parse(weightText),
-      healthStatus: _state,
-      farmId: _farmId!,
-      motherId: _motherId,
-      fatherId: _fatherId,
-      registrationDate: _entryDate,
-    );
+    try {
+      String? photoUrl = widget.rabbit?.photoUrl;
+      if (_pickedPhoto != null) {
+        photoUrl = await RabbitService().uploadPhoto(_pickedPhoto!);
+        if (photoUrl == null) {
+          throw Exception('No se pudo subir la foto');
+        }
+      }
 
-    // El controlador cierra el diálogo y muestra el mensaje
-    if (_isEditing) {
-      await rabbitController.updateRabbit(old!.id, rabbit);
-    } else {
-      await rabbitController.createRabbit(rabbit);
+      final old = widget.rabbit;
+      final weightText = _weightCtrl.text.trim().replaceAll(',', '.');
+      final hasMatingDate =
+          _matingDate != null &&
+          (_reproductiveStatus == 'Servida' ||
+              _reproductiveStatus == 'Gestante');
+      final actualBirthDate = _actualBirthDate;
+
+      final rabbit = Rabbit(
+        id: old?.id ?? '',
+        name: null,
+        breed: _breedCtrl.text.trim(),
+        gender: _gender,
+        birthDate: _birthDate!,
+        weightKg: weightText.isEmpty ? 0 : double.parse(weightText),
+        healthStatus: _state,
+        farmId: _farmId!,
+        motherId: _motherId,
+        fatherId: _fatherId,
+        registrationDate:
+            _identificationEntryDate ?? old?.registrationDate ?? DateTime.now(),
+        entryDate: _identificationEntryDate,
+        origin: _originCtrl.text.trim().isEmpty
+            ? null
+            : _originCtrl.text.trim(),
+        registryNumber: _registryNumberCtrl.text.trim().isEmpty
+            ? null
+            : _registryNumberCtrl.text.trim(),
+        cageNumber: _cageNumberCtrl.text.trim().isEmpty
+            ? null
+            : _cageNumberCtrl.text.trim(),
+        photoUrl: photoUrl,
+        chapeta: _chapetaCtrl.text.trim(),
+        placaInventario: old?.placaInventario,
+        reproductiveStatus: _reproductiveStatus,
+        expectedBirthDate: hasMatingDate
+            ? _matingDate!.add(const Duration(days: 31))
+            : _expectedBirthDate,
+        isActiveBreeder: _isActiveBreeder,
+        lastWeightKg: double.tryParse(
+          _lastWeightCtrl.text.trim().replaceAll(',', '.'),
+        ),
+        matingDate: _matingDate,
+        actualBirthDate: actualBirthDate,
+        actualLitterSize: int.tryParse(_actualLitterSizeController.text),
+        discardReason: _discardReason,
+        discardDate: _discardDate,
+        palpationDate: hasMatingDate
+            ? _matingDate!.add(const Duration(days: 12))
+            : _palpationDate,
+        maxBirthDate: hasMatingDate
+            ? _matingDate!.add(const Duration(days: 33))
+            : _maxBirthDate,
+        nextMatingDate:
+            _reproductiveStatus == 'Lactante' && actualBirthDate != null
+            ? actualBirthDate.add(const Duration(days: 42))
+            : _nextMatingDate,
+      );
+
+      final success = _isEditing
+          ? await rabbitController.updateRabbit(old!.id, rabbit)
+          : await rabbitController.createRabbit(rabbit);
+      if (!success) throw Exception('Guardar conejo devolvió false');
+
+      if (_isEditing && Get.isRegistered<DashboardController>()) {
+        await Get.find<DashboardController>().loadDashboardData();
+      }
+
+      navigator.pop();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_isEditing ? 'Conejo actualizado' : 'Conejo creado'),
+        ),
+      );
+    } catch (e, st) {
+      debugPrint('ERROR SUBMIT: $e');
+      debugPrint('STACK: $st');
+      if (mounted) {
+        setState(() => _saving = false);
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      }
     }
   }
 
@@ -141,12 +450,42 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
       decoration: InputDecoration(labelText: label),
       items: [
         const DropdownMenuItem<int?>(value: null, child: Text('Sin registrar')),
-        ...candidates.map((r) => DropdownMenuItem<int?>(
-              value: int.tryParse(r.id),
-              child: Text('${r.name} #${r.id}'),
-            )),
+        ...candidates.map(
+          (r) => DropdownMenuItem<int?>(
+            value: int.tryParse(r.id),
+            child: Text(r.displayId),
+          ),
+        ),
       ],
-      onChanged: onChanged,
+      onChanged: (selectedId) async {
+        Rabbit? selectedRabbit;
+        for (final candidate in candidates) {
+          if (int.tryParse(candidate.id) == selectedId) {
+            selectedRabbit = candidate;
+            break;
+          }
+        }
+
+        if (selectedRabbit != null) {
+          final ageDays = DateTime.now()
+              .difference(selectedRabbit.birthDate)
+              .inDays;
+          if (ageDays < 120 &&
+              !await _confirmWarning(
+                'Reproductor muy joven',
+                'El ${gender.toLowerCase()} seleccionado tiene menos de '
+                    '4 meses. ¿Continuar de todas formas?',
+              )) {
+            return;
+          }
+          if (ageDays > 5 * 365) {
+            await _showAgeNotice(
+              'El ${gender.toLowerCase()} seleccionado tiene más de 5 años.',
+            );
+          }
+        }
+        if (mounted) onChanged(selectedId);
+      },
     );
   }
 
@@ -162,10 +501,95 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Column(
+                  children: [
+                    Container(
+                      width: 140,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: _buildPhotoPreview(),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: _saving
+                              ? null
+                              : () => _pickPhoto(ImageSource.camera),
+                          icon: const Icon(Icons.camera_alt_rounded, size: 18),
+                          label: const Text('Cámara'),
+                        ),
+                        const SizedBox(width: 12),
+                        OutlinedButton.icon(
+                          onPressed: _saving
+                              ? null
+                              : () => _pickPhoto(ImageSource.gallery),
+                          icon: const Icon(
+                            Icons.photo_library_rounded,
+                            size: 18,
+                          ),
+                          label: const Text('Galería'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 TextFormField(
-                  controller: _nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Nombre *'),
+                  controller: _chapetaCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'N° de identificación *',
+                    helperText: 'Ej: C-045, A-12 (visible en el conejo)',
+                  ),
                   validator: _required,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _gender,
+                  decoration: const InputDecoration(labelText: 'Género *'),
+                  items: _genders
+                      .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                      .toList(),
+                  onChanged: (nuevoSexo) {
+                    setState(() {
+                      final anterior = _gender;
+                      _gender = nuevoSexo ?? 'Macho';
+
+                      if (_gender == 'Macho' && anterior == 'Hembra') {
+                        _reproductiveStatus = 'Vacía';
+                        _expectedBirthDate = null;
+                        _matingDate = null;
+                        _palpationDate = null;
+                        _maxBirthDate = null;
+                        _actualBirthDate = null;
+                        _nextMatingDate = null;
+                        _actualLitterSizeController.clear();
+                        _discardReason = null;
+                        _discardDate = null;
+                        _isActiveBreeder = true;
+                        _lastWeightCtrl.clear();
+                      } else if (_gender == 'Hembra' && anterior == 'Macho') {
+                        _reproductiveStatus = 'Vacía';
+                        _expectedBirthDate = null;
+                        _matingDate = null;
+                        _palpationDate = null;
+                        _maxBirthDate = null;
+                        _actualBirthDate = null;
+                        _nextMatingDate = null;
+                        _actualLitterSizeController.clear();
+                        _discardReason = null;
+                        _discardDate = null;
+                        _isActiveBreeder = false;
+                        _lastWeightCtrl.clear();
+                      }
+                    });
+                  },
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -174,75 +598,69 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
                   validator: _required,
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        initialValue: _gender,
-                        decoration:
-                            const InputDecoration(labelText: 'Género *'),
-                        items: _genders
-                            .map((g) =>
-                                DropdownMenuItem(value: g, child: Text(g)))
-                            .toList(),
-                        onChanged: (v) => setState(() => _gender = v!),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _weightCtrl,
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        decoration:
-                            const InputDecoration(labelText: 'Peso (kg)'),
-                        validator: (v) {
-                          if (v == null || v.trim().isEmpty) return null;
-                          final n =
-                              double.tryParse(v.trim().replaceAll(',', '.'));
-                          if (n == null || n <= 0) return 'Peso válido';
-                          return null;
-                        },
-                      ),
-                    ),
-                  ],
+                TextFormField(
+                  controller: _weightCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(labelText: 'Peso (kg)'),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) return null;
+                    final weight = double.tryParse(
+                      value.trim().replaceAll(',', '.'),
+                    );
+                    if (weight == null || weight <= 0) return 'Peso válido';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _cageNumberCtrl,
+                  decoration: const InputDecoration(labelText: 'Jaula'),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: _state,
                   decoration: const InputDecoration(labelText: 'Estado'),
                   items: _states
-                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                      .map(
+                        (state) =>
+                            DropdownMenuItem(value: state, child: Text(state)),
+                      )
                       .toList(),
-                  onChanged: (v) => setState(() => _state = v!),
+                  onChanged: (value) => setState(() => _state = value!),
                 ),
                 const SizedBox(height: 12),
                 FutureBuilder<List<Map<String, dynamic>>>(
                   future: _farmsFuture,
-                  builder: (context, snap) {
-                    if (snap.connectionState != ConnectionState.done) {
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState != ConnectionState.done) {
                       return const LinearProgressIndicator();
                     }
-                    if (snap.hasError) {
+                    if (snapshot.hasError) {
                       return Text(
-                          'No se pudieron cargar las granjas: ${snap.error}',
-                          style: const TextStyle(color: Colors.red));
+                        'No se pudieron cargar las granjas: ${snapshot.error}',
+                        style: const TextStyle(color: Colors.red),
+                      );
                     }
-                    final farms = snap.data ?? [];
-                    final ids =
-                        farms.map((f) => f['id_granja'] as int).toSet();
+                    final farms = snapshot.data ?? [];
+                    final ids = farms
+                        .map((farm) => farm['id_granja'] as int)
+                        .toSet();
                     return DropdownButtonFormField<int>(
                       initialValue: ids.contains(_farmId) ? _farmId : null,
                       decoration: const InputDecoration(labelText: 'Granja *'),
                       items: farms
-                          .map((f) => DropdownMenuItem<int>(
-                                value: f['id_granja'] as int,
-                                child: Text('${f['nombre']}'),
-                              ))
+                          .map(
+                            (farm) => DropdownMenuItem<int>(
+                              value: farm['id_granja'] as int,
+                              child: Text('${farm['nombre']}'),
+                            ),
+                          )
                           .toList(),
-                      onChanged: (v) => setState(() => _farmId = v),
-                      validator: (v) =>
-                          v == null ? 'Selecciona una granja' : null,
+                      onChanged: (value) => setState(() => _farmId = value),
+                      validator: (value) =>
+                          value == null ? 'Selecciona una granja' : null,
                     );
                   },
                 ),
@@ -251,14 +669,242 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
                   label: 'Madre',
                   gender: 'Hembra',
                   value: _motherId,
-                  onChanged: (v) => setState(() => _motherId = v),
+                  onChanged: (value) => setState(() => _motherId = value),
                 ),
                 const SizedBox(height: 12),
                 _parentDropdown(
                   label: 'Padre',
                   gender: 'Macho',
                   value: _fatherId,
-                  onChanged: (v) => setState(() => _fatherId = v),
+                  onChanged: (value) => setState(() => _fatherId = value),
+                ),
+                const SizedBox(height: 12),
+                if (_gender == 'Hembra') ...[
+                  DropdownButtonFormField<String>(
+                    initialValue: _reproductiveStatus,
+                    decoration: const InputDecoration(
+                      labelText: 'Estado reproductivo',
+                    ),
+                    items: _reproductiveStatuses
+                        .map(
+                          (status) => DropdownMenuItem(
+                            value: status,
+                            child: Text(status),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _reproductiveStatus = value ?? 'Vacía';
+                        if (_reproductiveStatus != 'Servida' &&
+                            _reproductiveStatus != 'Gestante') {
+                          _matingDate = null;
+                          _palpationDate = null;
+                          _maxBirthDate = null;
+                        }
+                        if (_reproductiveStatus != 'Gestante') {
+                          _expectedBirthDate = null;
+                        }
+                        if (_reproductiveStatus != 'Lactante') {
+                          _actualBirthDate = null;
+                          _nextMatingDate = null;
+                          _actualLitterSizeController.clear();
+                        }
+                        if (_reproductiveStatus != 'Descarte') {
+                          _discardReason = null;
+                          _discardDate = null;
+                        }
+                        if ((_reproductiveStatus == 'Servida' ||
+                                _reproductiveStatus == 'Gestante') &&
+                            _matingDate != null) {
+                          _setMatingDate(_matingDate!);
+                        }
+                        if (_reproductiveStatus == 'Lactante' &&
+                            _actualBirthDate != null) {
+                          _setActualBirthDate(_actualBirthDate!);
+                        }
+                      });
+                    },
+                  ),
+                  if (_reproductiveStatus == 'Servida') ...[
+                    const SizedBox(height: 12),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Fecha de monta'),
+                      subtitle: Text(
+                        _matingDate == null
+                            ? 'Sin registrar'
+                            : _formatDate(_matingDate!),
+                      ),
+                      trailing: const Icon(Icons.calendar_today),
+                      onTap: () => _pickDate(setter: _setMatingDate),
+                    ),
+                    const SizedBox(height: 12),
+                    _calculatedDateField(
+                      'Parto probable (día 31)',
+                      _expectedBirthDate,
+                    ),
+                    const SizedBox(height: 12),
+                    _calculatedDateField('Palpación (día 12)', _palpationDate),
+                    const SizedBox(height: 12),
+                    _calculatedDateField(
+                      'Fecha límite de parto (día 33)',
+                      _maxBirthDate,
+                    ),
+                  ],
+                  if (_reproductiveStatus == 'Gestante') ...[
+                    const SizedBox(height: 12),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Fecha de monta'),
+                      subtitle: Text(
+                        _matingDate == null
+                            ? 'Sin registrar'
+                            : _formatDate(_matingDate!),
+                      ),
+                      trailing: const Icon(Icons.calendar_today),
+                      onTap: () => _pickDate(setter: _setMatingDate),
+                    ),
+                    const SizedBox(height: 12),
+                    _calculatedDateField(
+                      'Parto probable (día 31)',
+                      _expectedBirthDate,
+                    ),
+                    const SizedBox(height: 12),
+                    _calculatedDateField('Palpación (día 12)', _palpationDate),
+                    const SizedBox(height: 12),
+                    _calculatedDateField(
+                      'Fecha límite de parto (día 33)',
+                      _maxBirthDate,
+                    ),
+                  ],
+                  if (_reproductiveStatus == 'Lactante') ...[
+                    const SizedBox(height: 12),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Fecha de parto real'),
+                      subtitle: Text(
+                        _actualBirthDate == null
+                            ? 'Sin registrar'
+                            : _formatDate(_actualBirthDate!),
+                      ),
+                      trailing: const Icon(Icons.calendar_today),
+                      onTap: () => _pickDate(setter: _setActualBirthDate),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _actualLitterSizeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Número de crías',
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 12),
+                    _calculatedDateField(
+                      'Próxima monta recomendada',
+                      _nextMatingDate,
+                    ),
+                  ],
+                  if (_reproductiveStatus == 'Descarte') ...[
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: _discardReason,
+                      decoration: const InputDecoration(
+                        labelText: 'Motivo del descarte',
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'Edad avanzada',
+                          child: Text('Edad avanzada'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Enfermedad',
+                          child: Text('Enfermedad'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Baja producción',
+                          child: Text('Baja producción'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Defecto genético',
+                          child: Text('Defecto genético'),
+                        ),
+                        DropdownMenuItem(value: 'Otro', child: Text('Otro')),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => _discardReason = value),
+                    ),
+                    const SizedBox(height: 12),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Fecha del descarte'),
+                      subtitle: Text(
+                        _discardDate == null
+                            ? 'Sin registrar'
+                            : _formatDate(_discardDate!),
+                      ),
+                      trailing: const Icon(Icons.calendar_today),
+                      onTap: () =>
+                          _pickDate(setter: (date) => _discardDate = date),
+                    ),
+                  ],
+                ],
+                if (_gender == 'Macho') ...[
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Activo como reproductor'),
+                    value: _isActiveBreeder,
+                    onChanged: (value) =>
+                        setState(() => _isActiveBreeder = value),
+                  ),
+                  TextFormField(
+                    controller: _lastWeightCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Último peso (kg)',
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) return null;
+                      final weight = double.tryParse(
+                        value.trim().replaceAll(',', '.'),
+                      );
+                      if (weight == null || weight <= 0) return 'Peso válido';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _originCtrl,
+                  decoration: const InputDecoration(labelText: 'Origen'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _registryNumberCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Número de registro',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.event_available_rounded),
+                  title: const Text('Fecha de ingreso al criadero'),
+                  subtitle: Text(_fmt(_identificationEntryDate)),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _identificationEntryDate ?? DateTime.now(),
+                      firstDate: DateTime(2015),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) {
+                      setState(() => _identificationEntryDate = picked);
+                    }
+                  },
                 ),
                 const SizedBox(height: 12),
                 ListTile(
@@ -266,14 +912,7 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
                   leading: const Icon(Icons.cake_rounded),
                   title: const Text('Fecha de nacimiento *'),
                   subtitle: Text(_fmt(_birthDate)),
-                  onTap: () => _pickDate(birth: true),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.calendar_today_rounded),
-                  title: const Text('Fecha de ingreso *'),
-                  subtitle: Text(_fmt(_entryDate)),
-                  onTap: () => _pickDate(birth: false),
+                  onTap: _pickBirthDate,
                 ),
               ],
             ),
@@ -281,14 +920,13 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Get.back(),
-          child: const Text('Cancelar'),
-        ),
+        TextButton(onPressed: () => Get.back(), child: const Text('Cancelar')),
         Obx(
           () => ElevatedButton(
-            onPressed: rabbitController.isLoading.value ? null : _save,
-            child: rabbitController.isLoading.value
+            onPressed: rabbitController.isLoading.value || _saving
+                ? null
+                : _save,
+            child: rabbitController.isLoading.value || _saving
                 ? const SizedBox(
                     width: 18,
                     height: 18,

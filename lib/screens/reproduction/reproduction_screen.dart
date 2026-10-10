@@ -410,8 +410,8 @@ class _KitFormDialogState extends State<_KitFormDialog> {
     super.initState();
     final kit = widget.kit;
     _idController = TextEditingController(text: kit?.id ?? '');
-    _motherController = TextEditingController(text: kit?.motherId ?? '');
-    _fatherController = TextEditingController(text: kit?.fatherId ?? '');
+    _motherController = TextEditingController(text: kit?.motherId?.toString() ?? '');
+    _fatherController = TextEditingController(text: kit?.fatherId?.toString() ?? '');
     _birthWeightController = TextEditingController(text: kit?.birthWeight.toString() ?? '');
     _currentWeightController = TextEditingController(text: kit?.currentWeight.toString() ?? '');
     _ageController = TextEditingController(text: kit?.ageDays.toString() ?? '');
@@ -456,7 +456,18 @@ class _KitFormDialogState extends State<_KitFormDialog> {
                 TextFormField(controller: _birthWeightController, decoration: const InputDecoration(labelText: 'Peso al nacer (kg)'), keyboardType: const TextInputType.numberWithOptions(decimal: true), validator: _positive),
                 TextFormField(controller: _currentWeightController, decoration: const InputDecoration(labelText: 'Peso actual (kg)'), keyboardType: const TextInputType.numberWithOptions(decimal: true), validator: _positive),
                 TextFormField(controller: _ageController, decoration: const InputDecoration(labelText: 'Edad (días)'), keyboardType: TextInputType.number, validator: (value) => _positive(value, integer: true)),
-                DropdownButtonFormField<String>(value: _healthStatus, decoration: const InputDecoration(labelText: 'Estado sanitario'), items: const [DropdownMenuItem(value: 'Saludable', child: Text('Saludable')), DropdownMenuItem(value: 'En tratamiento', child: Text('En tratamiento')), DropdownMenuItem(value: 'Enfermo', child: Text('Enfermo'))], onChanged: (value) => setState(() => _healthStatus = value!),),
+                DropdownButtonFormField<String>(
+                  initialValue: _healthStatus,
+                  decoration: const InputDecoration(labelText: 'Estado sanitario'),
+                  items: const <DropdownMenuItem<String>>[
+                    DropdownMenuItem(value: 'Saludable', child: Text('Saludable')),
+                    DropdownMenuItem(value: 'En tratamiento', child: Text('En tratamiento')),
+                    DropdownMenuItem(value: 'Enfermo', child: Text('Enfermo')),
+                  ],
+                  onChanged: (String? value) {
+                    if (value != null) setState(() => _healthStatus = value);
+                  },
+                ),
                 ListTile(title: const Text('Fecha de nacimiento'), subtitle: Text('${_birthDate.day}/${_birthDate.month}/${_birthDate.year}'), trailing: const Icon(Icons.calendar_today), onTap: _pickDate),
               ],
             ),
@@ -480,8 +491,8 @@ class _KitFormDialogState extends State<_KitFormDialog> {
     final current = widget.kit;
     Get.back(result: Kit(
       id: _idController.text.trim(),
-      motherId: _motherController.text.trim(),
-      fatherId: _fatherController.text.trim().isEmpty ? null : _fatherController.text.trim(),
+      motherId: int.tryParse(_motherController.text.trim()) ?? 0,
+      fatherId: int.tryParse(_fatherController.text.trim()),
       birthDate: _birthDate,
       birthWeight: double.parse(_birthWeightController.text),
       currentWeight: double.parse(_currentWeightController.text),

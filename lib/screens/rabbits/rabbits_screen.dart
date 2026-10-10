@@ -4,6 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/rabbit.dart';
 import '../../controllers/rabbit_controller.dart';
 import 'rabbit_form_dialog.dart';
+import 'rabbit_detail_screen.dart';
 
 class RabbitsScreen extends StatefulWidget {
   const RabbitsScreen({super.key});
@@ -108,51 +109,49 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
 
           // READ: lista de conejos
           Expanded(
-            child: Obx(
-              () {
-                if (rabbitController.isLoading.value &&
-                    rabbitController.rabbits.isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+            child: Obx(() {
+              if (rabbitController.isLoading.value &&
+                  rabbitController.rabbits.isEmpty) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-                final rabbits = _searchController.text.isEmpty
-                    ? rabbitController.rabbits
-                    : rabbitController.searchRabbits(_searchController.text);
+              final rabbits = _searchController.text.isEmpty
+                  ? rabbitController.rabbits
+                  : rabbitController.searchRabbits(_searchController.text);
 
-                if (rabbits.isEmpty) {
-                  return Center(
-                    child: Text(
-                      _searchController.text.isEmpty
-                          ? 'No hay conejos registrados'
-                          : 'No se encontraron resultados',
-                      style: TextStyle(color: AppTheme.textSecondary),
-                    ),
-                  );
-                }
-
-                return RefreshIndicator(
-                  onRefresh: rabbitController.loadAllRabbits,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                    itemCount: rabbits.length,
-                    itemBuilder: (context, index) {
-                      final rabbit = rabbits[index];
-                      return _RabbitCard(
-                        rabbit: rabbit,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => RabbitDetailScreen(rabbit: rabbit),
-                          ),
-                        ),
-                        onEdit: () => _showRabbitForm(rabbit: rabbit),
-                        onDelete: () => _showDeleteDialog(rabbit),
-                      );
-                    },
+              if (rabbits.isEmpty) {
+                return Center(
+                  child: Text(
+                    _searchController.text.isEmpty
+                        ? 'No hay conejos registrados'
+                        : 'No se encontraron resultados',
+                    style: TextStyle(color: AppTheme.textSecondary),
                   ),
                 );
-              },
-            ),
+              }
+
+              return RefreshIndicator(
+                onRefresh: rabbitController.loadAllRabbits,
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  itemCount: rabbits.length,
+                  itemBuilder: (context, index) {
+                    final rabbit = rabbits[index];
+                    return _RabbitCard(
+                      rabbit: rabbit,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => RabbitDetailScreen(rabbit: rabbit),
+                        ),
+                      ),
+                      onEdit: () => _showRabbitForm(rabbit: rabbit),
+                      onDelete: () => _showDeleteDialog(rabbit),
+                    );
+                  },
+                ),
+              );
+            }),
           ),
         ],
       ),
@@ -164,7 +163,7 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
     Get.dialog(
       AlertDialog(
         title: const Text('Eliminar conejo'),
-        content: Text('¿Deseas eliminar a ${rabbit.name} (#${rabbit.id})?'),
+        content: Text('¿Deseas eliminar a ${rabbit.displayId}?'),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
@@ -218,11 +217,17 @@ class _RabbitCard extends StatelessWidget {
                 CircleAvatar(
                   radius: 32,
                   backgroundColor: AppTheme.accent.withValues(alpha: 0.1),
-                  child: Icon(
-                    rabbit.gender == 'Macho' ? Icons.male : Icons.female,
-                    size: 28,
-                    color: AppTheme.accent,
-                  ),
+                  backgroundImage:
+                      rabbit.photoUrl != null && rabbit.photoUrl!.isNotEmpty
+                      ? NetworkImage(rabbit.photoUrl!)
+                      : null,
+                  child: rabbit.photoUrl == null || rabbit.photoUrl!.isEmpty
+                      ? Icon(
+                          rabbit.gender == 'Macho' ? Icons.male : Icons.female,
+                          size: 28,
+                          color: AppTheme.accent,
+                        )
+                      : null,
                 ),
                 const SizedBox(width: 24),
                 Expanded(
@@ -235,7 +240,7 @@ class _RabbitCard extends StatelessWidget {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
-                            '${rabbit.name} #${rabbit.id}',
+                            rabbit.displayId,
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           _HealthBadge(status: rabbit.healthStatus),
@@ -244,9 +249,8 @@ class _RabbitCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         rabbit.breed,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: AppTheme.textSecondary,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(color: AppTheme.textSecondary),
                       ),
                       const SizedBox(height: 8),
                       Wrap(
@@ -348,188 +352,6 @@ class _InfoChip extends StatelessWidget {
         const SizedBox(width: 6),
         Text(label, style: Theme.of(context).textTheme.bodyMedium),
       ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// DETALLE DEL CONEJO
-// ─────────────────────────────────────────────
-
-class RabbitDetailScreen extends StatelessWidget {
-  final Rabbit rabbit;
-
-  const RabbitDetailScreen({super.key, required this.rabbit});
-
-  String _fmt(DateTime d) => '${d.day}/${d.month}/${d.year}';
-
-  @override
-  Widget build(BuildContext context) {
-    final rabbitController = Get.find<RabbitController>();
-
-    // Obx: si se edita el conejo, el detalle se actualiza solo
-    return Obx(() {
-      final r = rabbitController.getRabbitById(rabbit.id) ?? rabbit;
-
-      return Scaffold(
-        backgroundColor: AppTheme.bgLight,
-        appBar: AppBar(
-          title: Text('${r.name} #${r.id}'),
-          backgroundColor: AppTheme.surfaceLight,
-          elevation: 0,
-          foregroundColor: AppTheme.textPrimary,
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceLight,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                  border: Border.all(color: AppTheme.borderLight),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 44,
-                      backgroundColor: AppTheme.accent.withValues(alpha: 0.1),
-                      child: Icon(
-                        r.gender == 'Macho' ? Icons.male : Icons.female,
-                        size: 48,
-                        color: AppTheme.accent,
-                      ),
-                    ),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(r.name,
-                              style: Theme.of(context).textTheme.headlineMedium),
-                          const SizedBox(height: 6),
-                          Text(
-                            '${r.breed} #${r.id}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(color: AppTheme.textSecondary),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-              Text('Información General',
-                  style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 16),
-              _InfoCard(
-                title: 'Estado',
-                value: r.healthStatus,
-                icon: Icons.health_and_safety_rounded,
-                color: r.healthStatus.toLowerCase() == 'saludable'
-                    ? AppTheme.success
-                    : AppTheme.warning,
-              ),
-              _InfoCard(
-                title: 'Género',
-                value: r.gender,
-                icon: r.gender == 'Macho' ? Icons.male : Icons.female,
-              ),
-              _InfoCard(
-                title: 'Raza',
-                value: r.breed,
-                icon: Icons.pets_rounded,
-              ),
-              _InfoCard(
-                title: 'Fecha de Nacimiento',
-                value: '${_fmt(r.birthDate)}  (${r.ageMonths} meses)',
-                icon: Icons.cake_rounded,
-              ),
-              if (r.weightKg > 0)
-                _InfoCard(
-                  title: 'Peso',
-                  value: '${r.weightKg} kg',
-                  icon: Icons.monitor_weight_outlined,
-                ),
-              _InfoCard(
-                title: 'Fecha de Ingreso',
-                value: _fmt(r.registrationDate),
-                icon: Icons.calendar_today_rounded,
-              ),
-              if (r.motherId != null)
-                _InfoCard(
-                  title: 'Madre',
-                  value: '#${r.motherId}',
-                  icon: Icons.female,
-                ),
-              if (r.fatherId != null)
-                _InfoCard(
-                  title: 'Padre',
-                  value: '#${r.fatherId}',
-                  icon: Icons.male,
-                ),
-            ],
-          ),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => Get.dialog(
-            RabbitFormDialog(rabbit: r),
-            barrierDismissible: false,
-          ),
-          backgroundColor: AppTheme.accent,
-          child: const Icon(Icons.edit_rounded),
-        ),
-      );
-    });
-  }
-}
-
-class _InfoCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color? color;
-
-  const _InfoCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        side: BorderSide(color: AppTheme.borderLight),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: (color ?? AppTheme.accent).withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: color ?? AppTheme.accent),
-        ),
-        title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-        subtitle: Text(
-          value,
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(fontWeight: FontWeight.w600),
-        ),
-      ),
     );
   }
 }
