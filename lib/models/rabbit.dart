@@ -183,6 +183,25 @@ class Rabbit {
     };
   }
 
+  Map<String, dynamic> toInsertJson() {
+    final json = toJson();
+    for (final field in [
+      'reproductive_status',
+      'mating_date',
+      'expected_birth_date',
+      'actual_birth_date',
+      'actual_litter_size',
+      'discard_reason',
+      'discard_date',
+      'palpation_date',
+      'max_birth_date',
+      'next_mating_date',
+    ]) {
+      json.remove(field);
+    }
+    return json;
+  }
+
   Rabbit copyWith({
     String? id,
     String? name,

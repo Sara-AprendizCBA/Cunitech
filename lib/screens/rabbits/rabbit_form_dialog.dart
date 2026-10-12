@@ -29,31 +29,13 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
   late final TextEditingController _cageNumberCtrl;
   late final TextEditingController _chapetaCtrl;
   late final TextEditingController _lastWeightCtrl;
-  late final TextEditingController _actualLitterSizeController;
 
   final List<String> _genders = ['Macho', 'Hembra'];
   final List<String> _states = ['Saludable', 'En Tratamiento', 'Enfermo'];
-  final List<String> _reproductiveStatuses = [
-    'Vacía',
-    'Servida',
-    'Gestante',
-    'Lactante',
-    'Descarte',
-  ];
-
   late String _gender;
   late String _state;
-  late String _reproductiveStatus;
   DateTime? _birthDate;
   DateTime? _identificationEntryDate;
-  DateTime? _expectedBirthDate;
-  DateTime? _matingDate;
-  DateTime? _palpationDate;
-  DateTime? _maxBirthDate;
-  DateTime? _actualBirthDate;
-  DateTime? _discardDate;
-  DateTime? _nextMatingDate;
-  String? _discardReason;
   int? _farmId;
   int? _motherId;
   int? _fatherId;
@@ -83,28 +65,8 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
     _lastWeightCtrl = TextEditingController(
       text: r?.lastWeightKg?.toString() ?? '',
     );
-    _actualLitterSizeController = TextEditingController(
-      text: r?.actualLitterSize?.toString() ?? '',
-    );
-
     if (r != null && !_genders.contains(r.gender)) _genders.add(r.gender);
     _gender = r?.gender ?? 'Macho';
-    _reproductiveStatus = r?.reproductiveStatus ?? 'Vacía';
-    if (!_reproductiveStatuses.contains(_reproductiveStatus)) {
-      _reproductiveStatus = 'Vacía';
-    }
-    _expectedBirthDate =
-        r?.expectedBirthDate ?? r?.matingDate?.add(const Duration(days: 31));
-    _matingDate = r?.matingDate;
-    _palpationDate =
-        r?.palpationDate ?? r?.matingDate?.add(const Duration(days: 12));
-    _maxBirthDate =
-        r?.maxBirthDate ?? r?.matingDate?.add(const Duration(days: 33));
-    _actualBirthDate = r?.actualBirthDate;
-    _discardReason = r?.discardReason;
-    _discardDate = r?.discardDate;
-    _nextMatingDate =
-        r?.nextMatingDate ?? r?.actualBirthDate?.add(const Duration(days: 42));
     _isActiveBreeder = r?.isActiveBreeder ?? true;
 
     _state = r?.healthStatus ?? 'Saludable';
@@ -134,54 +96,11 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
     _cageNumberCtrl.dispose();
     _chapetaCtrl.dispose();
     _lastWeightCtrl.dispose();
-    _actualLitterSizeController.dispose();
     super.dispose();
   }
 
   String _fmt(DateTime? d) =>
       d == null ? 'Seleccionar' : '${d.day}/${d.month}/${d.year}';
-
-  String _formatDate(DateTime d) => '${d.day}/${d.month}/${d.year}';
-
-  Future<void> _pickDate({required ValueChanged<DateTime> setter}) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null && mounted) {
-      setState(() => setter(picked));
-    }
-  }
-
-  void _setMatingDate(DateTime date) {
-    _matingDate = date;
-    _expectedBirthDate = date.add(const Duration(days: 31));
-    _palpationDate = date.add(const Duration(days: 12));
-    _maxBirthDate = date.add(const Duration(days: 33));
-  }
-
-  void _setActualBirthDate(DateTime date) {
-    _actualBirthDate = date;
-    _nextMatingDate = date.add(const Duration(days: 42));
-  }
-
-  Widget _calculatedDateField(String label, DateTime? value) {
-    return TextFormField(
-      key: ValueKey('$label-${value?.toIso8601String() ?? ''}'),
-      initialValue: value == null
-          ? 'Pendiente de fecha de monta'
-          : _formatDate(value),
-      readOnly: true,
-      style: TextStyle(color: AppTheme.textSecondary),
-      decoration: InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: AppTheme.surfaceLight,
-      ),
-    );
-  }
 
   Future<bool> _confirmWarning(String title, String message) async {
     return await showDialog<bool>(
@@ -218,48 +137,6 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
         ],
       ),
     );
-  }
-
-  Future<bool> _validateMatingAttempt() async {
-    if (_gender != 'Hembra' ||
-        _reproductiveStatus != 'Servida' ||
-        widget.rabbit?.reproductiveStatus == 'Servida') {
-      return true;
-    }
-
-    final ageDays = DateTime.now().difference(_birthDate!).inDays;
-    if (ageDays < 120 &&
-        !await _confirmWarning(
-          'Coneja muy joven',
-          'La coneja tiene menos de 4 meses. ¿Continuar de todas formas?',
-        )) {
-      return false;
-    }
-
-    final previousRabbit = widget.rabbit;
-    final previousBirthDate = previousRabbit?.reproductiveStatus == 'Lactante'
-        ? previousRabbit?.actualBirthDate
-        : null;
-    if (previousBirthDate != null) {
-      final daysSinceBirth = DateTime.now()
-          .difference(previousBirthDate)
-          .inDays;
-      if (daysSinceBirth < 42 &&
-          !await _confirmWarning(
-            'Recuperación postparto',
-            'Solo han pasado $daysSinceBirth días desde el último parto. '
-                'Se recomiendan 42 días. ¿Continuar?',
-          )) {
-        return false;
-      }
-    }
-
-    if (ageDays > 5 * 365) {
-      await _showAgeNotice(
-        'La coneja tiene más de 5 años. Revisa su condición antes de servirla.',
-      );
-    }
-    return mounted;
   }
 
   Future<void> _pickPhoto(ImageSource source) async {
@@ -328,8 +205,6 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
       Get.snackbar('Falta un dato', 'Selecciona la fecha de nacimiento');
       return;
     }
-    if (!await _validateMatingAttempt()) return;
-
     setState(() => _saving = true);
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
@@ -345,11 +220,6 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
 
       final old = widget.rabbit;
       final weightText = _weightCtrl.text.trim().replaceAll(',', '.');
-      final hasMatingDate =
-          _matingDate != null &&
-          (_reproductiveStatus == 'Servida' ||
-              _reproductiveStatus == 'Gestante');
-      final actualBirthDate = _actualBirthDate;
 
       final rabbit = Rabbit(
         id: old?.id ?? '',
@@ -377,29 +247,10 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
         photoUrl: photoUrl,
         chapeta: _chapetaCtrl.text.trim(),
         placaInventario: old?.placaInventario,
-        reproductiveStatus: _reproductiveStatus,
-        expectedBirthDate: hasMatingDate
-            ? _matingDate!.add(const Duration(days: 31))
-            : _expectedBirthDate,
         isActiveBreeder: _isActiveBreeder,
         lastWeightKg: double.tryParse(
           _lastWeightCtrl.text.trim().replaceAll(',', '.'),
         ),
-        matingDate: _matingDate,
-        actualBirthDate: actualBirthDate,
-        actualLitterSize: int.tryParse(_actualLitterSizeController.text),
-        discardReason: _discardReason,
-        discardDate: _discardDate,
-        palpationDate: hasMatingDate
-            ? _matingDate!.add(const Duration(days: 12))
-            : _palpationDate,
-        maxBirthDate: hasMatingDate
-            ? _matingDate!.add(const Duration(days: 33))
-            : _maxBirthDate,
-        nextMatingDate:
-            _reproductiveStatus == 'Lactante' && actualBirthDate != null
-            ? actualBirthDate.add(const Duration(days: 42))
-            : _nextMatingDate,
       );
 
       final success = _isEditing
@@ -562,29 +413,9 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
                       _gender = nuevoSexo ?? 'Macho';
 
                       if (_gender == 'Macho' && anterior == 'Hembra') {
-                        _reproductiveStatus = 'Vacía';
-                        _expectedBirthDate = null;
-                        _matingDate = null;
-                        _palpationDate = null;
-                        _maxBirthDate = null;
-                        _actualBirthDate = null;
-                        _nextMatingDate = null;
-                        _actualLitterSizeController.clear();
-                        _discardReason = null;
-                        _discardDate = null;
                         _isActiveBreeder = true;
                         _lastWeightCtrl.clear();
                       } else if (_gender == 'Hembra' && anterior == 'Macho') {
-                        _reproductiveStatus = 'Vacía';
-                        _expectedBirthDate = null;
-                        _matingDate = null;
-                        _palpationDate = null;
-                        _maxBirthDate = null;
-                        _actualBirthDate = null;
-                        _nextMatingDate = null;
-                        _actualLitterSizeController.clear();
-                        _discardReason = null;
-                        _discardDate = null;
                         _isActiveBreeder = false;
                         _lastWeightCtrl.clear();
                       }
@@ -680,174 +511,46 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
                 ),
                 const SizedBox(height: 12),
                 if (_gender == 'Hembra') ...[
-                  DropdownButtonFormField<String>(
-                    initialValue: _reproductiveStatus,
-                    decoration: const InputDecoration(
-                      labelText: 'Estado reproductivo',
+                  Card(
+                    margin: const EdgeInsets.only(top: 16),
+                    color: AppTheme.surfaceLight,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: AppTheme.borderLight),
                     ),
-                    items: _reproductiveStatuses
-                        .map(
-                          (status) => DropdownMenuItem(
-                            value: status,
-                            child: Text(status),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded,
+                                color: AppTheme.textSecondary,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Estado reproductivo',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ],
                           ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _reproductiveStatus = value ?? 'Vacía';
-                        if (_reproductiveStatus != 'Servida' &&
-                            _reproductiveStatus != 'Gestante') {
-                          _matingDate = null;
-                          _palpationDate = null;
-                          _maxBirthDate = null;
-                        }
-                        if (_reproductiveStatus != 'Gestante') {
-                          _expectedBirthDate = null;
-                        }
-                        if (_reproductiveStatus != 'Lactante') {
-                          _actualBirthDate = null;
-                          _nextMatingDate = null;
-                          _actualLitterSizeController.clear();
-                        }
-                        if (_reproductiveStatus != 'Descarte') {
-                          _discardReason = null;
-                          _discardDate = null;
-                        }
-                        if ((_reproductiveStatus == 'Servida' ||
-                                _reproductiveStatus == 'Gestante') &&
-                            _matingDate != null) {
-                          _setMatingDate(_matingDate!);
-                        }
-                        if (_reproductiveStatus == 'Lactante' &&
-                            _actualBirthDate != null) {
-                          _setActualBirthDate(_actualBirthDate!);
-                        }
-                      });
-                    },
+                          const SizedBox(height: 8),
+                          const Text(
+                            'El estado reproductivo se gestiona desde el módulo de '
+                            'Reproducción (monta, palpación, parto y destete).',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.textSecondary,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  if (_reproductiveStatus == 'Servida') ...[
-                    const SizedBox(height: 12),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Fecha de monta'),
-                      subtitle: Text(
-                        _matingDate == null
-                            ? 'Sin registrar'
-                            : _formatDate(_matingDate!),
-                      ),
-                      trailing: const Icon(Icons.calendar_today),
-                      onTap: () => _pickDate(setter: _setMatingDate),
-                    ),
-                    const SizedBox(height: 12),
-                    _calculatedDateField(
-                      'Parto probable (día 31)',
-                      _expectedBirthDate,
-                    ),
-                    const SizedBox(height: 12),
-                    _calculatedDateField('Palpación (día 12)', _palpationDate),
-                    const SizedBox(height: 12),
-                    _calculatedDateField(
-                      'Fecha límite de parto (día 33)',
-                      _maxBirthDate,
-                    ),
-                  ],
-                  if (_reproductiveStatus == 'Gestante') ...[
-                    const SizedBox(height: 12),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Fecha de monta'),
-                      subtitle: Text(
-                        _matingDate == null
-                            ? 'Sin registrar'
-                            : _formatDate(_matingDate!),
-                      ),
-                      trailing: const Icon(Icons.calendar_today),
-                      onTap: () => _pickDate(setter: _setMatingDate),
-                    ),
-                    const SizedBox(height: 12),
-                    _calculatedDateField(
-                      'Parto probable (día 31)',
-                      _expectedBirthDate,
-                    ),
-                    const SizedBox(height: 12),
-                    _calculatedDateField('Palpación (día 12)', _palpationDate),
-                    const SizedBox(height: 12),
-                    _calculatedDateField(
-                      'Fecha límite de parto (día 33)',
-                      _maxBirthDate,
-                    ),
-                  ],
-                  if (_reproductiveStatus == 'Lactante') ...[
-                    const SizedBox(height: 12),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Fecha de parto real'),
-                      subtitle: Text(
-                        _actualBirthDate == null
-                            ? 'Sin registrar'
-                            : _formatDate(_actualBirthDate!),
-                      ),
-                      trailing: const Icon(Icons.calendar_today),
-                      onTap: () => _pickDate(setter: _setActualBirthDate),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _actualLitterSizeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Número de crías',
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 12),
-                    _calculatedDateField(
-                      'Próxima monta recomendada',
-                      _nextMatingDate,
-                    ),
-                  ],
-                  if (_reproductiveStatus == 'Descarte') ...[
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      initialValue: _discardReason,
-                      decoration: const InputDecoration(
-                        labelText: 'Motivo del descarte',
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'Edad avanzada',
-                          child: Text('Edad avanzada'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Enfermedad',
-                          child: Text('Enfermedad'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Baja producción',
-                          child: Text('Baja producción'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Defecto genético',
-                          child: Text('Defecto genético'),
-                        ),
-                        DropdownMenuItem(value: 'Otro', child: Text('Otro')),
-                      ],
-                      onChanged: (value) =>
-                          setState(() => _discardReason = value),
-                    ),
-                    const SizedBox(height: 12),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Fecha del descarte'),
-                      subtitle: Text(
-                        _discardDate == null
-                            ? 'Sin registrar'
-                            : _formatDate(_discardDate!),
-                      ),
-                      trailing: const Icon(Icons.calendar_today),
-                      onTap: () =>
-                          _pickDate(setter: (date) => _discardDate = date),
-                    ),
-                  ],
                 ],
                 if (_gender == 'Macho') ...[
                   SwitchListTile(

@@ -90,7 +90,7 @@ class RabbitService {
     try {
       final response = await _supabase
           .from(_tableName)
-          .insert(rabbit.toJson())
+          .insert(rabbit.toInsertJson())
           .select()
           .single();
       return Rabbit.fromJson(response as Map<String, dynamic>);
@@ -105,7 +105,7 @@ class RabbitService {
     try {
       final response = await _supabase
           .from(_tableName)
-          .update(rabbit.toJson())
+          .update(rabbit.toInsertJson())
           .eq(_idColumn, _id(id))
           .eq('user_id', _userId)
           .select()
