@@ -8,6 +8,8 @@ import 'birth_controller.dart';
 import 'kit_controller.dart';
 
 class DashboardController extends GetxController {
+  RealtimeChannel? _realtimeChannel;
+
   final rabbitController = Get.put(RabbitController());
   final birthController = Get.put(BirthController());
   final kitController = Get.put(KitController());
@@ -26,6 +28,27 @@ class DashboardController extends GetxController {
   void onInit() {
     super.onInit();
     loadDashboardData();
+    _realtimeChannel = Supabase.instance.client
+        .channel('dashboard_changes')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'conejo',
+          callback: (_) => loadDashboardData(),
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'births',
+          callback: (_) => loadDashboardData(),
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'kits',
+          callback: (_) => loadDashboardData(),
+        )
+        .subscribe();
     // Escuchar cambios en otros controladores
     ever(rabbitController.rabbits, (_) {
       updateDashboardMetrics();
@@ -33,6 +56,12 @@ class DashboardController extends GetxController {
       generateAlerts();
     });
     ever(birthController.births, (_) => updateDashboardMetrics());
+  }
+
+  @override
+  void onClose() {
+    _realtimeChannel?.unsubscribe();
+    super.onClose();
   }
 
   /// Cargar todos los datos del dashboard

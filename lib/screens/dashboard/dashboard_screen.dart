@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import '../../core/theme/app_theme.dart';
 import '../../controllers/dashboard_controller.dart';
 import '../../models/rabbit.dart';
+import '../rabbits/rabbit_detail_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -251,35 +252,162 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final formattedDueDate = dueDate == null
         ? 'Fecha sin registrar'
         : '${dueDate.day}/${dueDate.month}/${dueDate.year}';
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      decoration: BoxDecoration(
-        color: background,
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+      child: InkWell(
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: foreground.withValues(alpha: 0.2)),
+        onTap: () => _showBirthInfoDialog(context, nextBirth),
+        child: Ink(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            border: Border.all(color: foreground.withValues(alpha: 0.2)),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: foreground, size: 24),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      message,
+                      style: TextStyle(
+                        color: foreground,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${nextBirth.displayId} · $formattedDueDate',
+                      style: TextStyle(color: foreground),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
+    );
+  }
+
+  void _showBirthInfoDialog(BuildContext context, Rabbit rabbit) {
+    final matingDate = rabbit.matingDate;
+    final dueDate =
+        rabbit.expectedBirthDate ??
+        (matingDate == null ? null : matingDate.add(const Duration(days: 31)));
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final daysRemaining = dueDate == null
+        ? null
+        : DateTime(
+            dueDate.year,
+            dueDate.month,
+            dueDate.day,
+          ).difference(today).inDays;
+    final isOverdue = dashboardController.overduePregnancies.any(
+      (item) => item.id == rabbit.id,
+    );
+    final alertColor =
+        (daysRemaining != null && daysRemaining <= 2) || isOverdue
+        ? AppTheme.danger
+        : AppTheme.warning;
+    final formattedDate = dueDate == null
+        ? 'Sin registrar'
+        : '${dueDate.day}/${dueDate.month}/${dueDate.year}';
+
+    Get.dialog<void>(
+      AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.notifications_active_rounded, color: alertColor),
+            const SizedBox(width: 12),
+            const Expanded(child: Text('Parto próximo')),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _birthInfoRow('Coneja', rabbit.displayId),
+              _birthInfoRow('Fecha probable', formattedDate),
+              _birthInfoRow(
+                'Días restantes',
+                daysRemaining == null
+                    ? 'Sin fecha'
+                    : daysRemaining == 0
+                    ? 'HOY'
+                    : daysRemaining < 0
+                    ? 'Atrasado ${daysRemaining.abs()} días'
+                    : '$daysRemaining días',
+              ),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 8),
+              const Text(
+                'Recomendaciones:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              if (daysRemaining != null && daysRemaining > 3)
+                const Text('Vigilar el comportamiento de la coneja')
+              else if (daysRemaining != null && daysRemaining >= 1)
+                const Text(
+                  'Preparar nido con material limpio\n'
+                  'Verificar que tenga agua fresca\n'
+                  'Evitar manipulación',
+                )
+              else if (daysRemaining == 0)
+                const Text(
+                  'Estar atento al parto HOY\n'
+                  'No molestar a la coneja\n'
+                  'Alejar al macho',
+                )
+              else
+                const Text(
+                  'El parto supera la fecha prevista.\n'
+                  'Contactar al veterinario y vigilar a la coneja.',
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: Get.back, child: const Text('Cerrar')),
+          ElevatedButton.icon(
+            onPressed: () {
+              Get.back();
+              Get.to(() => RabbitDetailScreen(rabbit: rabbit));
+            },
+            icon: const Icon(Icons.arrow_forward),
+            label: const Text('Ver coneja'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _birthInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Icon(icon, color: foreground, size: 24),
-          const SizedBox(width: 14),
+          SizedBox(
+            width: 130,
+            child: Text(
+              label,
+              style: const TextStyle(color: AppTheme.textSecondary),
+            ),
+          ),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  message,
-                  style: TextStyle(
-                    color: foreground,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${nextBirth.displayId} · $formattedDueDate',
-                  style: TextStyle(color: foreground),
-                ),
-              ],
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -288,26 +416,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildTableHeader(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
-
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            'CONEJAS ACTIVAS',
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(letterSpacing: 0.8),
-          ),
-        ),
-        if (!isMobile)
-          TextButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.add_rounded, size: 18),
-            label: const Text('Nueva Coneja'),
-            style: TextButton.styleFrom(foregroundColor: AppTheme.accent),
-          ),
-      ],
+    return Text(
+      'CONEJAS ACTIVAS',
+      style: Theme.of(
+        context,
+      ).textTheme.titleSmall?.copyWith(letterSpacing: 0.8),
     );
   }
 
@@ -348,7 +461,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-          onTap: () {},
+          onTap: () => Get.to(() => RabbitDetailScreen(rabbit: rabbit)),
           child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: MediaQuery.of(context).size.width < 700 ? 16 : 24,
