@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../services/notification_service.dart';
+import 'package:get/get.dart';
+
+import '../../controllers/feeding_controller.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/alimentacion_jaula.dart';
 
 class FeedingScreen extends StatefulWidget {
   const FeedingScreen({super.key});
@@ -11,130 +16,129 @@ class FeedingScreen extends StatefulWidget {
 }
 
 class _FeedingScreenState extends State<FeedingScreen> {
+  final FeedingController controller = Get.put(FeedingController());
+  Timer? _clockTimer;
+
   @override
   void initState() {
     super.initState();
-    _scheduleDailyFeedingReminder();
+    _clockTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) setState(() {});
+    });
   }
 
-  /// Programa un recordatorio diario de alimentación
-  Future<void> _scheduleDailyFeedingReminder() async {
-    await NotificationService().scheduleNotification(
-      id: 2001,
-      title: "Alimentación Pendiente",
-      body: "Registrar alimentación del día de hoy",
-      scheduledDate: DateTime.now().add(const Duration(hours: 8)),
-    );
+  @override
+  void dispose() {
+    _clockTimer?.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
-
     return Container(
       color: AppTheme.bgLight,
       child: SingleChildScrollView(
         padding: EdgeInsets.all(isMobile ? 16 : 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context),
-            const SizedBox(height: 40),
+        child: Obx(() {
+          if (controller.isLoading.value &&
+              controller.feedings.isEmpty &&
+              controller.jaulasDelUsuario.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-            // Daily Progress Card
-            _buildDailyProgressCard(context),
-            const SizedBox(height: 40),
-
-            // Historial
-            Text(
-              'Historial Reciente',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-
-            _buildHistoryList(),
-
-            const SizedBox(height: 48),
-
-            // Action Button
-            SizedBox(
-              width: double.infinity,
-              height: 64,
-              child: ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.add_rounded, size: 26),
-                label: const Text(
-                  "REGISTRAR ALIMENTACIÓN DE HOY",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accent,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          final pendientes = controller.jaulasPendientesHoy;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(context),
+              const SizedBox(height: 24),
+              if (pendientes.isNotEmpty) ...[
+                _buildPendingBanner(pendientes.length),
+                const SizedBox(height: 24),
+              ],
+              _buildDailyProgressCard(context),
+              const SizedBox(height: 32),
+              Text(
+                'JAULAS DE HOY',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 16),
+              if (controller.jaulasDelUsuario.isEmpty)
+                _buildNoCagesMessage()
+              else
+                _buildTodayCages(),
+              const SizedBox(height: 32),
+              Text(
+                'HISTORIAL RECIENTE',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 16),
+              _buildHistoryList(),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: ElevatedButton.icon(
+                  onPressed: controller.jaulasDelUsuario.isEmpty
+                      ? null
+                      : () => _showFeedingForm(),
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('REGISTRAR ALIMENTACIÓN'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.accent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          );
+        }),
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Alimentación',
-                style: Theme.of(context).textTheme.headlineLarge,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Granjas Mosquera • 14 de Mayo 2026',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppTheme.textSecondary,
-                    ),
-              ),
-            ],
+    final now = DateTime.now();
+    return Text(
+      '${now.day} de ${_getMonthName(now.month)} · Granja Mosquera',
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
           ),
-        ),
-        if (!isMobile) Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: AppTheme.accent.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.calendar_today_rounded, size: 18, color: AppTheme.accent),
-              const SizedBox(width: 8),
-              Text(
-                "Hoy",
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.accent,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     ).animate().fadeIn(duration: 400.ms);
   }
 
-  Widget _buildDailyProgressCard(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
+  Widget _buildPendingBanner(int count) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF3E0),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFFFCC80)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Color(0xFFE65100)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Faltan $count ${count == 1 ? 'jaula' : 'jaulas'} por registrar',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFE65100),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
 
+  Widget _buildDailyProgressCard(BuildContext context) {
+    final percent = controller.porcentajeHoy.round().clamp(0, 100);
     return Container(
-      padding: EdgeInsets.all(isMobile ? 20 : 32),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -143,181 +147,481 @@ class _FeedingScreenState extends State<FeedingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            runSpacing: 12,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Progreso del Día",
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    "Registro de hoy",
-                    style: TextStyle(fontSize: 15, color: AppTheme.textSecondary),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppTheme.success.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  "75% Completado",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.success,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 28),
-
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: const LinearProgressIndicator(
-              value: 0.75,
-              minHeight: 12,
-              backgroundColor: AppTheme.borderLight,
-              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accent),
-            ),
-          ),
-
-          const SizedBox(height: 20),
           Row(
             children: [
-              Text(
-                "67 kg",
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+              Expanded(
+                child: Text(
+                  'Progreso del Día',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
               ),
-              Text(
-                "de 89 kg",
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppTheme.textSecondary,
-                    ),
-              ),
+              _PercentageBadge(percent: percent),
             ],
+          ),
+          const SizedBox(height: 20),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: percent / 100,
+              minHeight: 10,
+              backgroundColor: AppTheme.borderLight,
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(AppTheme.accent),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '${controller.jaulasRegistradasHoy} de '
+            '${controller.totalJaulas} jaulas registradas',
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Total hoy: ${controller.kgRegistradosHoy.toStringAsFixed(1)} kg',
           ),
         ],
       ),
-    ).animate().fadeIn(delay: 100.ms, duration: 500.ms).slideY(begin: 0.05);
+    ).animate().fadeIn(delay: 100.ms, duration: 500.ms);
+  }
+
+  Widget _buildNoCagesMessage() => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceLight,
+          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+          border: Border.all(color: AppTheme.borderLight),
+        ),
+        child: const Text(
+          'Asigna N° de jaula a tus conejos para usar este módulo',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppTheme.textSecondary),
+        ),
+      );
+
+  Widget _buildTodayCages() {
+    final registros = controller.registrosDeHoy;
+    return Column(
+      children: controller.jaulasDelUsuario.map((jaula) {
+        final coincidencias =
+            registros.where((item) => item.jaula == jaula).toList();
+        final registro = coincidencias.isEmpty ? null : coincidencias.first;
+        return _CageFeedingTile(
+          jaula: jaula,
+          registro: registro,
+          onTap: () => _showFeedingForm(jaula: jaula, existing: registro),
+        );
+      }).toList(),
+    );
   }
 
   Widget _buildHistoryList() {
-    final history = [
-      _HistoryItem("13 Mayo 2026", "92 kg", "Completado", true),
-      _HistoryItem("12 Mayo 2026", "85 kg", "Completado", true),
-      _HistoryItem("11 Mayo 2026", "78 kg", "Parcial", false),
-      _HistoryItem("10 Mayo 2026", "91 kg", "Completado", true),
-    ];
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: history.length,
-      itemBuilder: (context, index) {
-        final item = history[index];
-        return _HistoryCard(item: item);
-      },
+    final history = controller.feedings.take(20).toList();
+    if (history.isEmpty) {
+      return const Text(
+        'Aún no hay registros de alimentación',
+        style: TextStyle(color: AppTheme.textSecondary),
+      );
+    }
+    return Column(
+      children: history.map((item) => _HistoryCard(item: item)).toList(),
     );
+  }
+
+  Future<void> _showFeedingForm({
+    String? jaula,
+    AlimentacionJaula? existing,
+  }) async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => _FeedingFormDialog(
+        controller: controller,
+        initialJaula: jaula,
+        existing: existing,
+      ),
+    );
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+    ];
+    return months[month - 1];
   }
 }
 
-class _HistoryItem {
-  final String date;
-  final String amount;
-  final String status;
-  final bool completed;
+class _CageFeedingTile extends StatelessWidget {
+  final String jaula;
+  final AlimentacionJaula? registro;
+  final VoidCallback onTap;
 
-  const _HistoryItem(this.date, this.amount, this.status, this.completed);
-}
-
-class _HistoryCard extends StatelessWidget {
-  final _HistoryItem item;
-
-  const _HistoryCard({required this.item});
+  const _CageFeedingTile({
+    required this.jaula,
+    required this.registro,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final color = item.completed ? AppTheme.success : AppTheme.warning;
-
+    final registered = registro != null;
+    final color = registered ? AppTheme.success : AppTheme.warning;
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         border: Border.all(color: AppTheme.borderLight),
       ),
-      child: Material(
-        color: Colors.transparent,
+      child: ListTile(
+        onTap: onTap,
+        leading: Icon(
+          registered ? Icons.check_circle : Icons.circle_outlined,
+          color: color,
+        ),
+        title: Text('Jaula $jaula'),
+        subtitle: registered
+            ? Text(
+                '${registro!.cantidadKg} kg'
+                '${registro!.tipoComida == null ? '' : ' · ${registro!.tipoComida}'}',
+              )
+            : const Text('Pendiente de registro'),
+        trailing: const Icon(Icons.chevron_right_rounded),
+      ),
+    );
+  }
+}
+
+class _PercentageBadge extends StatelessWidget {
+  final int percent;
+
+  const _PercentageBadge({required this.percent});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppTheme.success.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          '$percent% Completado',
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: AppTheme.success,
+          ),
+        ),
+      );
+}
+
+class _HistoryCard extends StatelessWidget {
+  final AlimentacionJaula item;
+
+  const _HistoryCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final completed = item.estado.toLowerCase() == 'completado';
+    final color = completed ? AppTheme.success : AppTheme.warning;
+    final dateLabel =
+        '${item.fecha.day} de ${_monthName(item.fecha.month)} ${item.fecha.year}';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-          onTap: () {},
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
+        border: Border.all(color: AppTheme.borderLight),
+      ),
+      child: ListTile(
+        leading: Icon(Icons.restaurant_rounded, color: color),
+        title: Text('Jaula ${item.jaula} · $dateLabel'),
+        subtitle: Text(
+          '${item.cantidadKg} kg'
+          '${item.tipoComida == null ? '' : ' · ${item.tipoComida}'}',
+        ),
+        trailing: _StatusBadge(status: item.estado, color: color),
+      ),
+    );
+  }
+
+  static String _monthName(int month) {
+    const months = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+    ];
+    return months[month - 1];
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  final String status;
+  final Color color;
+
+  const _StatusBadge({required this.status, required this.color});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          status,
+          style: TextStyle(
+            color: color,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+}
+
+class _FeedingFormDialog extends StatefulWidget {
+  final FeedingController controller;
+  final String? initialJaula;
+  final AlimentacionJaula? existing;
+
+  const _FeedingFormDialog({
+    required this.controller,
+    this.initialJaula,
+    this.existing,
+  });
+
+  @override
+  State<_FeedingFormDialog> createState() => _FeedingFormDialogState();
+}
+
+class _FeedingFormDialogState extends State<_FeedingFormDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late String? _jaula;
+  late DateTime _fecha;
+  late String? _tipoComida;
+  late String _estado;
+  late final TextEditingController _cantidadController;
+  late final TextEditingController _notasController;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final item = widget.existing;
+    _jaula = item?.jaula ?? widget.initialJaula;
+    _fecha = item?.fecha ?? DateTime.now();
+    _tipoComida = item?.tipoComida;
+    _estado = item?.estado ?? 'Completado';
+    _cantidadController =
+        TextEditingController(text: item?.cantidadKg.toString() ?? '');
+    _notasController = TextEditingController(text: item?.notas ?? '');
+  }
+
+  @override
+  void dispose() {
+    _cantidadController.dispose();
+    _notasController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final jaulas = widget.controller.jaulasDelUsuario.toList();
+    final dialogWidth =
+        MediaQuery.of(context).size.width < 500 ? double.infinity : 420.0;
+    return AlertDialog(
+      title: Row(
+        children: [
+          const Icon(Icons.restaurant_menu_rounded, color: AppTheme.accent),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(widget.existing == null
+                ? 'Registrar alimentación'
+                : 'Editar alimentación'),
+          ),
+        ],
+      ),
+      content: SizedBox(
+        width: dialogWidth,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                DropdownButtonFormField<String>(
+                  initialValue: _jaula,
+                  decoration: InputDecoration(
+                    labelText: 'Jaula',
+                    hintText: 'Selecciona una jaula',
+                    prefixIcon: const Icon(Icons.meeting_room_rounded),
+                    helperText: jaulas.isEmpty
+                        ? 'Registra conejos con N° de jaula primero'
+                        : null,
                   ),
-                  child: Icon(
-                    Icons.restaurant_rounded,
-                    color: color,
-                    size: 26,
-                  ),
+                  items: jaulas
+                      .map((j) => DropdownMenuItem(value: j, child: Text(j)))
+                      .toList(),
+                  onChanged: jaulas.isEmpty
+                      ? null
+                      : (value) => setState(() => _jaula = value),
+                  validator: (value) =>
+                      value == null ? 'Selecciona jaula' : null,
                 ),
-                const SizedBox(width: 20),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.date,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item.amount,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                    ],
-                  ),
-                ),
-
+                const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: AppTheme.borderLight),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
-                    item.status,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: color,
+                  child: ListTile(
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16),
+                    leading: const Icon(
+                      Icons.calendar_today_rounded,
+                      size: 20,
                     ),
+                    title: const Text('Fecha', style: TextStyle(fontSize: 12)),
+                    subtitle: Text(
+                      '${_fecha.day}/${_fecha.month}/${_fecha.year}',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: _pickDate,
                   ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _cantidadController,
+                  decoration: const InputDecoration(
+                    labelText: 'Cantidad',
+                    helperText: 'Ej: 5.5',
+                    suffixText: 'kg',
+                    prefixIcon: Icon(Icons.scale_rounded),
+                  ),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  validator: (value) {
+                    final amount = double.tryParse(value ?? '');
+                    return amount == null || amount <= 0
+                        ? 'Ingresa una cantidad válida'
+                        : null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  initialValue: _tipoComida,
+                  decoration: const InputDecoration(
+                    labelText: 'Momento del día',
+                    hintText: 'Selecciona',
+                    prefixIcon: Icon(Icons.restaurant_rounded),
+                  ),
+                  items: ['Mañana', 'Tarde', 'Noche']
+                      .map((value) =>
+                          DropdownMenuItem(value: value, child: Text(value)))
+                      .toList(),
+                  onChanged: (value) => setState(() => _tipoComida = value),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  initialValue: _estado,
+                  decoration: const InputDecoration(
+                    labelText: 'Estado',
+                    prefixIcon: Icon(Icons.check_circle_outline_rounded),
+                  ),
+                  items: ['Completado', 'Parcial']
+                      .map((value) =>
+                          DropdownMenuItem(value: value, child: Text(value)))
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) setState(() => _estado = value);
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _notasController,
+                  decoration: const InputDecoration(
+                    labelText: 'Notas',
+                    helperText: 'Observaciones opcionales',
+                    prefixIcon: Icon(Icons.notes_rounded),
+                  ),
+                  minLines: 2,
+                  maxLines: 3,
                 ),
               ],
             ),
           ),
         ),
       ),
+      actions: [
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton.icon(
+          onPressed: _saving ? null : _save,
+          icon: _saving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Icon(Icons.check_rounded),
+          label: Text(_saving ? 'Guardando…' : 'Guardar'),
+        ),
+      ],
     );
+  }
+
+  Future<void> _pickDate() async {
+    final today = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _fecha.isAfter(today) ? today : _fecha,
+      firstDate: DateTime(2000),
+      lastDate: today,
+    );
+    if (picked != null) setState(() => _fecha = picked);
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate() || _jaula == null) return;
+    setState(() => _saving = true);
+
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
+    final existing = widget.existing;
+    final item = AlimentacionJaula(
+      id: existing?.id,
+      jaula: _jaula!,
+      fecha: _fecha,
+      cantidadKg: double.parse(_cantidadController.text),
+      tipoComida: _tipoComida,
+      estado: _estado,
+      notas: _notasController.text.trim().isEmpty
+          ? null
+          : _notasController.text.trim(),
+      userId: existing?.userId,
+    );
+
+    final ok = existing?.id == null
+        ? await widget.controller.createFeeding(item)
+        : await widget.controller.updateFeeding(existing!.id!, item);
+
+    if (!ok) {
+      if (mounted) setState(() => _saving = false);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Error al guardar')),
+      );
+      return;
+    }
+
+    navigator.pop();
   }
 }
