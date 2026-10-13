@@ -38,6 +38,9 @@ dependencies:
   flutter_local_notifications: ^21.0.0
   timezone: 0.11.0
   flutter_native_timezone: ^2.0.0
+  pdf: ^3.11.1
+  printing: ^5.13.2
+
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -104,3 +107,7 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+dependency_overrides:
+  archive: 3.6.1
+  image: 4.2.0
