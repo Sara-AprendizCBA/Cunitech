@@ -5,9 +5,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/utils/logger.dart';
 import '../models/reproduccion.dart';
 import '../services/reproduccion_service.dart';
+import 'reportes_controller.dart';
 
 class ReproduccionController extends GetxController {
   final _service = ReproduccionService();
+
+  Future<void> _refreshReportesIfRegistered() async {
+    if (Get.isRegistered<ReportesController>()) {
+      await Get.find<ReportesController>().loadAll();
+    }
+  }
 
   final reproducciones = <Reproduccion>[].obs;
   final conejas = <Map<String, dynamic>>[].obs;
@@ -127,19 +134,28 @@ class ReproduccionController extends GetxController {
 
   Future<bool> createMonta(Reproduccion r) async {
     final ok = await _service.create(r);
-    if (ok) await loadAll();
+    if (ok) {
+      await loadAll();
+      await _refreshReportesIfRegistered();
+    }
     return ok;
   }
 
   Future<bool> updateReproduccion(int id, Reproduccion r) async {
     final ok = await _service.update(id, r);
-    if (ok) await loadAll();
+    if (ok) {
+      await loadAll();
+      await _refreshReportesIfRegistered();
+    }
     return ok;
   }
 
   Future<bool> deleteReproduccion(int id) async {
     final ok = await _service.delete(id);
-    if (ok) await loadAll();
+    if (ok) {
+      await loadAll();
+      await _refreshReportesIfRegistered();
+    }
     return ok;
   }
 
@@ -183,7 +199,10 @@ class ReproduccionController extends GetxController {
       pesoPromedio: pesoPromedio,
       notas: notas,
     );
-    if (ok) await loadAll();
+    if (ok) {
+      await loadAll();
+      await _refreshReportesIfRegistered();
+    }
     return ok;
   }
 }

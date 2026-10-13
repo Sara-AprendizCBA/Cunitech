@@ -260,9 +260,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  r.idReproduccion == null
-                      ? 'Monta'
-                      : 'Monta ${r.idReproduccion}',
+                  'Monta',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
@@ -1557,7 +1555,7 @@ class _BirthCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Nacimiento ${birth['id'] ?? ''}',
+                  'Parto de $motherLabel',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
