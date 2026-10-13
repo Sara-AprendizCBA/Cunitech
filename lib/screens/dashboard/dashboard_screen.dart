@@ -77,7 +77,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         Expanded(
           child: Text(
-            '${DateTime.now().day} de ${_getMonthName(DateTime.now().month)} · Granja Mosquera',
+            '${DateTime.now().day} de ${_getMonthName(DateTime.now().month)} · Cunicultura CBA',
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
