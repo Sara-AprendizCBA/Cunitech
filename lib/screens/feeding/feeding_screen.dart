@@ -18,6 +18,7 @@ class FeedingScreen extends StatefulWidget {
 class _FeedingScreenState extends State<FeedingScreen> {
   final FeedingController controller = Get.put(FeedingController());
   Timer? _clockTimer;
+  bool _historialExpandido = false;
 
   @override
   void initState() {
@@ -104,7 +105,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
   Widget _buildHeader(BuildContext context) {
     final now = DateTime.now();
     return Text(
-      '${now.day} de ${_getMonthName(now.month)} · Granja Mosquera',
+      '${now.day} de ${_getMonthName(now.month)} · Cunicultura CBA',
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
           ),
@@ -217,15 +218,88 @@ class _FeedingScreenState extends State<FeedingScreen> {
   }
 
   Widget _buildHistoryList() {
-    final history = controller.feedings.take(20).toList();
+    final history = controller.feedings;
     if (history.isEmpty) {
       return const Text(
         'Aún no hay registros de alimentación',
         style: TextStyle(color: AppTheme.textSecondary),
       );
     }
+
+    final mostrarTodos = _historialExpandido || history.length <= 4;
+    final visibles = mostrarTodos
+        ? history.toList()
+        : history.take(4).toList();
+
     return Column(
-      children: history.map((item) => _HistoryCard(item: item)).toList(),
+      children: [
+        ...visibles.map(
+          (item) => _HistoryCard(
+            item: item,
+            onDelete: () => _confirmarEliminarRegistro(item),
+          ),
+        ),
+        if (history.length > 4)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => setState(
+                  () => _historialExpandido = !_historialExpandido,
+                ),
+                icon: Icon(
+                  _historialExpandido
+                      ? Icons.expand_less_rounded
+                      : Icons.expand_more_rounded,
+                ),
+                label: Text(
+                  _historialExpandido
+                      ? 'Ver menos'
+                      : 'Ver ${history.length - 4} más',
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _confirmarEliminarRegistro(
+    AlimentacionJaula item,
+  ) async {
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Eliminar registro'),
+        content: Text(
+          '¿Eliminar el registro de ${item.jaula} del '
+          '${item.fecha.day}/${item.fecha.month}/${item.fecha.year}? '
+          'Esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppTheme.danger,
+            ),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmado != true || !mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await controller.deleteFeeding(item.id!);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(ok ? 'Registro eliminado' : 'Error al eliminar'),
+      ),
     );
   }
 
@@ -317,8 +391,12 @@ class _PercentageBadge extends StatelessWidget {
 
 class _HistoryCard extends StatelessWidget {
   final AlimentacionJaula item;
+  final VoidCallback onDelete;
 
-  const _HistoryCard({required this.item});
+  const _HistoryCard({
+    required this.item,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -340,7 +418,23 @@ class _HistoryCard extends StatelessWidget {
           '${item.cantidadKg} kg'
           '${item.tipoComida == null ? '' : ' · ${item.tipoComida}'}',
         ),
-        trailing: _StatusBadge(status: item.estado, color: color),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: 'Eliminar registro',
+              onPressed: onDelete,
+              icon: const Icon(
+                Icons.delete_outline_rounded,
+                size: 20,
+                color: AppTheme.danger,
+              ),
+              visualDensity: VisualDensity.compact,
+            ),
+            const SizedBox(width: 4),
+            _StatusBadge(status: item.estado, color: color),
+          ],
+        ),
       ),
     );
   }
