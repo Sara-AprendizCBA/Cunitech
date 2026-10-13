@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../controllers/reportes_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/meta_mensual.dart';
+import '../../services/pdf_service.dart';
 
 String _getMonthName(int month) => const [
       'ene',
@@ -47,10 +48,20 @@ String _tiempoRelativo(DateTime fecha) {
   return 'hace ${(diff.inDays / 365).floor()} años';
 }
 
-class ReportsScreen extends StatelessWidget {
+class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
 
   static final reportesController = Get.put(ReportesController());
+
+  @override
+  State<ReportsScreen> createState() => _ReportsScreenState();
+}
+
+class _ReportsScreenState extends State<ReportsScreen> {
+  bool _exportando = false;
+
+  ReportesController get reportesController =>
+      ReportsScreen.reportesController;
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +140,7 @@ class ReportsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Granja Mosquera · '
+              'Cunicultura CBA · '
               '${_getMonthName(DateTime.now().month)} ${DateTime.now().year}',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppTheme.textSecondary,
@@ -137,13 +148,55 @@ class ReportsScreen extends StatelessWidget {
             ),
           ],
         ),
-        if (!isMobile) ElevatedButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.download_rounded),
-          label: const Text('Exportar Reporte'),
-        ),
+        if (!isMobile)
+          ElevatedButton.icon(
+            onPressed:
+                _exportando ? null : () => _exportarReporte(context),
+            icon: _exportando
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.download_rounded),
+            label: Text(
+              _exportando ? 'Generando…' : 'Exportar Reporte',
+            ),
+          ),
       ],
     );
+  }
+
+  Future<void> _exportarReporte(BuildContext context) async {
+    if (_exportando) return;
+    setState(() => _exportando = true);
+
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      await reportesController.loadAll();
+
+      await PdfService().exportarReporte(
+        controller: reportesController,
+        nombreCriadero: 'Cunicultura CBA',
+      );
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Reporte descargado')),
+      );
+    } catch (e) {
+      debugPrint('Error exportar reporte: $e');
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Error al exportar: $e'),
+          backgroundColor: AppTheme.danger,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _exportando = false);
+    }
   }
 
   Widget _buildPopulationChart(BuildContext context) {
@@ -307,7 +360,7 @@ class ReportsScreen extends StatelessWidget {
       ),
       _buildReportSummary(
         context,
-        'Tasa de Gestación',
+        'Conejas en Ciclo',
         reportesController.tasaGestacionTexto,
         Icons.favorite_rounded,
         const Color(0xFF9E7C5E),
@@ -686,7 +739,7 @@ class ReportsScreen extends StatelessWidget {
             titulo: 'Nacimiento registrado',
             subtitulo: '${birth['live_kits'] ?? 0} vivos · '
                 '${birth['dead_kits'] ?? 0} muertos · '
-                'Madre ${birth['mother_id'] ?? '—'}',
+                '${birth['chapeta_madre'] ?? 'Sin ID'}',
           ),
         );
       }
@@ -698,7 +751,7 @@ class ReportsScreen extends StatelessWidget {
             icono: Icons.favorite_rounded,
             color: AppTheme.accent,
             titulo: 'Monta registrada',
-            subtitulo: 'Coneja ${mating['id_coneja'] ?? '—'} · '
+            subtitulo: '${mating['chapeta_coneja'] ?? 'Sin ID'} · '
                 '${mating['estado'] ?? ''}',
           ),
         );

@@ -66,7 +66,12 @@ class ReportesController extends GetxController {
           .select('id_conejo')
           .eq('user_id', _userId)
           .eq('genero', 'Hembra')
-          .eq('reproductive_status', 'Gestante');
+          .inFilter('reproductive_status', [
+            'Servida',
+            'Gestante',
+            'Lactante',
+            'Destete',
+          ]);
       conejasGestantes.value = (data as List).length;
     } catch (e) {
       logger.e('Error loadConejasGestantes', error: e);
@@ -204,20 +209,36 @@ class ReportesController extends GetxController {
           .select('id, birth_date, live_kits, dead_kits, mother_id')
           .eq('user_id', _userId)
           .order('birth_date', ascending: false)
-          .limit(3);
-      nacimientosRecientes.assignAll(
-        (nacimientos as List).cast<Map<String, dynamic>>(),
-      );
+          .limit(5);
+      final listaNac =
+          (nacimientos as List).cast<Map<String, dynamic>>();
+      for (final item in listaNac) {
+        final madre = await supabase
+            .from('conejo')
+            .select('chapeta')
+            .eq('id_conejo', item['mother_id'])
+            .maybeSingle();
+        item['chapeta_madre'] = madre?['chapeta'] ?? 'Sin ID';
+      }
+      nacimientosRecientes.assignAll(listaNac);
 
       final montas = await supabase
           .from('reproduccion')
           .select('id_reproduccion, fecha_monta, id_coneja, estado')
           .eq('user_id', _userId)
           .order('fecha_monta', ascending: false)
-          .limit(3);
-      montasRecientes.assignAll(
-        (montas as List).cast<Map<String, dynamic>>(),
-      );
+          .limit(5);
+      final listaMontas =
+          (montas as List).cast<Map<String, dynamic>>();
+      for (final item in listaMontas) {
+        final coneja = await supabase
+            .from('conejo')
+            .select('chapeta')
+            .eq('id_conejo', item['id_coneja'])
+            .maybeSingle();
+        item['chapeta_coneja'] = coneja?['chapeta'] ?? 'Sin ID';
+      }
+      montasRecientes.assignAll(listaMontas);
 
       final alertas = await supabase
           .from('conejo')
@@ -406,7 +427,7 @@ class ReportesController extends GetxController {
   String get tasaGestacionSubtitulo {
     final total = totalConejos.value;
     if (total == 0) return 'Sin conejas registradas';
-    return '${conejasGestantes.value} de $total conejas';
+    return '${conejasGestantes.value} de $total en ciclo';
   }
 
   String get insightTitulo {
