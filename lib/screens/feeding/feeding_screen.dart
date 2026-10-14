@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 
 import '../../controllers/feeding_controller.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/responsive.dart';
 import '../../models/alimentacion_jaula.dart';
 
 class FeedingScreen extends StatefulWidget {
@@ -36,11 +37,23 @@ class _FeedingScreenState extends State<FeedingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
-    return Container(
-      color: AppTheme.bgLight,
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(isMobile ? 16 : 32),
+    return Scaffold(
+      backgroundColor: AppTheme.bgLight,
+      floatingActionButton: context.isMobile
+          ? FloatingActionButton.extended(
+              onPressed: controller.jaulasDelUsuario.isEmpty
+                  ? null
+                  : () => _showFeedingForm(),
+              backgroundColor: AppTheme.accent,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Registrar'),
+            )
+          : null,
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(context.adaptivePadding).copyWith(
+          bottom: context.isMobile ? 96 : context.adaptivePadding,
+        ),
         child: Obx(() {
           if (controller.isLoading.value &&
               controller.feedings.isEmpty &&
@@ -53,40 +66,41 @@ class _FeedingScreenState extends State<FeedingScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(context),
-              const SizedBox(height: 24),
+              SizedBox(height: context.isMobile ? 16 : 24),
               if (pendientes.isNotEmpty) ...[
                 _buildPendingBanner(pendientes.length),
-                const SizedBox(height: 24),
+                SizedBox(height: context.isMobile ? 16 : 24),
               ],
               _buildDailyProgressCard(context),
-              const SizedBox(height: 32),
+              SizedBox(height: context.adaptivePadding),
               Text(
                 'JAULAS DE HOY',
                 style: Theme.of(context).textTheme.titleSmall,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: context.isMobile ? 12 : 16),
               if (controller.jaulasDelUsuario.isEmpty)
                 _buildNoCagesMessage()
               else
                 _buildTodayCages(),
-              const SizedBox(height: 32),
+              SizedBox(height: context.adaptivePadding),
               Text(
                 'HISTORIAL RECIENTE',
                 style: Theme.of(context).textTheme.titleSmall,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: context.isMobile ? 12 : 16),
               _buildHistoryList(),
-              const SizedBox(height: 32),
-              SizedBox(
+              SizedBox(height: context.adaptivePadding),
+              if (!context.isMobile)
+                SizedBox(
                 width: double.infinity,
                 height: 60,
-                child: ElevatedButton.icon(
+                child: FilledButton.icon(
                   onPressed: controller.jaulasDelUsuario.isEmpty
                       ? null
                       : () => _showFeedingForm(),
                   icon: const Icon(Icons.add_rounded),
                   label: const Text('REGISTRAR ALIMENTACIÓN'),
-                  style: ElevatedButton.styleFrom(
+                  style: FilledButton.styleFrom(
                     backgroundColor: AppTheme.accent,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
@@ -94,7 +108,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
                     ),
                   ),
                 ),
-              ),
+                ),
             ],
           );
         }),
@@ -113,7 +127,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
   }
 
   Widget _buildPendingBanner(int count) => Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(context.isMobile ? 12 : 16),
         decoration: BoxDecoration(
           color: const Color(0xFFFFF3E0),
           borderRadius: BorderRadius.circular(12),
@@ -139,7 +153,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
   Widget _buildDailyProgressCard(BuildContext context) {
     final percent = controller.porcentajeHoy.round().clamp(0, 100);
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(context.isMobile ? 16 : 24),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -161,7 +175,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
               _PercentageBadge(percent: percent),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: context.isMobile ? 12 : 20),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
@@ -172,7 +186,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
                   const AlwaysStoppedAnimation<Color>(AppTheme.accent),
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: context.isMobile ? 12 : 16),
           Text(
             '${controller.jaulasRegistradasHoy} de '
             '${controller.totalJaulas} jaulas registradas',
@@ -188,7 +202,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
 
   Widget _buildNoCagesMessage() => Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(context.isMobile ? 16 : 24),
         decoration: BoxDecoration(
           color: AppTheme.surfaceLight,
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -561,7 +575,7 @@ class _FeedingFormDialogState extends State<_FeedingFormDialog> {
                   validator: (value) =>
                       value == null ? 'Selecciona jaula' : null,
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: context.isMobile ? 12 : 16),
                 Container(
                   decoration: BoxDecoration(
                     border: Border.all(color: AppTheme.borderLight),
@@ -586,7 +600,7 @@ class _FeedingFormDialogState extends State<_FeedingFormDialog> {
                     onTap: _pickDate,
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: context.isMobile ? 12 : 16),
                 TextFormField(
                   controller: _cantidadController,
                   decoration: const InputDecoration(
@@ -604,7 +618,7 @@ class _FeedingFormDialogState extends State<_FeedingFormDialog> {
                         : null;
                   },
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: context.isMobile ? 12 : 16),
                 DropdownButtonFormField<String>(
                   initialValue: _tipoComida,
                   decoration: const InputDecoration(
@@ -618,7 +632,7 @@ class _FeedingFormDialogState extends State<_FeedingFormDialog> {
                       .toList(),
                   onChanged: (value) => setState(() => _tipoComida = value),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: context.isMobile ? 12 : 16),
                 DropdownButtonFormField<String>(
                   initialValue: _estado,
                   decoration: const InputDecoration(
@@ -633,7 +647,7 @@ class _FeedingFormDialogState extends State<_FeedingFormDialog> {
                     if (value != null) setState(() => _estado = value);
                   },
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: context.isMobile ? 12 : 16),
                 TextFormField(
                   controller: _notasController,
                   decoration: const InputDecoration(

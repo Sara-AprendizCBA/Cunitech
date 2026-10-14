@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:get/get.dart';
 import '../../controllers/reportes_controller.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/responsive.dart';
 import '../../models/meta_mensual.dart';
 import '../../services/pdf_service.dart';
 
@@ -65,21 +66,27 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
-
     return Container(
       color: AppTheme.bgLight,
       child: SingleChildScrollView(
-        padding: EdgeInsets.all(isMobile ? 16 : 32),
+        padding: EdgeInsets.all(context.adaptivePadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(context),
-            const SizedBox(height: 40),
+            SizedBox(
+              height: context.isMobile
+                  ? 24
+                  : (ResponsiveBuildContext(context).isTablet ? 32 : 40),
+            ),
 
             // Main Chart
             _buildPopulationChart(context),
-            const SizedBox(height: 40),
+            SizedBox(
+              height: context.isMobile
+                  ? 24
+                  : (ResponsiveBuildContext(context).isTablet ? 32 : 40),
+            ),
 
             // Summary Cards
             Text(
@@ -89,7 +96,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
             const SizedBox(height: 16),
             Obx(() => _buildSummaryGrid(context)),
 
-            const SizedBox(height: 48),
+            SizedBox(
+              height: context.isMobile
+                  ? 32
+                  : (ResponsiveBuildContext(context).isTablet ? 40 : 48),
+            ),
             LayoutBuilder(
               builder: (context, constraints) {
                 final isWide = constraints.maxWidth >= 900;
@@ -118,7 +129,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 );
               },
             ),
-            const SizedBox(height: 48),
+            SizedBox(
+              height: context.isMobile
+                  ? 32
+                  : (ResponsiveBuildContext(context).isTablet ? 40 : 48),
+            ),
           ],
         ),
       ),
@@ -126,8 +141,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -136,7 +149,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
           children: [
             Text(
               'Reportes y Estadísticas',
-              style: Theme.of(context).textTheme.headlineLarge,
+              style: context.isMobile
+                  ? Theme.of(context).textTheme.headlineMedium
+                  : Theme.of(context).textTheme.headlineLarge,
             ),
             const SizedBox(height: 8),
             Text(
@@ -148,7 +163,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ),
           ],
         ),
-        if (!isMobile)
+        if (!context.isMobile)
           ElevatedButton.icon(
             onPressed:
                 _exportando ? null : () => _exportarReporte(context),
@@ -201,7 +216,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   Widget _buildPopulationChart(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(context.adaptivePadding),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -225,9 +240,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: context.isMobile ? 16 : 24),
           SizedBox(
-            height: 320,
+            height: context.isMobile
+                ? 220
+                : (ResponsiveBuildContext(context).isTablet ? 280 : 320),
             child: Obx(() {
               final data = reportesController.poblacionPorDia.toList();
               final spots = <FlSpot>[];
@@ -242,7 +259,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
               if (spots.isEmpty || spots.every((spot) => spot.y == 0)) {
                 return Container(
-                  height: 280,
+                  height: context.isMobile ? 180 : 280,
                   alignment: Alignment.center,
                   child: const Text(
                     'Sin datos para mostrar.\n'
@@ -340,7 +357,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   Widget _buildSummaryGrid(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
     final cards = [
       _buildReportSummary(
         context,
@@ -368,7 +384,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       ),
     ];
 
-    return isMobile
+    return context.isMobile
         ? Column(children: [for (final card in cards) ...[card, const SizedBox(height: 12)]])
         : Row(
       children: [
@@ -394,7 +410,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
     String trend,
   ) {
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: EdgeInsets.all(
+        context.isMobile
+            ? 16
+            : (ResponsiveBuildContext(context).isTablet ? 24 : 28),
+      ),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -411,12 +431,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ),
             child: Icon(icon, size: 28, color: color),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: context.isMobile ? 16 : 24),
           Text(
             value,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: (context.isMobile
+                    ? Theme.of(context).textTheme.titleLarge
+                    : Theme.of(context).textTheme.headlineMedium)
+                ?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Text(
@@ -473,11 +494,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: context.isMobile ? 12 : 16),
           if (metas.isEmpty)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(
+                context.isMobile
+                    ? 16
+                    : (ResponsiveBuildContext(context).isTablet ? 20 : 24),
+              ),
               decoration: BoxDecoration(
                 color: AppTheme.surfaceLight,
                 borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -539,7 +564,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
     };
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(
+        context.isMobile
+            ? 12
+            : (ResponsiveBuildContext(context).isTablet ? 16 : 20),
+      ),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -787,7 +816,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
           ),
           const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(
+              context.isMobile
+                  ? 12
+                  : (ResponsiveBuildContext(context).isTablet ? 16 : 20),
+            ),
             decoration: BoxDecoration(
               color: AppTheme.surfaceLight,
               borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -993,11 +1026,10 @@ class _MetaFormDialogState extends State<_MetaFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 520;
     return AlertDialog(
       title: const Text('Configurar meta mensual'),
       content: SizedBox(
-        width: isMobile ? double.maxFinite : 420,
+        width: context.isMobile ? double.maxFinite : 420,
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(

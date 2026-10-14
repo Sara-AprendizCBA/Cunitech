@@ -6,6 +6,7 @@ import '../../controllers/reproduccion_controller.dart';
 import '../../models/reproduccion.dart';
 import '../../services/notification_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/responsive.dart';
 
 class ReproductionScreen extends StatefulWidget {
   const ReproductionScreen({super.key});
@@ -25,22 +26,46 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
+    final isMobile = context.isMobile;
 
-    return Container(
-      color: AppTheme.bgLight,
-      child: DefaultTabController(
-        length: 3,
-        child: Column(
-          children: [
+    return DefaultTabController(
+      length: 3,
+      child: Builder(
+        builder: (tabContext) {
+          final tabController = DefaultTabController.of(tabContext);
+          return AnimatedBuilder(
+            animation: tabController,
+            builder: (innerContext, _) => Scaffold(
+              backgroundColor: AppTheme.bgLight,
+              floatingActionButton: innerContext.isMobile &&
+                      tabController.index == 0
+                  ? FloatingActionButton(
+                      onPressed: () => _showMatingForm(),
+                      backgroundColor: AppTheme.accent,
+                      foregroundColor: Colors.white,
+                      child: const Icon(Icons.add_rounded),
+                    )
+                  : null,
+              body: Column(
+                children: [
             // Custom Header
             Padding(
-              padding: EdgeInsets.fromLTRB(isMobile ? 16 : 32, 20, isMobile ? 16 : 32, 0),
+              padding: EdgeInsets.fromLTRB(
+                context.adaptivePaddingH,
+                isMobile ? 12 : 20,
+                context.adaptivePaddingH,
+                0,
+              ),
               child: isMobile
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Reproducción', style: Theme.of(context).textTheme.headlineMedium),
+                        Text(
+                          'Reproducción',
+                          style: context.isMobile
+                              ? Theme.of(context).textTheme.titleLarge
+                              : Theme.of(context).textTheme.headlineMedium,
+                        ),
                         const SizedBox(height: 12),
                         _buildTabs(context),
                       ],
@@ -49,7 +74,9 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
                 children: [
                   Text(
                     'Reproducción',
-                    style: Theme.of(context).textTheme.headlineMedium,
+                    style: context.isMobile
+                        ? Theme.of(context).textTheme.titleLarge
+                        : Theme.of(context).textTheme.headlineMedium,
                   ),
                   const Spacer(),
                   Expanded(child: _buildTabs(context)),
@@ -57,7 +84,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: isMobile ? 16 : 20),
 
             // Tab Content
             Expanded(
@@ -69,8 +96,11 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
                 ],
               ),
             ),
-          ],
-        ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -116,9 +146,16 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
         default:
           filtered = reproController.reproducciones.toList();
       }
+      final isMobile = context.isMobile;
+      final isTablet = ResponsiveBuildContext(context).isTablet;
 
       return ListView(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+        padding: EdgeInsets.fromLTRB(
+          isMobile ? 80 : 24,
+          8,
+          isMobile ? 16 : 24,
+          isMobile ? 16 : 24,
+        ),
         children: [
           Wrap(
             spacing: 10,
@@ -150,14 +187,15 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
                   color: const Color(0xFFFFEDD5),
                   foreground: const Color(0xFF9A3412),
                 ),
-              FilledButton.icon(
-                onPressed: () => _showMatingForm(),
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('Registrar monta'),
-              ),
+              if (!context.isMobile)
+                FilledButton.icon(
+                  onPressed: () => _showMatingForm(),
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('Registrar monta'),
+                ),
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: isMobile ? 16 : 24),
           Wrap(
             spacing: 8,
             children: ['Todas', 'Pendientes', 'Gestantes', 'Fallidas']
@@ -176,10 +214,12 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
                 )
                 .toList(),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: isMobile ? 16 : 20),
           if (filtered.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 48),
+            Padding(
+              padding: EdgeInsets.symmetric(
+                vertical: isMobile ? 32 : (isTablet ? 40 : 48),
+              ),
               child: Center(
                 child: Text(
                   'No hay montas registradas. Registra la primera con el botón +',
@@ -244,8 +284,8 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(24),
+      margin: EdgeInsets.only(bottom: context.isMobile ? 12 : 16),
+      padding: EdgeInsets.all(context.isMobile ? 16 : 24),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -271,7 +311,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: context.isMobile ? 12 : 16),
           Row(
             children: [
               Expanded(
@@ -304,14 +344,14 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
             '📅 ${_formatMatingDate(r.fechaMonta)} · Hace $days días',
             style: const TextStyle(color: AppTheme.textSecondary),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: context.isMobile ? 12 : 16),
           const Divider(color: AppTheme.borderLight, height: 1),
-          const SizedBox(height: 16),
+          SizedBox(height: context.isMobile ? 12 : 16),
           _MatingTimeline(r: r),
           if (phaseTitle.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            SizedBox(height: context.isMobile ? 12 : 16),
             const Divider(color: AppTheme.borderLight, height: 1),
-            const SizedBox(height: 16),
+            SizedBox(height: context.isMobile ? 12 : 16),
             Text(
               '📍 Fase actual: $phaseTitle',
               style: const TextStyle(fontWeight: FontWeight.w600),
@@ -326,10 +366,10 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
             ),
           ],
           if (r.estado == 'Servida' && r.tocaPalpacion) ...[
-            const SizedBox(height: 16),
+            SizedBox(height: context.isMobile ? 12 : 16),
             const Divider(color: AppTheme.borderLight, height: 1),
           ],
-          const SizedBox(height: 16),
+          SizedBox(height: context.isMobile ? 12 : 16),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -628,7 +668,12 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
         return const Center(child: Text('No hay nacimientos registrados'));
       }
       return ListView.builder(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+        padding: EdgeInsets.fromLTRB(
+          context.isMobile ? 16 : 24,
+          8,
+          context.isMobile ? 16 : 24,
+          context.isMobile ? 16 : 24,
+        ),
         itemCount: reproController.nacimientos.length,
         itemBuilder: (context, index) => _BirthCard(
           birth: reproController.nacimientos[index],
@@ -647,7 +692,12 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
         return const Center(child: Text('No hay crías registradas'));
       }
       return ListView.builder(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+        padding: EdgeInsets.fromLTRB(
+          context.isMobile ? 16 : 24,
+          8,
+          context.isMobile ? 16 : 24,
+          context.isMobile ? 16 : 24,
+        ),
         itemCount: reproController.crias.length,
         itemBuilder: (context, index) => _KitCard(kit: reproController.crias[index]),
       );
@@ -701,20 +751,65 @@ class _MatingTimeline extends StatelessWidget {
       currentStep = 1;
     }
 
-    return Row(
-      children: [
-        _hito('Monta', monta, 0, currentStep),
-        _linea(0, currentStep),
-        _hito('Palpación', palpacion, 1, currentStep),
-        _linea(1, currentStep),
-        _hito('Parto', parto, 2, currentStep),
-        _linea(2, currentStep),
-        _hito('Destete', destete, 3, currentStep),
-      ],
+    final hitos = <(String, DateTime)>[
+      ('Monta', monta),
+      ('Palpación', palpacion),
+      ('Parto', parto),
+      ('Destete', destete),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compacto = context.isMobile;
+        final apilar = compacto && constraints.maxWidth < 360;
+
+        if (apilar) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var i = 0; i < hitos.length; i++) ...[
+                _hito(hitos[i].$1, hitos[i].$2, i, currentStep,
+                    compacto: true),
+                if (i < hitos.length - 1)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 18),
+                    child: Container(
+                      width: 2,
+                      height: 12,
+                      color: _colorLinea(i, currentStep),
+                    ),
+                  ),
+              ],
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            _hito(hitos[0].$1, hitos[0].$2, 0, currentStep,
+                compacto: compacto),
+            _linea(0, currentStep),
+            _hito(hitos[1].$1, hitos[1].$2, 1, currentStep,
+                compacto: compacto),
+            _linea(1, currentStep),
+            _hito(hitos[2].$1, hitos[2].$2, 2, currentStep,
+                compacto: compacto),
+            _linea(2, currentStep),
+            _hito(hitos[3].$1, hitos[3].$2, 3, currentStep,
+                compacto: compacto),
+          ],
+        );
+      },
     );
   }
 
-  Widget _hito(String label, DateTime fecha, int index, int current) {
+  Widget _hito(
+    String label,
+    DateTime fecha,
+    int index,
+    int current, {
+    required bool compacto,
+  }) {
     final Color color;
     final String icono;
     if (index < current) {
@@ -739,35 +834,35 @@ class _MatingTimeline extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 10,
+            fontSize: compacto ? 8 : 10,
             color: color,
             fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 4),
-        Text(icono, style: const TextStyle(fontSize: 14)),
+        Text(icono, style: TextStyle(fontSize: compacto ? 12 : 14)),
         const SizedBox(height: 2),
         Text(
-          '${fecha.day} ${_monthShort(fecha.month)}',
-          style: TextStyle(fontSize: 10, color: color),
+          compacto ? '${fecha.day}' : '${fecha.day} ${_monthShort(fecha.month)}',
+          style: TextStyle(fontSize: compacto ? 8 : 10, color: color),
         ),
       ],
     );
   }
 
-  Widget _linea(int index, int current) {
+  Color _colorLinea(int index, int current) {
     final palpacionVencida = r.estado == 'Servida' &&
         (r.diasDesdeMonta ?? 0) > 16;
-    final color = index < current
-        ? AppTheme.success
-        : index == 0 && palpacionVencida
-            ? const Color(0xFF991B1B)
-            : AppTheme.borderLight;
+    if (index < current) return AppTheme.success;
+    if (index == 0 && palpacionVencida) return const Color(0xFF991B1B);
+    return AppTheme.borderLight;
+  }
 
+  Widget _linea(int index, int current) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.only(bottom: 20),
-        child: Container(height: 2, color: color),
+        child: Container(height: 2, color: _colorLinea(index, current)),
       ),
     );
   }
@@ -1539,8 +1634,8 @@ class _BirthCard extends StatelessWidget {
     final weaningDate = date?.add(const Duration(days: 30));
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
+      margin: EdgeInsets.only(bottom: context.isMobile ? 12 : 16),
+      padding: EdgeInsets.all(context.isMobile ? 16 : 20),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -1620,8 +1715,8 @@ class _KitCard extends StatelessWidget {
     final statusLabel = isDead ? 'Muerto' : isWeaned ? 'Destetado' : 'Vivo';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
+      margin: EdgeInsets.only(bottom: context.isMobile ? 12 : 16),
+      padding: EdgeInsets.all(context.isMobile ? 16 : 20),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -1636,7 +1731,7 @@ class _KitCard extends StatelessWidget {
               color: statusColor,
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: context.isMobile ? 12 : 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

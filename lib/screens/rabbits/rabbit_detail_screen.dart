@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/responsive.dart';
 import '../../models/rabbit.dart';
 import '../../controllers/rabbit_controller.dart';
 import 'rabbit_form_dialog.dart';
@@ -232,7 +233,11 @@ class RabbitDetailScreen extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(
+          context.isMobile
+              ? 16
+              : (ResponsiveBuildContext(context).isTablet ? 20 : 24),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -481,7 +486,7 @@ class RabbitDetailScreen extends StatelessWidget {
         backgroundColor: AppTheme.bgLight,
         appBar: _buildHeader(context, r),
         body: SingleChildScrollView(
-          padding: EdgeInsets.all(isMobile ? 16 : 32),
+          padding: EdgeInsets.all(context.adaptivePadding),
           child: isMobile
               ? _buildMobileLayout(context, r)
               : _buildDesktopLayout(context, r, isTablet: isTablet),

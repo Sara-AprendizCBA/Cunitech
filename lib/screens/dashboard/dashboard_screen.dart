@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/responsive.dart';
 import '../../controllers/dashboard_controller.dart';
 import '../../models/rabbit.dart';
 import '../rabbits/rabbit_detail_screen.dart';
@@ -38,7 +39,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
+    final isMobile = context.isMobile;
+    final isTablet = ResponsiveBuildContext(context).isTablet;
 
     return Container(
       color: AppTheme.bgLight,
@@ -49,22 +51,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
 
         return SingleChildScrollView(
-          padding: EdgeInsets.all(isMobile ? 16 : 32),
+          padding: EdgeInsets.all(context.adaptivePadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(context),
-              SizedBox(height: isMobile ? 24 : 40),
+              SizedBox(height: isMobile ? 24 : (isTablet ? 32 : 40)),
               _sectionLabel(context, 'RESUMEN GENERAL'),
-              const SizedBox(height: 16),
+              SizedBox(height: isMobile ? 12 : 16),
               _buildMetricsGrid(context),
-              const SizedBox(height: 40),
+              SizedBox(height: isMobile ? 24 : (isTablet ? 32 : 40)),
               _buildNextBirthBanner(context),
-              const SizedBox(height: 40),
+              SizedBox(height: isMobile ? 24 : (isTablet ? 32 : 40)),
               _buildTableHeader(context),
-              const SizedBox(height: 16),
+              SizedBox(height: isMobile ? 12 : 16),
               _buildActiveRabbits(context),
-              const SizedBox(height: 48),
+              SizedBox(height: isMobile ? 32 : (isTablet ? 40 : 48)),
             ],
           ),
         );
@@ -98,7 +100,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildMetricsGrid(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
+    final isMobile = context.isMobile;
 
     return GridView.builder(
       shrinkWrap: true,
@@ -188,7 +190,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final nextBirth = dashboardController.getNextExpectedBirth();
     if (nextBirth == null) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        padding: EdgeInsets.symmetric(
+          horizontal: context.isMobile ? 16 : 24,
+          vertical: context.isMobile ? 12 : 20,
+        ),
         decoration: BoxDecoration(
           color: AppTheme.surfaceLight,
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -260,7 +265,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         onTap: () => _showBirthInfoDialog(context, nextBirth),
         child: Ink(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          padding: EdgeInsets.symmetric(
+            horizontal: context.isMobile ? 16 : 24,
+            vertical: context.isMobile ? 12 : 20,
+          ),
           decoration: BoxDecoration(
             color: background,
             borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -347,7 +355,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ? 'Atrasado ${daysRemaining.abs()} días'
                     : '$daysRemaining días',
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: context.isMobile ? 12 : 16),
               const Divider(),
               const SizedBox(height: 8),
               const Text(
@@ -429,7 +437,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final list = dashboardController.activeRabbits;
       if (list.isEmpty) {
         return Container(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(context.isMobile ? 16 : 24),
           decoration: BoxDecoration(
             color: AppTheme.surfaceLight,
             borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -464,7 +472,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           onTap: () => Get.to(() => RabbitDetailScreen(rabbit: rabbit)),
           child: Padding(
             padding: EdgeInsets.symmetric(
-              horizontal: MediaQuery.of(context).size.width < 700 ? 16 : 24,
+              horizontal: context.isMobile ? 16 : 24,
               vertical: 18,
             ),
             child: Row(
@@ -489,7 +497,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                 ),
-                if (MediaQuery.of(context).size.width >= 700)
+                if (!context.isMobile)
                   Text(
                     '${rabbit.weightKg} kg',
                     style: Theme.of(context).textTheme.titleMedium,
@@ -554,7 +562,7 @@ class _MetricCard extends StatelessWidget {
         : Icons.trending_down_rounded;
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(context.isMobile ? 16 : 24),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -570,10 +578,13 @@ class _MetricCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             value,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              fontSize: 32,
-            ),
+            style: (context.isMobile
+                    ? Theme.of(context).textTheme.titleLarge
+                    : Theme.of(context).textTheme.headlineMedium)
+                ?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: context.isMobile ? null : 32,
+                ),
           ),
           const SizedBox(height: 12),
           Row(

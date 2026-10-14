@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/responsive.dart';
 import '../../models/rabbit.dart';
 import '../../controllers/rabbit_controller.dart';
 import 'rabbit_form_dialog.dart';
@@ -53,35 +54,47 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
+    final isTablet = ResponsiveBuildContext(context).isTablet;
 
-    return Container(
-      color: AppTheme.bgLight,
-      child: Column(
+    return Scaffold(
+      backgroundColor: AppTheme.bgLight,
+      floatingActionButton: context.isMobile
+          ? FloatingActionButton(
+              onPressed: () => _showRabbitForm(),
+              backgroundColor: AppTheme.accent,
+              foregroundColor: Colors.white,
+              child: const Icon(Icons.add_rounded),
+            )
+          : null,
+      body: Column(
         children: [
           // Header: buscador + botones
           Padding(
-            padding: const EdgeInsets.fromLTRB(32, 24, 32, 16),
-            child: isMobile
+            padding: EdgeInsets.fromLTRB(
+              context.isMobile
+                  ? 16
+                  : (isTablet ? 24 : 32),
+              context.isMobile
+                  ? 16
+                  : (isTablet ? 20 : 24),
+              context.isMobile
+                  ? 16
+                  : (isTablet ? 24 : 32),
+              context.isMobile ? 12 : 16,
+            ),
+            child: context.isMobile
                 ? Column(
                     children: [
                       _searchField(),
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          Expanded(
+                          Align(
+                            alignment: Alignment.centerLeft,
                             child: TextButton.icon(
                               onPressed: () {},
                               icon: const Icon(Icons.filter_list_rounded),
                               label: const Text('Filtrar'),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => _showRabbitForm(),
-                              icon: const Icon(Icons.add_rounded),
-                              label: const Text('Nuevo'),
                             ),
                           ),
                         ],
@@ -98,7 +111,7 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
                         label: const Text('Filtrar'),
                       ),
                       const SizedBox(width: 12),
-                      ElevatedButton.icon(
+                      FilledButton.icon(
                         onPressed: () => _showRabbitForm(),
                         icon: const Icon(Icons.add_rounded),
                         label: const Text('Nuevo Conejo'),
@@ -133,7 +146,13 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
               return RefreshIndicator(
                 onRefresh: rabbitController.loadAllRabbits,
                 child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: context.isMobile
+                        ? 16
+                        : (isTablet ? 24 : 32),
+                  ).copyWith(
+                    bottom: context.isMobile ? 80 : 0,
+                  ),
                   itemCount: rabbits.length,
                   itemBuilder: (context, index) {
                     final rabbit = rabbits[index];
@@ -198,7 +217,7 @@ class _RabbitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: context.isMobile ? 12 : 16),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -211,7 +230,11 @@ class _RabbitCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(
+              context.isMobile
+                  ? 12
+                  : (ResponsiveBuildContext(context).isTablet ? 16 : 20),
+            ),
             child: Row(
               children: [
                 CircleAvatar(
@@ -229,7 +252,11 @@ class _RabbitCard extends StatelessWidget {
                         )
                       : null,
                 ),
-                const SizedBox(width: 24),
+                SizedBox(
+                  width: context.isMobile
+                      ? 12
+                      : (ResponsiveBuildContext(context).isTablet ? 20 : 24),
+                ),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

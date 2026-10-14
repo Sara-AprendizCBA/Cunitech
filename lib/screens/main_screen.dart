@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
 import '../core/theme/theme_controller.dart';
+import '../core/utils/responsive.dart';
 
 import 'dashboard/dashboard_screen.dart';
 import 'rabbits/rabbits_screen.dart';
@@ -22,6 +23,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final List<Widget> _screens = [
     const DashboardScreen(),
@@ -142,28 +144,20 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 800;
+    final isMobile = context.isMobile;
+    final isTablet = context.isTablet;
+    final isDesktop = context.isDesktop;
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: AppTheme.bgLight,
-      bottomNavigationBar: isMobile
-          ? NavigationBar(
-              selectedIndex: _currentIndex,
-              onDestinationSelected: (index) => setState(() => _currentIndex = index),
-              destinations: _navItems
-                  .map(
-                    (item) => NavigationDestination(
-                      icon: Icon(item['icon'] as IconData),
-                      label: item['label'] as String,
-                    ),
-                  )
-                  .toList(),
-            )
+      drawer: (isMobile || isTablet)
+          ? Drawer(child: _buildNavigationDrawer(context))
           : null,
-      body: isMobile
+      body: !isDesktop
           ? Column(
               children: [
-                _buildMobileTopBar(context),
+                _buildMobileTopBar(context, isTablet: isTablet),
                 Expanded(child: _screens[_currentIndex]),
               ],
             )
@@ -329,16 +323,109 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Widget _buildMobileTopBar(BuildContext context) {
+  Widget _buildNavigationDrawer(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(context.adaptivePadding),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: AppTheme.borderLight),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.pets, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'CUNITECH',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: _navItems.length,
+              itemBuilder: (context, index) {
+                final item = _navItems[index];
+                final selected = index == _currentIndex;
+                return ListTile(
+                  leading: Icon(
+                    item['icon'] as IconData,
+                    color: selected
+                        ? AppTheme.accent
+                        : AppTheme.textSecondary,
+                  ),
+                  title: Text(item['label'] as String),
+                  selected: selected,
+                  selectedColor: AppTheme.accent,
+                  selectedTileColor: AppTheme.accentLight,
+                  onTap: () {
+                    setState(() => _currentIndex = index);
+                    Navigator.of(context).pop();
+                  },
+                );
+              },
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: AppTheme.borderLight)),
+            ),
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: AppTheme.accent.withValues(alpha: 0.1),
+                child: const Text(
+                  'AC',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+              title: const Text(
+                'Admin',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: const Text('Administrador'),
+              trailing: const Icon(Icons.arrow_drop_down),
+              onTap: _showProfileMenu,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileTopBar(
+    BuildContext context, {
+    required bool isTablet,
+  }) {
     return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: isTablet ? 72 : 64,
+      padding: EdgeInsets.symmetric(horizontal: context.adaptivePaddingH),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
       ),
       child: Row(
         children: [
+          IconButton(
+            tooltip: 'Abrir navegación',
+            icon: const Icon(Icons.menu_rounded),
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+          ),
           Expanded(
             child: Text(
               _navItems[_currentIndex]['label'] as String,

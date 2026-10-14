@@ -2,6 +2,7 @@
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/responsive.dart';
 
 enum UserRole {
   admin,
@@ -46,6 +47,7 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     final isWideScreen = MediaQuery.of(context).size.width > 1000;
+    final isTablet = ResponsiveBuildContext(context).isTablet;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFEFBF7),
@@ -136,8 +138,8 @@ class _AuthScreenState extends State<AuthScreen> {
               child: Center(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.symmetric(
-                    horizontal: isWideScreen ? 56 : 32,
-                    vertical: 40,
+                    horizontal: context.isMobile ? 16 : (isTablet ? 32 : 56),
+                    vertical: context.isMobile ? 24 : (isTablet ? 32 : 40),
                   ),
                   child: SizedBox(
                     width: 480,
@@ -147,16 +149,28 @@ class _AuthScreenState extends State<AuthScreen> {
                         // Logo Mobile
                         if (!isWideScreen) ...[
                           _buildMobileLogo(),
-                          const SizedBox(height: 48),
+                          SizedBox(
+                            height: context.isMobile
+                                ? 24
+                                : (isTablet ? 40 : 48),
+                          ),
                         ],
 
                         // Role Selector
-                        _buildRoleSelector(),
-                        const SizedBox(height: 48),
+                        _buildRoleSelector(context),
+                        SizedBox(
+                          height: context.isMobile
+                              ? 24
+                              : (isTablet ? 40 : 48),
+                        ),
 
                         // Tab Buttons
-                        _buildAuthTabs(),
-                        const SizedBox(height: 48),
+                        _buildAuthTabs(context),
+                        SizedBox(
+                          height: context.isMobile
+                              ? 24
+                              : (isTablet ? 40 : 48),
+                        ),
 
                         // Header Text
                         Text(
@@ -180,7 +194,11 @@ class _AuthScreenState extends State<AuthScreen> {
                             height: 1.5,
                           ),
                         ),
-                        const SizedBox(height: 44),
+                        SizedBox(
+                          height: context.isMobile
+                              ? 28
+                              : (isTablet ? 36 : 44),
+                        ),
 
                         // Error Message
                         if (_errorMessage != null)
@@ -200,7 +218,12 @@ class _AuthScreenState extends State<AuthScreen> {
                               ),
                             ),
                           ),
-                        if (_errorMessage != null) const SizedBox(height: 24),
+                        if (_errorMessage != null)
+                          SizedBox(
+                            height: context.isMobile
+                                ? 16
+                                : (isTablet ? 20 : 24),
+                          ),
 
                         // Form
                         Form(
@@ -214,7 +237,11 @@ class _AuthScreenState extends State<AuthScreen> {
                                   hint: "Granja Los Conejos",
                                   icon: Icons.business_rounded,
                                 ),
-                                const SizedBox(height: 20),
+                                SizedBox(
+                                  height: context.isMobile
+                                      ? 12
+                                      : (isTablet ? 16 : 20),
+                                ),
                               ],
                               _buildTextField(
                                 controller: _emailController,
@@ -223,7 +250,11 @@ class _AuthScreenState extends State<AuthScreen> {
                                 icon: Icons.email_rounded,
                                 keyboardType: TextInputType.emailAddress,
                               ),
-                              const SizedBox(height: 20),
+                              SizedBox(
+                                height: context.isMobile
+                                    ? 12
+                                    : (isTablet ? 16 : 20),
+                              ),
                               _buildPasswordField(
                                 controller: _passwordController,
                                 label: "Contraseña",
@@ -231,7 +262,11 @@ class _AuthScreenState extends State<AuthScreen> {
                                 onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
                               ),
                               if (!isLogin) ...[
-                                const SizedBox(height: 20),
+                                SizedBox(
+                                  height: context.isMobile
+                                      ? 12
+                                      : (isTablet ? 16 : 20),
+                                ),
                                 _buildPasswordField(
                                   controller: _confirmPasswordController,
                                   label: "Confirmar Contraseña",
@@ -239,13 +274,21 @@ class _AuthScreenState extends State<AuthScreen> {
                                   onToggle: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                                 ),
                               ],
-                              const SizedBox(height: 44),
+                              SizedBox(
+                                height: context.isMobile
+                                    ? 24
+                                    : (isTablet ? 32 : 44),
+                              ),
                               _buildAuthButton(),
                             ],
                           ),
                         ),
 
-                        const SizedBox(height: 24),
+                        SizedBox(
+                          height: context.isMobile
+                              ? 16
+                              : (isTablet ? 20 : 24),
+                        ),
                         GestureDetector(
                           onTap: () => setState(() => isLogin = !isLogin),
                           child: RichText(
@@ -410,7 +453,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   // ========== ROLE SELECTOR ==========
-  Widget _buildRoleSelector() {
+  Widget _buildRoleSelector(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -427,6 +470,7 @@ class _AuthScreenState extends State<AuthScreen> {
         Row(
           children: [
             _buildRoleCard(
+              context,
               UserRole.admin,
               "Administrador",
               Icons.shield_rounded,
@@ -434,6 +478,7 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
             const SizedBox(width: 12),
             _buildRoleCard(
+              context,
               UserRole.veterinario,
               "Veterinario",
               Icons.local_hospital_rounded,
@@ -441,6 +486,7 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
             const SizedBox(width: 12),
             _buildRoleCard(
+              context,
               UserRole.ayudante,
               "Ayudante",
               Icons.handshake_rounded,
@@ -452,14 +498,27 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Widget _buildRoleCard(UserRole role, String title, IconData icon, String subtitle) {
+  Widget _buildRoleCard(
+    BuildContext context,
+    UserRole role,
+    String title,
+    IconData icon,
+    String subtitle,
+  ) {
     final isSelected = selectedRole == role;
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => selectedRole = role),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+          padding: EdgeInsets.symmetric(
+            vertical: context.isMobile
+                ? 12
+                : (ResponsiveBuildContext(context).isTablet ? 16 : 18),
+            horizontal: context.isMobile
+                ? 8
+                : (ResponsiveBuildContext(context).isTablet ? 10 : 12),
+          ),
           decoration: BoxDecoration(
             color: isSelected
                 ? const Color(0xFF9E7C5E).withValues(alpha: 0.08)
@@ -525,7 +584,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   // ========== AUTH TABS ==========
-  Widget _buildAuthTabs() {
+  Widget _buildAuthTabs(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
@@ -534,20 +593,28 @@ class _AuthScreenState extends State<AuthScreen> {
       ),
       child: Row(
         children: [
-          _buildTabButton("Iniciar Sesión", isLogin),
-          _buildTabButton("Registrarse", !isLogin),
+          _buildTabButton(context, "Iniciar Sesión", isLogin),
+          _buildTabButton(context, "Registrarse", !isLogin),
         ],
       ),
     );
   }
 
-  Widget _buildTabButton(String text, bool selected) {
+  Widget _buildTabButton(
+    BuildContext context,
+    String text,
+    bool selected,
+  ) {
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => isLogin = !isLogin),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: EdgeInsets.symmetric(
+            vertical: context.isMobile
+                ? 10
+                : (ResponsiveBuildContext(context).isTablet ? 12 : 14),
+          ),
           decoration: BoxDecoration(
             color: selected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
