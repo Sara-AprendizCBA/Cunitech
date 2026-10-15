@@ -67,19 +67,9 @@ class RabbitController extends GetxController {
       error(null);
       final newRabbit = await _rabbitService.createRabbit(rabbit);
       rabbits.add(newRabbit);
-      Get.snackbar(
-        'Éxito',
-        'Conejo creado correctamente',
-        snackPosition: SnackPosition.TOP,
-      );
       return true;
     } catch (e) {
       error('Error creando conejo: $e');
-      Get.snackbar(
-        'Error',
-        'No se pudo crear el conejo: $e',
-        snackPosition: SnackPosition.TOP,
-      );
       print('Error: $e');
       return false;
     } finally {
@@ -97,19 +87,9 @@ class RabbitController extends GetxController {
       if (index != -1) {
         rabbits[index] = updated;
       }
-      Get.snackbar(
-        'Éxito',
-        'Conejo actualizado correctamente',
-        snackPosition: SnackPosition.TOP,
-      );
       return true;
     } catch (e) {
       error('Error actualizando conejo: $e');
-      Get.snackbar(
-        'Error',
-        'No se pudo actualizar el conejo',
-        snackPosition: SnackPosition.TOP,
-      );
       print('Error: $e');
       return false;
     } finally {
@@ -118,79 +98,25 @@ class RabbitController extends GetxController {
   }
 
   /// Eliminar conejo
-  /// Eliminar conejo
-  Future<void> deleteRabbit(String id) async {
+  Future<bool> deleteRabbit(String id) async {
     try {
       isLoading(true);
       error(null);
       await _rabbitService.deleteRabbit(id);
       rabbits.removeWhere((r) => r.id == id);
-      Get.snackbar(
-        'Éxito',
-        'Conejo eliminado correctamente',
-        snackPosition: SnackPosition.TOP,
-      );
+      return true;
     } on PostgrestException catch (e) {
       // 23503 = tiene registros relacionados (lactancia, reproducción,
       // tratamiento, o es madre/padre de otro conejo)
-      final msg = e.code == '23503'
-          ? 'No se puede eliminar: tiene registros relacionados'
-          : 'No se pudo eliminar el conejo';
       error('Error eliminando conejo: ${e.message}');
-      Get.snackbar('Error', msg, snackPosition: SnackPosition.TOP);
       print('Error: $e');
+      return false;
     } catch (e) {
       error('Error eliminando conejo: $e');
-      Get.snackbar(
-        'Error',
-        'No se pudo eliminar el conejo',
-        snackPosition: SnackPosition.TOP,
-      );
       print('Error: $e');
+      return false;
     } finally {
       isLoading(false);
-    }
-  }
-
-  /// Registrar alimentación
-  Future<void> recordFeeding(String rabbbitId) async {
-    try {
-      await _rabbitService.updateLastFeeding(rabbbitId);
-      // Recargar datos
-      await loadAllRabbits();
-      Get.snackbar(
-        'Éxito',
-        'Alimentación registrada',
-        snackPosition: SnackPosition.TOP,
-      );
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'No se pudo registrar la alimentación',
-        snackPosition: SnackPosition.TOP,
-      );
-      print('Error: $e');
-    }
-  }
-
-  /// Registrar tratamiento
-  Future<void> recordTreatment(String rabbbitId) async {
-    try {
-      await _rabbitService.updateLastTreatment(rabbbitId);
-      // Recargar datos
-      await loadAllRabbits();
-      Get.snackbar(
-        'Éxito',
-        'Tratamiento registrado',
-        snackPosition: SnackPosition.TOP,
-      );
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'No se pudo registrar el tratamiento',
-        snackPosition: SnackPosition.TOP,
-      );
-      print('Error: $e');
     }
   }
 

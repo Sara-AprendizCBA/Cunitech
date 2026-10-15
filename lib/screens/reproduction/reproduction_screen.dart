@@ -6,6 +6,7 @@ import '../../controllers/reproduccion_controller.dart';
 import '../../models/reproduccion.dart';
 import '../../services/notification_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/responsive.dart';
 
 class ReproductionScreen extends StatefulWidget {
@@ -516,13 +517,13 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
       ),
     );
     if (confirmed != true || !mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
     final ok = await reproController.confirmarPrenez(r);
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(ok ? 'Preñez confirmada' : 'Error al confirmar preñez'),
-      ),
-    );
+    if (!mounted) return;
+    if (ok) {
+      AppSnackbar.success(context, 'Preñez confirmada');
+    } else {
+      AppSnackbar.error(context, 'Error al confirmar preñez');
+    }
   }
 
   Future<void> _registerFailure(Reproduccion r) async {
@@ -544,11 +545,13 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
       ),
     );
     if (confirmed != true || !mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
     final ok = await reproController.registrarFalla(r);
-    messenger.showSnackBar(
-      SnackBar(content: Text(ok ? 'Falla registrada' : 'Error al registrar')),
-    );
+    if (!mounted) return;
+    if (ok) {
+      AppSnackbar.success(context, 'Falla registrada');
+    } else {
+      AppSnackbar.error(context, 'Error al registrar la falla');
+    }
   }
 
   Future<void> _showMatingDetails(Reproduccion r) async {
@@ -651,12 +654,13 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
 
     if (confirmed != true || !mounted) return;
 
-    final messenger = ScaffoldMessenger.of(context);
     final ok = await reproController.deleteReproduccion(r.idReproduccion!);
     if (!mounted) return;
-    messenger.showSnackBar(
-      SnackBar(content: Text(ok ? 'Monta eliminada' : 'Error al eliminar')),
-    );
+    if (ok) {
+      AppSnackbar.success(context, 'Monta eliminada');
+    } else {
+      AppSnackbar.error(context, 'Error al eliminar');
+    }
   }
 
   Widget _buildBirthsTab() {
@@ -1410,7 +1414,6 @@ class _MatingFormDialogState extends State<_MatingFormDialog> {
       _error = null;
     });
     final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     final item = Reproduccion(
       idReproduccion: widget.existing?.idReproduccion,
       idConeja: _doeId!,
@@ -1442,18 +1445,16 @@ class _MatingFormDialogState extends State<_MatingFormDialog> {
             existing.idReproduccion!,
             item,
           );
+    if (!mounted) return;
     if (ok) {
       navigator.pop();
     } else {
-      if (mounted) setState(() => _saving = false);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            existing == null
-                ? 'Error al registrar la monta'
-                : 'Error al actualizar la monta',
-          ),
-        ),
+      setState(() => _saving = false);
+      AppSnackbar.error(
+        context,
+        existing == null
+            ? 'Error al registrar la monta'
+            : 'Error al actualizar la monta',
       );
     }
   }
@@ -1586,7 +1587,6 @@ class _BirthFormDialogState extends State<_BirthFormDialog> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     final ok = await widget.controller.registrarParto(
       widget.reproduccion,
       fechaParto: _date,
@@ -1603,9 +1603,7 @@ class _BirthFormDialogState extends State<_BirthFormDialog> {
       navigator.pop();
     } else {
       setState(() => _saving = false);
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Error al registrar el parto')),
-      );
+      AppSnackbar.error(context, 'Error al registrar el parto');
     }
   }
 }

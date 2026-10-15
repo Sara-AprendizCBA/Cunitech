@@ -131,15 +131,6 @@ class RabbitService {
     }
   }
 
-  // Estas columnas no existen en la tabla conejo (no usar en la presentación)
-  Future<void> updateLastFeeding(String rabbitId) async {}
-  Future<void> updateLastTreatment(String rabbitId) async {}
-  Future<void> updateExpectedBirthDate(
-    String rabbitId,
-    DateTime expectedDate,
-  ) async {}
-  Future<void> incrementLitterCount(String rabbitId) async {}
-
   /// Estadísticas generales
   Future<Map<String, dynamic>> getStatistics() async {
     try {

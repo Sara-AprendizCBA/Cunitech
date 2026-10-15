@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/responsive.dart';
+import '../../core/utils/app_snackbar.dart';
 import '../../models/rabbit.dart';
 import '../../controllers/rabbit_controller.dart';
 import 'rabbit_form_dialog.dart';
@@ -189,9 +190,18 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
             child: const Text('Cancelar'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Get.back();
-              rabbitController.deleteRabbit(rabbit.id);
+              final ok = await rabbitController.deleteRabbit(rabbit.id);
+              if (!mounted) return;
+              if (ok) {
+                AppSnackbar.success(context, 'Conejo eliminado');
+              } else {
+                AppSnackbar.error(
+                  context,
+                  'No se puede eliminar: tiene registros relacionados',
+                );
+              }
             },
             child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
           ),

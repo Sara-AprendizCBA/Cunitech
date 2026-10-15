@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/app_snackbar.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -301,19 +302,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ListTile(
               title: const Text("Español"),
               onTap: () {
+                AppSnackbar.info(context, 'Idioma: Español');
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Idioma: Español")),
-                );
               },
             ),
             ListTile(
               title: const Text("English"),
               onTap: () {
+                AppSnackbar.info(context, 'Language: English');
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Language: English")),
-                );
               },
             ),
           ],
@@ -388,10 +385,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ElevatedButton(
             onPressed: () {
+              AppSnackbar.success(context, 'Contraseña actualizada');
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("✓ Contraseña actualizada")),
-              );
             },
             child: const Text("Actualizar"),
           ),
@@ -401,15 +396,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showActiveSessions() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Sesiones activas: 1 dispositivo")),
-    );
+    AppSnackbar.info(context, 'Sesiones activas: 1 dispositivo');
   }
 
   void _openPrivacyPolicy() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Abriendo política de privacidad...")),
-    );
+    AppSnackbar.info(context, 'Abriendo política de privacidad...');
   }
 
   void _reportBug() {
@@ -431,10 +422,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ElevatedButton(
             onPressed: () {
+              AppSnackbar.success(context, 'Reporte enviado');
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("✓ Reporte enviado")),
-              );
             },
             child: const Text("Enviar"),
           ),

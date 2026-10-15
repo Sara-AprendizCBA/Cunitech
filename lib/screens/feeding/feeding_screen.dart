@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 
 import '../../controllers/feeding_controller.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/responsive.dart';
 import '../../models/alimentacion_jaula.dart';
 
@@ -308,13 +309,13 @@ class _FeedingScreenState extends State<FeedingScreen> {
     );
     if (confirmado != true || !mounted) return;
 
-    final messenger = ScaffoldMessenger.of(context);
     final ok = await controller.deleteFeeding(item.id!);
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(ok ? 'Registro eliminado' : 'Error al eliminar'),
-      ),
-    );
+    if (!mounted) return;
+    if (ok) {
+      AppSnackbar.success(context, 'Registro eliminado');
+    } else {
+      AppSnackbar.error(context, 'Error al eliminar');
+    }
   }
 
   Future<void> _showFeedingForm({
@@ -702,7 +703,6 @@ class _FeedingFormDialogState extends State<_FeedingFormDialog> {
     setState(() => _saving = true);
 
     final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
 
     final existing = widget.existing;
     final item = AlimentacionJaula(
@@ -722,14 +722,14 @@ class _FeedingFormDialogState extends State<_FeedingFormDialog> {
         ? await widget.controller.createFeeding(item)
         : await widget.controller.updateFeeding(existing!.id!, item);
 
+    if (!mounted) return;
     if (!ok) {
-      if (mounted) setState(() => _saving = false);
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Error al guardar')),
-      );
+      setState(() => _saving = false);
+      AppSnackbar.error(context, 'Error al guardar');
       return;
     }
 
+    AppSnackbar.success(context, 'Registro de alimentación guardado');
     navigator.pop();
   }
 }

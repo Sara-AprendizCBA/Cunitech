@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:get/get.dart';
 import '../../controllers/reportes_controller.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/responsive.dart';
 import '../../models/meta_mensual.dart';
 import '../../services/pdf_service.dart';
@@ -189,8 +190,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
     if (_exportando) return;
     setState(() => _exportando = true);
 
-    final messenger = ScaffoldMessenger.of(context);
-
     try {
       await reportesController.loadAll();
 
@@ -198,17 +197,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
         controller: reportesController,
         nombreCriadero: 'Cunicultura CBA',
       );
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Reporte descargado')),
-      );
+      if (!mounted) return;
+      AppSnackbar.success(context, 'Reporte descargado');
     } catch (e) {
       debugPrint('Error exportar reporte: $e');
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Error al exportar: $e'),
-          backgroundColor: AppTheme.danger,
-        ),
-      );
+      if (mounted) AppSnackbar.error(context, 'Error al exportar: $e');
     } finally {
       if (mounted) setState(() => _exportando = false);
     }
@@ -746,13 +739,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
     if (confirmado != true || !context.mounted) return;
 
-    final messenger = ScaffoldMessenger.of(context);
     final ok = await reportesController.eliminarMeta(meta.id!);
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(ok ? 'Meta eliminada' : 'Error al eliminar'),
-      ),
-    );
+    if (!context.mounted) return;
+    if (ok) {
+      AppSnackbar.success(context, 'Meta eliminada');
+    } else {
+      AppSnackbar.error(context, 'Error al eliminar la meta');
+    }
   }
 
   Widget _buildRecentActivity(BuildContext context) {
@@ -987,7 +980,6 @@ class _MetaFormDialogState extends State<_MetaFormDialog> {
     setState(() => _saving = true);
 
     final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     final ahora = DateTime.now();
     final meta = MetaMensual(
       id: _existing?.id,
@@ -1006,15 +998,18 @@ class _MetaFormDialogState extends State<_MetaFormDialog> {
     final ok = existingId == null
         ? await widget.controller.crearMeta(meta)
         : await widget.controller.actualizarMeta(existingId, meta);
+    if (!mounted) return;
     if (ok) {
+      AppSnackbar.success(
+        context,
+        existingId == null ? 'Meta creada' : 'Meta actualizada',
+      );
       navigator.pop();
       return;
     }
 
-    if (mounted) setState(() => _saving = false);
-    messenger.showSnackBar(
-      const SnackBar(content: Text('Error al guardar la meta')),
-    );
+    setState(() => _saving = false);
+    AppSnackbar.error(context, 'Error al guardar la meta');
   }
 
   @override

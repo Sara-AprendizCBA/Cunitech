@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/utils/app_snackbar.dart';
 import '../../../controllers/dashboard_controller.dart';
 import '../../../controllers/rabbit_controller.dart';
 import '../../../models/rabbit.dart';
@@ -152,9 +153,7 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error al obtener la foto: $e')));
+        AppSnackbar.error(context, 'Error al obtener la foto: $e');
       }
     }
   }
@@ -202,12 +201,11 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_birthDate == null) {
-      Get.snackbar('Falta un dato', 'Selecciona la fecha de nacimiento');
+      AppSnackbar.warning(context, 'Selecciona la fecha de nacimiento');
       return;
     }
     setState(() => _saving = true);
     final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
 
     try {
       String? photoUrl = widget.rabbit?.photoUrl;
@@ -262,23 +260,18 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
         await Get.find<DashboardController>().loadDashboardData();
       }
 
-      navigator.pop();
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(_isEditing ? 'Conejo actualizado' : 'Conejo creado'),
-        ),
+      if (!mounted) return;
+      AppSnackbar.success(
+        context,
+        _isEditing ? 'Conejo actualizado' : 'Conejo creado',
       );
+      navigator.pop();
     } catch (e, st) {
       debugPrint('ERROR SUBMIT: $e');
       debugPrint('STACK: $st');
       if (mounted) {
         setState(() => _saving = false);
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            duration: const Duration(seconds: 6),
-          ),
-        );
+        AppSnackbar.error(context, 'Error al guardar: $e');
       }
     }
   }

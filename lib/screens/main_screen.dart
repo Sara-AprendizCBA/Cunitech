@@ -1,8 +1,10 @@
 // lib/screens/main_screen.dart
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/theme/app_theme.dart';
 import '../core/theme/theme_controller.dart';
+import '../core/utils/app_snackbar.dart';
 import '../core/utils/responsive.dart';
 
 import 'dashboard/dashboard_screen.dart';
@@ -43,15 +45,35 @@ class _MainScreenState extends State<MainScreen> {
 
   // ==================== CERRAR SESIÓN ====================
   Future<void> _logout() async {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Sesión cerrada correctamente"),
-        backgroundColor: const Color(0xFF9E7C5E),
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cerrar sesión'),
+        content: const Text(
+          '¿Estás seguro de que deseas cerrar sesión?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Cerrar sesión'),
+          ),
+        ],
       ),
     );
-    Navigator.of(context).pushReplacementNamed('/');
+    if (confirmado != true) return;
+
+    try {
+      await Supabase.instance.client.auth.signOut();
+      // El listener en main.dart detectará signedOut y navegará al login.
+    } catch (e) {
+      if (mounted) {
+        AppSnackbar.error(context, 'Error al cerrar sesión: $e');
+      }
+    }
   }
 
   // Ir a Perfil
@@ -129,9 +151,9 @@ class _MainScreenState extends State<MainScreen> {
             _goToSettings();
             break;
           case 'password':
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Función próximamente")),
-            );
+            if (mounted) {
+              AppSnackbar.info(context, "Función próximamente");
+            }
             break;
           case 'logout':
             _logout();
@@ -154,8 +176,11 @@ class _MainScreenState extends State<MainScreen> {
       drawer: (isMobile || isTablet)
           ? Drawer(child: _buildNavigationDrawer(context))
           : null,
-      body: !isDesktop
-          ? Column(
+      body: SafeArea(
+        top: !isDesktop,
+        bottom: false,
+        child: !isDesktop
+            ? Column(
               children: [
                 _buildMobileTopBar(context, isTablet: isTablet),
                 Expanded(child: _screens[_currentIndex]),
@@ -319,6 +344,7 @@ class _MainScreenState extends State<MainScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

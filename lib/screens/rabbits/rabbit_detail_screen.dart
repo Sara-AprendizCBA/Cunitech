@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/responsive.dart';
+import '../../core/utils/app_snackbar.dart';
 import '../../models/rabbit.dart';
 import '../../controllers/rabbit_controller.dart';
 import 'rabbit_form_dialog.dart';
@@ -112,10 +113,11 @@ class RabbitDetailScreen extends StatelessWidget {
 
   Widget _buildInfoColumn(BuildContext context, Rabbit rabbit) {
     final sections = <Widget>[
-      _buildIdentitySection(rabbit),
-      _buildBirthSection(rabbit),
-      if (rabbit.gender == 'Hembra') _buildReproductiveSection(rabbit),
-      _buildHealthSection(rabbit),
+      _buildIdentitySection(context, rabbit),
+      _buildBirthSection(context, rabbit),
+      if (rabbit.gender == 'Hembra')
+        _buildReproductiveSection(context, rabbit),
+      _buildHealthSection(context, rabbit),
     ];
 
     return Column(
@@ -134,9 +136,10 @@ class RabbitDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildIdentitySection(Rabbit rabbit) {
+  Widget _buildIdentitySection(BuildContext context, Rabbit rabbit) {
     final name = rabbit.name?.trim();
     return _sectionCard(
+      context,
       icon: Icons.pets_rounded,
       title: 'IDENTIDAD',
       rows: [
@@ -147,8 +150,9 @@ class RabbitDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBirthSection(Rabbit rabbit) {
+  Widget _buildBirthSection(BuildContext context, Rabbit rabbit) {
     return _sectionCard(
+      context,
       icon: Icons.cake_rounded,
       title: 'NACIMIENTO Y PESO',
       rows: [
@@ -162,7 +166,7 @@ class RabbitDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildReproductiveSection(Rabbit rabbit) {
+  Widget _buildReproductiveSection(BuildContext context, Rabbit rabbit) {
     final rows = <Widget>[
       _infoRow(
         'Estado reproductivo',
@@ -191,14 +195,16 @@ class RabbitDetailScreen extends StatelessWidget {
     ];
 
     return _sectionCard(
+      context,
       icon: Icons.favorite_rounded,
       title: 'ESTADO REPRODUCTIVO',
       rows: rows,
     );
   }
 
-  Widget _buildHealthSection(Rabbit rabbit) {
+  Widget _buildHealthSection(BuildContext context, Rabbit rabbit) {
     return _sectionCard(
+      context,
       icon: Icons.health_and_safety_rounded,
       title: 'SALUD',
       rows: [
@@ -213,7 +219,8 @@ class RabbitDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _sectionCard({
+  Widget _sectionCard(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required List<Widget> rows,
@@ -438,10 +445,17 @@ class RabbitDetailScreen extends StatelessWidget {
     if (confirmed != true || !context.mounted) return;
 
     final controller = Get.find<RabbitController>();
-    await controller.deleteRabbit(rabbit.id);
-    if (context.mounted &&
-        !controller.rabbits.any((item) => item.id == rabbit.id)) {
+    final ok = await controller.deleteRabbit(rabbit.id);
+    if (!context.mounted) return;
+
+    if (ok) {
+      AppSnackbar.success(context, 'Conejo eliminado');
       Navigator.of(context).pop();
+    } else {
+      AppSnackbar.error(
+        context,
+        'No se puede eliminar: tiene registros relacionados',
+      );
     }
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/app_snackbar.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -222,12 +223,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _saveProfile() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("✓ Perfil actualizado correctamente"),
-        backgroundColor: const Color(0xFF9E7C5E),
-      ),
-    );
+    AppSnackbar.success(context, 'Perfil actualizado correctamente');
     Navigator.pop(context);
   }
 }

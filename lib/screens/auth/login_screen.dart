@@ -1,14 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/responsive.dart';
-
-enum UserRole {
-  admin,
-  ayudante,
-  veterinario,
-}
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -30,10 +25,39 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  UserRole selectedRole = UserRole.admin;
   String? _errorMessage;
 
+  int _totalConejos = 0;
+  double _tasaSupervivencia = 0;
+  int _partosMes = 0;
+  bool _statsLoaded = false;
+
   final SupabaseClient _supabase = Supabase.instance.client;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarStats();
+  }
+
+  Future<void> _cargarStats() async {
+    try {
+      final stats = await _supabase.rpc('get_public_stats');
+
+      if (mounted) {
+        setState(() {
+          _totalConejos = (stats['total_conejo'] as num?)?.toInt() ?? 0;
+          _partosMes = (stats['total_partos_mes'] as num?)?.toInt() ?? 0;
+          _tasaSupervivencia =
+              (stats['tasa_supervivencia'] as num?)?.toDouble() ?? 0;
+          _statsLoaded = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error cargando stats: $e');
+      if (mounted) setState(() => _statsLoaded = true);
+    }
+  }
 
   @override
   void dispose() {
@@ -46,84 +70,81 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWideScreen = MediaQuery.of(context).size.width > 1000;
-    final isTablet = ResponsiveBuildContext(context).isTablet;
+    final isMobile = context.isMobile;
+    final isTablet = context.isTablet;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFEFBF7),
+      backgroundColor: AppTheme.bgLight,
       body: Row(
         children: [
           // ========== HERO IMAGE - LEFT SIDE ==========
-          if (isWideScreen)
+          if (!isMobile)
             Expanded(
-              flex: 5,
+              flex: isTablet ? 4 : 5,
               child: Container(
                 decoration: BoxDecoration(
                   image: DecorationImage(
                     image: const AssetImage('assets/images/Conejos.jpg'),
                     fit: BoxFit.cover,
-                    colorFilter: ColorFilter.mode(
-                      Colors.black.withValues(alpha: 0.3),
-                      BlendMode.multiply,
-                    ),
                   ),
                 ),
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                       colors: [
-                        const Color(0xFFD4A574).withValues(alpha: 0.2),
-                        const Color(0xFF1E40AF).withValues(alpha: 0.4),
+                        Colors.black.withValues(alpha: 0.55),
+                        Colors.black.withValues(alpha: 0.75),
                       ],
                     ),
                   ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          const Color(0xFFD4A574).withValues(alpha: 0.2),
-                          const Color(0xFF9E7C5E).withValues(alpha: 0.4),
-                        ],
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 64, vertical: 80),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Logo + Brand Name
-                          _buildHeroLogo(),
-                          const SizedBox(height: 64),
-                          Text(
-                            "Gestión Profesional\nde Criaderos",
+                  child: Padding(
+                    padding: EdgeInsets.all(isTablet ? 32 : 64),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Logo + Brand Name
+                        _buildHeroLogo(),
+                        const SizedBox(height: 72),
+                        Text.rich(
+                          TextSpan(
                             style: TextStyle(
-                              fontSize: 52,
+                              fontSize: isTablet ? 32 : 48,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
-                              letterSpacing: -1.2,
-                              height: 1.2,
-                              fontFamily: 'Merriweather',
+                              letterSpacing: -0.5,
+                              height: 1.1,
                             ),
-                          ).animate().fadeIn(duration: 600.ms),
-                          const SizedBox(height: 32),
-                          Text(
-                            "Controla tu granja con precisión veterinaria, eficiencia operativa y tranquilidad profesional.",
+                            children: [
+                              const TextSpan(text: 'Gestión Profesional\nde '),
+                              TextSpan(
+                                text: 'Criaderos',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.85),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ).animate().fadeIn(duration: 600.ms),
+                        const SizedBox(height: 32),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 400),
+                          child: Text(
+                            'Controla tu granja con precisión veterinaria, '
+                            'eficiencia operativa y tranquilidad profesional.',
                             style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 15,
+                              color: Colors.white.withValues(alpha: 0.75),
                               height: 1.6,
                               fontWeight: FontWeight.w400,
                             ),
-                          ).animate().fadeIn(duration: 800.ms, delay: 100.ms),
-                          const SizedBox(height: 80),
-                          _buildHeroStats(),
-                        ],
-                      ),
+                          ),
+                        ).animate().fadeIn(duration: 800.ms, delay: 100.ms),
+                        const SizedBox(height: 80),
+                        _buildHeroStats(),
+                      ],
                     ),
                   ),
                 ),
@@ -132,14 +153,14 @@ class _AuthScreenState extends State<AuthScreen> {
 
           // ========== LOGIN CARD - RIGHT SIDE ==========
           Expanded(
-            flex: isWideScreen ? 5 : 10,
+            flex: isMobile ? 10 : (isTablet ? 6 : 5),
             child: Container(
-              color: const Color(0xFFFEFBF7),
+              color: AppTheme.bgLight,
               child: Center(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.symmetric(
-                    horizontal: context.isMobile ? 16 : (isTablet ? 32 : 56),
-                    vertical: context.isMobile ? 24 : (isTablet ? 32 : 40),
+                    horizontal: isMobile ? 16 : (isTablet ? 32 : 64),
+                    vertical: isMobile ? 24 : 48,
                   ),
                   child: SizedBox(
                     width: 480,
@@ -147,38 +168,24 @@ class _AuthScreenState extends State<AuthScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         // Logo Mobile
-                        if (!isWideScreen) ...[
+                        if (isMobile) ...[
                           _buildMobileLogo(),
-                          SizedBox(
-                            height: context.isMobile
-                                ? 24
-                                : (isTablet ? 40 : 48),
-                          ),
+                          const SizedBox(height: 24),
                         ],
-
-                        // Role Selector
-                        _buildRoleSelector(context),
-                        SizedBox(
-                          height: context.isMobile
-                              ? 24
-                              : (isTablet ? 40 : 48),
-                        ),
 
                         // Tab Buttons
                         _buildAuthTabs(context),
-                        SizedBox(
-                          height: context.isMobile
-                              ? 24
-                              : (isTablet ? 40 : 48),
-                        ),
+                        const SizedBox(height: 40),
 
                         // Header Text
                         Text(
-                          isLogin ? "Bienvenido de nuevo" : "Crear nueva cuenta",
+                          isLogin
+                              ? "Bienvenido de nuevo"
+                              : "Crear nueva cuenta",
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF9E7C5E),
+                            color: AppTheme.textPrimary,
                             letterSpacing: -0.8,
                           ),
                         ),
@@ -189,41 +196,45 @@ class _AuthScreenState extends State<AuthScreen> {
                               : "Registra tu granja y empieza ahora",
                           style: TextStyle(
                             fontSize: 16,
-                            color: const Color(0xFF5A5A5A),
+                            color: AppTheme.textSecondary,
                             fontWeight: FontWeight.w400,
                             height: 1.5,
                           ),
                         ),
-                        SizedBox(
-                          height: context.isMobile
-                              ? 28
-                              : (isTablet ? 36 : 44),
-                        ),
+                        const SizedBox(height: 32),
 
                         // Error Message
                         if (_errorMessage != null)
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFEE2E2),
-                              border: Border.all(color: const Color(0xFFFCA5A5)),
+                              color: const Color(0xFFFFF1F1),
+                              border: Border.all(
+                                color: const Color(0xFFF3B5B5),
+                              ),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Text(
-                              _errorMessage!,
-                              style: const TextStyle(
-                                color: Color(0xFFDD5624),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: Color(0xFFB54747),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    _errorMessage!,
+                                    style: const TextStyle(
+                                      color: Color(0xFF9B3434),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        if (_errorMessage != null)
-                          SizedBox(
-                            height: context.isMobile
-                                ? 16
-                                : (isTablet ? 20 : 24),
-                          ),
+                        if (_errorMessage != null) const SizedBox(height: 16),
 
                         // Form
                         Form(
@@ -237,11 +248,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   hint: "Granja Los Conejos",
                                   icon: Icons.business_rounded,
                                 ),
-                                SizedBox(
-                                  height: context.isMobile
-                                      ? 12
-                                      : (isTablet ? 16 : 20),
-                                ),
+                                const SizedBox(height: 20),
                               ],
                               _buildTextField(
                                 controller: _emailController,
@@ -250,50 +257,41 @@ class _AuthScreenState extends State<AuthScreen> {
                                 icon: Icons.email_rounded,
                                 keyboardType: TextInputType.emailAddress,
                               ),
-                              SizedBox(
-                                height: context.isMobile
-                                    ? 12
-                                    : (isTablet ? 16 : 20),
-                              ),
+                              const SizedBox(height: 20),
                               _buildPasswordField(
                                 controller: _passwordController,
                                 label: "Contraseña",
                                 obscure: _obscurePassword,
-                                onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
+                                onToggle: () => setState(
+                                  () => _obscurePassword = !_obscurePassword,
+                                ),
                               ),
                               if (!isLogin) ...[
-                                SizedBox(
-                                  height: context.isMobile
-                                      ? 12
-                                      : (isTablet ? 16 : 20),
-                                ),
+                                const SizedBox(height: 20),
                                 _buildPasswordField(
                                   controller: _confirmPasswordController,
                                   label: "Confirmar Contraseña",
                                   obscure: _obscureConfirmPassword,
-                                  onToggle: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                                  onToggle: () => setState(
+                                    () => _obscureConfirmPassword =
+                                        !_obscureConfirmPassword,
+                                  ),
                                 ),
                               ],
-                              SizedBox(
-                                height: context.isMobile
-                                    ? 24
-                                    : (isTablet ? 32 : 44),
-                              ),
+                              const SizedBox(height: 28),
                               _buildAuthButton(),
                             ],
                           ),
                         ),
 
-                        SizedBox(
-                          height: context.isMobile
-                              ? 16
-                              : (isTablet ? 20 : 24),
-                        ),
+                        const SizedBox(height: 20),
                         GestureDetector(
                           onTap: () => setState(() => isLogin = !isLogin),
                           child: RichText(
                             text: TextSpan(
-                              text: isLogin ? "¿No tienes cuenta? " : "¿Ya tienes cuenta? ",
+                              text: isLogin
+                                  ? "¿No tienes cuenta? "
+                                  : "¿Ya tienes cuenta? ",
                               style: TextStyle(
                                 fontSize: 14,
                                 color: const Color(0xFF5A5A5A),
@@ -301,7 +299,9 @@ class _AuthScreenState extends State<AuthScreen> {
                               ),
                               children: [
                                 TextSpan(
-                                  text: isLogin ? "Regístrate" : "Inicia sesión",
+                                  text: isLogin
+                                      ? "Regístrate"
+                                      : "Inicia sesión",
                                   style: TextStyle(
                                     color: const Color(0xFFe0e27c),
                                     fontWeight: FontWeight.w600,
@@ -331,8 +331,8 @@ class _AuthScreenState extends State<AuthScreen> {
         Row(
           children: [
             Container(
-              width: 56,
-              height: 56,
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(14),
@@ -340,11 +340,18 @@ class _AuthScreenState extends State<AuthScreen> {
                   color: Colors.white.withValues(alpha: 0.3),
                   width: 2,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
               child: const Icon(
                 Icons.pets_rounded,
                 color: Colors.white,
-                size: 32,
+                size: 40,
               ),
             ),
             const SizedBox(width: 16),
@@ -354,7 +361,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 Text(
                   'CUNITECH',
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: 22,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                     fontFamily: 'Merriweather',
@@ -417,168 +424,68 @@ class _AuthScreenState extends State<AuthScreen> {
   // ========== HERO STATS ==========
   Widget _buildHeroStats() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildStatItem("142+", "Conejos"),
-        _buildStatItem("98.4%", "Supervivencia"),
-        _buildStatItem("31", "Partos/mes"),
+        Expanded(
+          child: _buildStatItem(
+            _statsLoaded ? '$_totalConejos' : '—',
+            'Conejos',
+          ),
+        ),
+        Container(
+          width: 1,
+          height: 40,
+          color: Colors.white.withValues(alpha: 0.15),
+        ),
+        const SizedBox(width: 24),
+        Expanded(
+          child: _buildStatItem(
+            _statsLoaded ? '${_tasaSupervivencia.toStringAsFixed(1)}%' : '—',
+            'Supervivencia',
+          ),
+        ),
+        Container(
+          width: 1,
+          height: 40,
+          color: Colors.white.withValues(alpha: 0.15),
+        ),
+        const SizedBox(width: 24),
+        Expanded(
+          child: _buildStatItem(
+            _statsLoaded ? '$_partosMes' : '—',
+            'Partos/mes',
+          ),
+        ),
       ],
     ).animate().fadeIn(duration: 1000.ms, delay: 200.ms);
   }
 
   Widget _buildStatItem(String value, String label) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.white.withValues(alpha: 0.8),
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ========== ROLE SELECTOR ==========
-  Widget _buildRoleSelector(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          "¿Cuál es tu rol?",
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF5A5A5A),
-            letterSpacing: 0.3,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            _buildRoleCard(
-              context,
-              UserRole.admin,
-              "Administrador",
-              Icons.shield_rounded,
-              "Control\ntotal",
+    return AnimatedOpacity(
+      opacity: _statsLoaded ? 1.0 : 0.5,
+      duration: const Duration(milliseconds: 500),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              letterSpacing: -0.5,
             ),
-            const SizedBox(width: 12),
-            _buildRoleCard(
-              context,
-              UserRole.veterinario,
-              "Veterinario",
-              Icons.local_hospital_rounded,
-              "Salud",
-            ),
-            const SizedBox(width: 12),
-            _buildRoleCard(
-              context,
-              UserRole.ayudante,
-              "Ayudante",
-              Icons.handshake_rounded,
-              "Operaciones",
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRoleCard(
-    BuildContext context,
-    UserRole role,
-    String title,
-    IconData icon,
-    String subtitle,
-  ) {
-    final isSelected = selectedRole == role;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => selectedRole = role),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          padding: EdgeInsets.symmetric(
-            vertical: context.isMobile
-                ? 12
-                : (ResponsiveBuildContext(context).isTablet ? 16 : 18),
-            horizontal: context.isMobile
-                ? 8
-                : (ResponsiveBuildContext(context).isTablet ? 10 : 12),
           ),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? const Color(0xFF9E7C5E).withValues(alpha: 0.08)
-                : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected
-                  ? const Color(0xFF9E7C5E)
-                  : const Color(0xFFE5E7EB),
-              width: isSelected ? 2 : 1.5,
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.85),
+              fontWeight: FontWeight.w400,
+              letterSpacing: 0.5,
             ),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFF9E7C5E).withValues(alpha: 0.12),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
           ),
-          child: Column(
-            children: [
-              Icon(
-                icon,
-                size: 28,
-                color: isSelected
-                    ? const Color(0xFF829A12)
-                    : const Color(0xFFCBD5E1),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                  fontSize: 12,
-                  color: isSelected
-                      ? const Color(0xFF9E7C5E)
-                      : const Color(0xFF2C2C2C),
-                ),
-              ),
-              Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: const Color(0xFF9CA3AF),
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -586,10 +493,10 @@ class _AuthScreenState extends State<AuthScreen> {
   // ========== AUTH TABS ==========
   Widget _buildAuthTabs(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(14),
+        color: const Color(0xFFF5F3F0),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
@@ -600,29 +507,23 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Widget _buildTabButton(
-    BuildContext context,
-    String text,
-    bool selected,
-  ) {
+  Widget _buildTabButton(BuildContext context, String text, bool selected) {
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => isLogin = !isLogin),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           padding: EdgeInsets.symmetric(
-            vertical: context.isMobile
-                ? 10
-                : (ResponsiveBuildContext(context).isTablet ? 12 : 14),
+            vertical: context.isMobile ? 10 : (context.isTablet ? 12 : 14),
           ),
           decoration: BoxDecoration(
             color: selected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             boxShadow: selected
                 ? [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 4,
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
                   ]
@@ -634,9 +535,7 @@ class _AuthScreenState extends State<AuthScreen> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: selected
-                  ? const Color(0xFFe0e27c)
-                  : const Color(0xFFCBD5E1),
+              color: selected ? AppTheme.accent : AppTheme.textSecondary,
             ),
           ),
         ),
@@ -681,40 +580,38 @@ class _AuthScreenState extends State<AuthScreen> {
             keyboardType: keyboardType,
             decoration: InputDecoration(
               hintText: hint,
-              prefixIcon: Icon(icon, color: const Color(0xFFCBD5E1), size: 20),
+              prefixIcon: Icon(
+                icon,
+                color: AppTheme.accent.withValues(alpha: 0.8),
+                size: 20,
+              ),
               filled: true,
-              fillColor: const Color(0xFFF5F3F0),
+              fillColor: Colors.white,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: Color(0xFFE5E7EB),
-                  width: 1.5,
-                ),
+                borderSide: const BorderSide(color: Color(0xFFE5E0DA)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: Color(0xFFE5E7EB),
-                  width: 1.5,
-                ),
+                borderSide: const BorderSide(color: Color(0xFFE5E0DA)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
-                  color: Color(0xFFe0e27c),
-                  width: 2,
+                  color: AppTheme.accent,
+                  width: 1.5,
                 ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 18,
+              ),
               hintStyle: const TextStyle(
                 color: Color(0xFFD1D5DB),
                 fontSize: 14,
               ),
             ),
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF1F2937),
-            ),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF1F2937)),
           ),
         ),
       ],
@@ -757,48 +654,48 @@ class _AuthScreenState extends State<AuthScreen> {
             obscureText: obscure,
             decoration: InputDecoration(
               hintText: "••••••••",
-              prefixIcon: const Icon(Icons.lock_rounded, color: Color(0xFFCBD5E1), size: 20),
+              prefixIcon: Icon(
+                Icons.lock_rounded,
+                color: AppTheme.accent.withValues(alpha: 0.8),
+                size: 20,
+              ),
               suffixIcon: GestureDetector(
                 onTap: onToggle,
                 child: Icon(
-                  obscure ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                  obscure
+                      ? Icons.visibility_off_rounded
+                      : Icons.visibility_rounded,
                   color: const Color(0xFF9CA3AF),
                   size: 20,
                 ),
               ),
               filled: true,
-              fillColor: const Color(0xFFF5F3F0),
+              fillColor: Colors.white,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: Color(0xFFE5E7EB),
-                  width: 1.5,
-                ),
+                borderSide: const BorderSide(color: Color(0xFFE5E0DA)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: Color(0xFFE5E7EB),
-                  width: 1.5,
-                ),
+                borderSide: const BorderSide(color: Color(0xFFE5E0DA)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
-                  color: Color(0xFFe0e27c),
-                  width: 2,
+                  color: AppTheme.accent,
+                  width: 1.5,
                 ),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 18,
+              ),
               hintStyle: const TextStyle(
                 color: Color(0xFFD1D5DB),
                 fontSize: 14,
               ),
             ),
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF1F2937),
-            ),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF1F2937)),
           ),
         ),
       ],
@@ -807,68 +704,52 @@ class _AuthScreenState extends State<AuthScreen> {
 
   // ========== AUTH BUTTON ==========
   Widget _buildAuthButton() {
-    return GestureDetector(
-      onTap: _isLoading ? null : _authenticate,
-      child: Container(
-        width: double.infinity,
-        height: 56,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: _isLoading
-                ? [
-                    const Color(0xFF9E7C5E).withValues(alpha: 0.6),
-                    const Color(0xFF1D7563).withValues(alpha: 0.6),
-                  ]
-                : [
-                    const Color(0xFF9E7C5E),
-                    const Color(0xFF9E7C5E),
-                  ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF9E7C5E).withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+    return ElevatedButton(
+      onPressed: _isLoading ? null : _authenticate,
+      style: ButtonStyle(
+        minimumSize: const WidgetStatePropertyAll(Size(double.infinity, 56)),
+        backgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return AppTheme.accent.withValues(alpha: 0.6);
+          }
+          if (states.contains(WidgetState.pressed)) {
+            return const Color(0xFF80634B);
+          }
+          return AppTheme.accent;
+        }),
+        foregroundColor: const WidgetStatePropertyAll(Colors.white),
+        elevation: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.hovered) ? 6 : 0,
         ),
-        child: Center(
-          child: _isLoading
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : Text(
-                  isLogin ? "INICIAR SESIÓN" : "CREAR CUENTA",
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
-                  ),
-                ),
+        shadowColor: WidgetStatePropertyAll(
+          AppTheme.accent.withValues(alpha: 0.3),
+        ),
+        overlayColor: WidgetStatePropertyAll(
+          Colors.white.withValues(alpha: 0.1),
+        ),
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
+      child: _isLoading
+          ? const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            )
+          : Text(
+              isLogin ? 'INICIAR SESIÓN' : 'CREAR CUENTA',
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+                letterSpacing: 1.2,
+              ),
+            ),
     );
-  }
-
-  // ========== HELPER: Convierte el enum de rol a String para Supabase ==========
-  String _rolToString(UserRole role) {
-    switch (role) {
-      case UserRole.admin:
-        return 'admin';
-      case UserRole.veterinario:
-        return 'veterinario';
-      case UserRole.ayudante:
-        return 'ayudante';
-    }
   }
 
   // ==================== AUTENTICACIÓN CON SUPABASE (VIA EDGE FUNCTION) ====================
@@ -880,7 +761,8 @@ class _AuthScreenState extends State<AuthScreen> {
       _errorMessage = null;
     });
 
-    if (!isLogin && _passwordController.text != _confirmPasswordController.text) {
+    if (!isLogin &&
+        _passwordController.text != _confirmPasswordController.text) {
       setState(() {
         _errorMessage = "Las contraseñas no coinciden";
         _isLoading = false;
@@ -938,7 +820,6 @@ class _AuthScreenState extends State<AuthScreen> {
         await _supabase.from('usuario').insert({
           'id_usuario': user.id,
           'nombre': _nameController.text.trim(),
-          'rol': _rolToString(selectedRole),
         });
 
         // Supabase puede iniciar sesión automáticamente al registrarse.
@@ -953,24 +834,18 @@ class _AuthScreenState extends State<AuthScreen> {
             _passwordController.clear();
             _confirmPasswordController.clear();
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Cuenta creada correctamente. Inicia sesión."),
-              backgroundColor: AppTheme.accent,
-              duration: Duration(milliseconds: 1800),
-            ),
+          AppSnackbar.success(
+            context,
+            'Cuenta creada correctamente. Inicia sesión.',
           );
         }
         return;
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isLogin ? "Bienvenido" : "Cuenta creada correctamente"),
-            backgroundColor: AppTheme.accent,
-            duration: const Duration(milliseconds: 1200),
-          ),
+        AppSnackbar.success(
+          context,
+          isLogin ? 'Bienvenido' : 'Cuenta creada correctamente',
         );
         Navigator.of(context).pushReplacementNamed('/main');
       }
