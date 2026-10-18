@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'controllers/auth_controller.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
 import 'screens/auth/login_screen.dart';
@@ -17,6 +18,9 @@ void main() async {
     anonKey: 'sb_publishable_hP_Ad03CQHCSgpyaw1p4mw_GapuC8RJ',
   );
   // ============================================================
+
+  // Controlador global de autenticación (rol del usuario actual)
+  Get.put(AuthController(), permanent: true);
 
   // Inicializar servicios globales
   await NotificationService().init();
@@ -40,6 +44,11 @@ class _CunitechAppState extends State<CunitechApp> {
   @override
   void initState() {
     super.initState();
+
+    // Controlador de tema accesible desde cualquier pantalla vía GetX
+    if (!Get.isRegistered<ThemeController>()) {
+      Get.put<ThemeController>(_themeController, permanent: true);
+    }
 
     // ==================== AUTH STATE LISTENER ====================
     supabase.auth.onAuthStateChange.listen((data) {
@@ -103,7 +112,7 @@ class _CunitechAppState extends State<CunitechApp> {
                 textScaler: TextScaler.noScaling,
               ),
               child: Container(
-                color: AppTheme.lightTheme.scaffoldBackgroundColor,
+                color: Theme.of(context).scaffoldBackgroundColor,
                 child: child!,
               ),
             );
