@@ -47,10 +47,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppTheme.bgLight,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.bgLight,
+        backgroundColor: theme.scaffoldBackgroundColor,
         title: const Text('Gestión de Usuarios'),
       ),
       body: SafeArea(
@@ -61,6 +62,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             Expanded(child: _buildList(context)),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showCreateUserDialog,
+        icon: const Icon(Icons.person_add_alt_1),
+        label: const Text('Crear usuario'),
       ),
     );
   }
@@ -354,6 +360,17 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     }
   }
 
+  Future<void> _showCreateUserDialog() async {
+    final created = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _CreateUserDialog(),
+    );
+    if (created == true && mounted) {
+      AppSnackbar.success(context, 'Invitación enviada y usuario creado');
+    }
+  }
+
   Future<void> _confirmDelete(UserProfile user) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -425,6 +442,169 @@ class _StatChip extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _CreateUserDialog extends StatefulWidget {
+  const _CreateUserDialog();
+
+  @override
+  State<_CreateUserDialog> createState() => _CreateUserDialogState();
+}
+
+class _CreateUserDialogState extends State<_CreateUserDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _nombreCtrl = TextEditingController();
+  final _personalCtrl = TextEditingController();
+  final _laboralCtrl = TextEditingController();
+  final _userController = Get.find<UserController>();
+
+  static final _emailRe = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+  static const List<String> _rolesPermitidos = [
+    'admin',
+    'veterinario',
+    'ayudante',
+  ];
+
+  String _rol = 'ayudante';
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _nombreCtrl.dispose();
+    _personalCtrl.dispose();
+    _laboralCtrl.dispose();
+    super.dispose();
+  }
+
+  String _rolLabel(String rol) => switch (rol) {
+        'admin' => 'Admin',
+        'veterinario' => 'Veterinario',
+        _ => 'Ayudante',
+      };
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+    final ok = await _userController.crearUsuario(
+      personalEmail: _personalCtrl.text.trim(),
+      laboralEmail: _laboralCtrl.text.trim(),
+      nombre: _nombreCtrl.text.trim(),
+      rol: _rol,
+    );
+    if (!mounted) return;
+    if (ok) {
+      Navigator.of(context).pop(true);
+    } else {
+      setState(() => _saving = false);
+      AppSnackbar.error(
+        context,
+        'No se pudo crear el usuario. Revisa los datos y tu conexión.',
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Crear usuario'),
+      content: SizedBox(
+        width: 420,
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _nombreCtrl,
+                  enabled: !_saving,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre completo',
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Ingresa el nombre'
+                      : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _personalCtrl,
+                  enabled: !_saving,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Correo personal',
+                    hintText: 'donde recibirá la invitación',
+                    prefixIcon: Icon(Icons.email_outlined),
+                  ),
+                  validator: (v) {
+                    final value = v?.trim() ?? '';
+                    if (value.isEmpty) return 'Ingresa el correo personal';
+                    if (!_emailRe.hasMatch(value)) return 'Correo no válido';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _laboralCtrl,
+                  enabled: !_saving,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Correo laboral (login)',
+                    prefixIcon: Icon(Icons.badge_outlined),
+                  ),
+                  validator: (v) {
+                    final value = v?.trim() ?? '';
+                    if (value.isEmpty) return 'Ingresa el correo laboral';
+                    if (!_emailRe.hasMatch(value)) return 'Correo no válido';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _rol,
+                  decoration: const InputDecoration(
+                    labelText: 'Rol',
+                    prefixIcon: Icon(Icons.workspace_premium_outlined),
+                  ),
+                  items: _rolesPermitidos
+                      .map(
+                        (r) => DropdownMenuItem(
+                          value: r,
+                          child: Text(_rolLabel(r)),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: _saving
+                      ? null
+                      : (value) {
+                          if (value != null) setState(() => _rol = value);
+                        },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.of(context).pop(false),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton.icon(
+          onPressed: _saving ? null : _submit,
+          icon: _saving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.person_add_alt_1),
+          label: Text(_saving ? 'Creando...' : 'Crear y enviar'),
+        ),
+      ],
     );
   }
 }
