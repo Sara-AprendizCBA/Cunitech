@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -6,8 +7,11 @@ import 'package:get/get.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/responsive.dart';
+import '../../controllers/auth_controller.dart';
 import '../../controllers/dashboard_controller.dart';
+import '../../models/insight_recomendacion.dart';
 import '../../models/rabbit.dart';
+import '../../services/insight_service.dart';
 import '../rabbits/rabbit_detail_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -17,15 +21,29 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>
+    with SingleTickerProviderStateMixin {
   final DashboardController dashboardController = Get.put(
     DashboardController(),
   );
+  final AuthController authController = Get.find<AuthController>();
+  final InsightService _insightService = InsightService();
+  late Future<InsightPanel> _insightFuture;
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseAnimation;
   Timer? _clockTimer;
 
   @override
   void initState() {
     super.initState();
+    _insightFuture = _insightService.obtenerRecomendaciones();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 0.85, end: 1.2).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
     _clockTimer = Timer.periodic(const Duration(minutes: 1), (_) {
       if (mounted) setState(() {});
     });
@@ -33,6 +51,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
+    _pulseController.dispose();
     _clockTimer?.cancel();
     super.dispose();
   }
@@ -41,10 +60,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final isMobile = context.isMobile;
     final isTablet = ResponsiveBuildContext(context).isTablet;
+    final isDesktop = !isMobile && !isTablet;
 
-    return Container(
-      color: AppTheme.bgLight,
-      child: Obx(() {
+    return Scaffold(
+      backgroundColor: AppTheme.bgLight,
+      floatingActionButton: _buildInsightFab(context, isDesktop),
+      body: Obx(() {
         // Este Obx principal controla el loading y todo el contenido
         if (dashboardController.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
@@ -57,10 +78,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               _buildHeader(context),
               SizedBox(height: isMobile ? 24 : (isTablet ? 32 : 40)),
-              _sectionLabel(context, 'RESUMEN GENERAL'),
-              SizedBox(height: isMobile ? 12 : 16),
-              _buildMetricsGrid(context),
-              SizedBox(height: isMobile ? 24 : (isTablet ? 32 : 40)),
+              if (!authController.isAyudante) ...[
+                _sectionLabel(context, 'RESUMEN GENERAL'),
+                SizedBox(height: isMobile ? 12 : 16),
+                _buildMetricsGrid(context),
+                SizedBox(height: isMobile ? 24 : (isTablet ? 32 : 40)),
+              ],
               _buildNextBirthBanner(context),
               SizedBox(height: isMobile ? 24 : (isTablet ? 32 : 40)),
               _buildTableHeader(context),
@@ -159,13 +182,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _getMetricTrend(int i) {
     switch (i) {
       case 0:
-        return '+12 este mes';
+        return '${dashboardController.rabbitsThisMonth.value} este mes';
       case 1:
-        return '+8%';
+        return '${dashboardController.birthsThisMonth.value} este mes';
       case 2:
-        return '−2%';
+        return '${dashboardController.liveKitsTotal.value} crías vivas';
       case 3:
-        return 'Sin cambio';
+        return dashboardController.alerts.value == 0
+            ? 'Todo al día'
+            : 'Requieren atención';
       default:
         return '';
     }
@@ -178,9 +203,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 1:
         return true;
       case 2:
-        return false;
-      case 3:
         return null;
+      case 3:
+        return dashboardController.alerts.value == 0 ? null : false;
       default:
         return null;
     }
@@ -516,6 +541,378 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ).animate().fadeIn(delay: (80 + 40 * index).ms);
   }
 
+  // ── Orbe flotante (FAB) de CUNITECH Insight ────────────
+  Widget _buildInsightFab(BuildContext context, bool isDesktop) {
+    return Container(
+      margin: EdgeInsets.only(
+        right: isDesktop ? 10 : 2,
+        bottom: isDesktop ? 10 : 2,
+      ),
+      child: ScaleTransition(
+        scale: _pulseAnimation,
+        child: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppTheme.accent, Color(0xFF6B5339)],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.accent.withValues(alpha: 0.45),
+                blurRadius: 18,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () => _showHolographicPanel(context),
+              child: const Icon(
+                Icons.auto_awesome,
+                color: Color(0xFFFDF6EC),
+                size: 28,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Panel holográfico (diálogo con efecto de vidrio) ───
+  void _showHolographicPanel(BuildContext context) {
+    showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'CUNITECH Insight',
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (dialogContext, _, __) {
+        return SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Material(
+                  color: Colors.transparent,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2C2C2C).withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                          border: Border.all(
+                            color: AppTheme.accentLight.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.auto_awesome,
+                                  color: AppTheme.accentLight,
+                                  size: 24,
+                                ),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
+                                    'CUNITECH Insight',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  tooltip: 'Cerrar',
+                                  onPressed: () =>
+                                      Navigator.of(dialogContext).pop(),
+                                  icon: const Icon(
+                                    Icons.close_rounded,
+                                    color: AppTheme.accentLight,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Flexible(
+                              child: SingleChildScrollView(
+                                child: FutureBuilder<InsightPanel>(
+                                  future: _insightFuture,
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return _buildPanelLoading();
+                                    }
+                                    final panel =
+                                        snapshot.data ?? InsightPanel.empty;
+                                    if (panel.isEmpty) {
+                                      return const Text(
+                                        'No hay recomendaciones por ahora.',
+                                        style: TextStyle(
+                                          color: Color(0xFFE8DED0),
+                                        ),
+                                      );
+                                    }
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        if (panel
+                                            .diagnosticoGeneral
+                                            .isNotEmpty) ...[
+                                          _panelSectionLabel('DIAGNÓSTICO GENERAL'),
+                                          const SizedBox(height: 8),
+                                          _buildDiagnostico(
+                                            panel.diagnosticoGeneral,
+                                          ),
+                                          const SizedBox(height: 18),
+                                        ],
+                                        _panelSectionLabel('RECOMENDACIONES'),
+                                        const SizedBox(height: 4),
+                                        for (final r in panel.recomendaciones)
+                                          _buildPanelItem(context, r),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, _, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+        );
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.92, end: 1).animate(curved),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _panelSectionLabel(String text) => Text(
+    text,
+    style: TextStyle(
+      color: AppTheme.accentLight.withValues(alpha: 0.9),
+      fontSize: 11,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 1,
+    ),
+  );
+
+  Widget _buildPanelLoading() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 16),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              color: AppTheme.accent,
+            ),
+          ),
+          SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              'Analizando tu criadero...',
+              style: TextStyle(color: Color(0xFFE8DED0)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiagnostico(String texto) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.accentLight.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        border: Border.all(color: AppTheme.accentLight.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.insights_rounded,
+            color: AppTheme.accentLight,
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              texto,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPanelItem(BuildContext context, InsightRecomendacion r) {
+    final color = _priorityColor(r.prioridad);
+
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        border: Border.all(color: color.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+            ),
+            child: Icon(_priorityIcon(r.prioridad), color: color, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        r.titulo,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        _priorityLabel(r.prioridad),
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  r.detalle,
+                  style: const TextStyle(
+                    color: Color(0xFFE8DED0),
+                    fontSize: 13,
+                    height: 1.35,
+                  ),
+                ),
+                if (r.impacto.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'Impacto esperado: ${r.impacto}',
+                    style: const TextStyle(
+                      color: AppTheme.accentLight,
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _priorityColor(String prioridad) {
+    switch (prioridad) {
+      case 'alta':
+        return const Color(0xFFD98C82);
+      case 'baja':
+        return const Color(0xFF9DCBA2);
+      case 'media':
+      default:
+        return const Color(0xFFE0C27A);
+    }
+  }
+
+  IconData _priorityIcon(String prioridad) {
+    switch (prioridad) {
+      case 'alta':
+        return Icons.warning_amber_rounded;
+      case 'baja':
+        return Icons.check_circle_rounded;
+      case 'media':
+      default:
+        return Icons.bolt_rounded;
+    }
+  }
+
+  String _priorityLabel(String prioridad) {
+    switch (prioridad) {
+      case 'alta':
+        return 'ALTA';
+      case 'baja':
+        return 'BAJA';
+      case 'media':
+      default:
+        return 'MEDIA';
+    }
+  }
+
   String _getMonthName(int month) {
     const months = [
       'ene',
@@ -617,7 +1014,7 @@ class _RabbitAvatar extends StatelessWidget {
     width: 48,
     height: 48,
     decoration: BoxDecoration(
-      color: color.withOpacity(0.08),
+      color: color.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(14),
     ),
     alignment: Alignment.center,

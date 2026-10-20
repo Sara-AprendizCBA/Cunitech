@@ -5,6 +5,7 @@ import '../../models/mating.dart';
 import '../../controllers/reproduccion_controller.dart';
 import '../../models/reproduccion.dart';
 import '../../services/notification_service.dart';
+import '../../controllers/auth_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/responsive.dart';
@@ -18,6 +19,7 @@ class ReproductionScreen extends StatefulWidget {
 
 class _ReproductionScreenState extends State<ReproductionScreen> {
   final reproController = Get.put(ReproduccionController());
+  final authController = Get.find<AuthController>();
   String _matingFilter = 'Todas';
 
   @override
@@ -39,7 +41,8 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
             builder: (innerContext, _) => Scaffold(
               backgroundColor: AppTheme.bgLight,
               floatingActionButton: innerContext.isMobile &&
-                      tabController.index == 0
+                      tabController.index == 0 &&
+                      !authController.isVeterinario
                   ? FloatingActionButton(
                       onPressed: () => _showMatingForm(),
                       backgroundColor: AppTheme.accent,
@@ -188,7 +191,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
                   color: const Color(0xFFFFEDD5),
                   foreground: const Color(0xFF9A3412),
                 ),
-              if (!context.isMobile)
+              if (!context.isMobile && !authController.isVeterinario)
                 FilledButton.icon(
                   onPressed: () => _showMatingForm(),
                   icon: const Icon(Icons.add_rounded),
@@ -375,50 +378,61 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              OutlinedButton.icon(
-                onPressed: () => _showMatingForm(existing: r),
-                icon: const Icon(Icons.edit_rounded, size: 16),
-                label: const Text('Editar'),
-              ),
-              OutlinedButton.icon(
-                onPressed: () => _confirmDeleteMating(r),
-                icon: const Icon(Icons.delete_outline_rounded, size: 16),
-                label: const Text('Eliminar'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.danger,
-                  side: BorderSide(
-                    color: AppTheme.danger.withValues(alpha: 0.3),
+              if (!authController.isVeterinario) ...[
+                OutlinedButton.icon(
+                  onPressed: () => _showMatingForm(existing: r),
+                  icon: const Icon(Icons.edit_rounded, size: 16),
+                  label: const Text('Editar'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _confirmDeleteMating(r),
+                  icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                  label: const Text('Eliminar'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.danger,
+                    side: BorderSide(
+                      color: AppTheme.danger.withValues(alpha: 0.3),
+                    ),
                   ),
                 ),
-              ),
+              ],
               if (r.estado == 'Servida' && r.tocaPalpacion) ...[
-                FilledButton(
-                  onPressed: () => _confirmPregnancy(r),
-                  child: const Text('Confirmar preñez'),
-                ),
-                OutlinedButton(
-                  onPressed: () => _registerFailure(r),
-                  child: const Text('Registrar falla'),
-                ),
-              ] else if (r.estado == 'Servida')
+                if (!authController.isVeterinario) ...[
+                  FilledButton(
+                    onPressed: () => _confirmPregnancy(r),
+                    child: const Text('Confirmar preñez'),
+                  ),
+                  OutlinedButton(
+                    onPressed: () => _registerFailure(r),
+                    child: const Text('Registrar falla'),
+                  ),
+                ] else
+                  OutlinedButton(
+                    onPressed: () => _showMatingDetails(r),
+                    child: const Text('Ver detalles'),
+                  ),
+              ] else if (r.estado == 'Servida') ...[
                 OutlinedButton(
                   onPressed: () => _showMatingDetails(r),
                   child: const Text('Ver detalles'),
-                )
-              else if (r.estado == 'Gestante')
-                FilledButton(
-                  onPressed: () => _showBirthForm(r),
-                  child: const Text('Registrar parto'),
-                )
-              else if (r.estado == 'Fallida')
-                OutlinedButton.icon(
-                  onPressed: () => _showMatingForm(
-                    initialDoeId: r.idConeja,
-                    initialBuckId: r.idConejopadre,
-                  ),
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('Reintentar'),
                 ),
+              ] else if (r.estado == 'Gestante') ...[
+                if (authController.isAdmin || authController.isAyudante)
+                  FilledButton(
+                    onPressed: () => _showBirthForm(r),
+                    child: const Text('Registrar parto'),
+                  ),
+              ] else if (r.estado == 'Fallida') ...[
+                if (!authController.isVeterinario)
+                  OutlinedButton.icon(
+                    onPressed: () => _showMatingForm(
+                      initialDoeId: r.idConeja,
+                      initialBuckId: r.idConejopadre,
+                    ),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Reintentar'),
+                  ),
+              ],
             ],
           ),
         ],

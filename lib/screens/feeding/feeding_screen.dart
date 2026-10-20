@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 
 import '../../controllers/feeding_controller.dart';
+import '../../controllers/auth_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/responsive.dart';
@@ -19,6 +20,7 @@ class FeedingScreen extends StatefulWidget {
 
 class _FeedingScreenState extends State<FeedingScreen> {
   final FeedingController controller = Get.put(FeedingController());
+  final AuthController authController = Get.find<AuthController>();
   Timer? _clockTimer;
   bool _historialExpandido = false;
 
@@ -40,7 +42,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.bgLight,
-      floatingActionButton: context.isMobile
+      floatingActionButton: context.isMobile && !authController.isVeterinario
           ? FloatingActionButton.extended(
               onPressed: controller.jaulasDelUsuario.isEmpty
                   ? null
@@ -91,7 +93,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
               SizedBox(height: context.isMobile ? 12 : 16),
               _buildHistoryList(),
               SizedBox(height: context.adaptivePadding),
-              if (!context.isMobile)
+              if (!context.isMobile && !authController.isVeterinario)
                 SizedBox(
                 width: double.infinity,
                 height: 60,
@@ -226,7 +228,9 @@ class _FeedingScreenState extends State<FeedingScreen> {
         return _CageFeedingTile(
           jaula: jaula,
           registro: registro,
-          onTap: () => _showFeedingForm(jaula: jaula, existing: registro),
+          onTap: authController.isVeterinario
+              ? null
+              : () => _showFeedingForm(jaula: jaula, existing: registro),
         );
       }).toList(),
     );
@@ -251,6 +255,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
         ...visibles.map(
           (item) => _HistoryCard(
             item: item,
+            canEdit: !authController.isVeterinario,
             onDelete: () => _confirmarEliminarRegistro(item),
           ),
         ),
@@ -344,7 +349,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
 class _CageFeedingTile extends StatelessWidget {
   final String jaula;
   final AlimentacionJaula? registro;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _CageFeedingTile({
     required this.jaula,
@@ -407,10 +412,12 @@ class _PercentageBadge extends StatelessWidget {
 class _HistoryCard extends StatelessWidget {
   final AlimentacionJaula item;
   final VoidCallback onDelete;
+  final bool canEdit;
 
   const _HistoryCard({
     required this.item,
     required this.onDelete,
+    this.canEdit = true,
   });
 
   @override
@@ -436,17 +443,19 @@ class _HistoryCard extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            IconButton(
-              tooltip: 'Eliminar registro',
-              onPressed: onDelete,
-              icon: const Icon(
-                Icons.delete_outline_rounded,
-                size: 20,
-                color: AppTheme.danger,
+            if (canEdit) ...[
+              IconButton(
+                tooltip: 'Eliminar registro',
+                onPressed: onDelete,
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  size: 20,
+                  color: AppTheme.danger,
+                ),
+                visualDensity: VisualDensity.compact,
               ),
-              visualDensity: VisualDensity.compact,
-            ),
-            const SizedBox(width: 4),
+              const SizedBox(width: 4),
+            ],
             _StatusBadge(status: item.estado, color: color),
           ],
         ),

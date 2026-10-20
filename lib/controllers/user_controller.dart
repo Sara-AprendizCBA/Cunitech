@@ -79,23 +79,20 @@ class UserController extends GetxController {
   }
 
   Future<bool> crearUsuario({
-    required String email,
-    required String password,
+    required String personalEmail,
+    required String laboralEmail,
     required String nombre,
     required String rol,
   }) async {
     try {
       final ok = await _service.createUser(
-        email: email,
-        password: password,
+        personalEmail: personalEmail,
+        laboralEmail: laboralEmail,
         nombre: nombre,
         rol: rol,
       );
       if (ok) await loadAll();
       return ok;
-    } on UnimplementedError {
-      // La Edge Function aún no está lista
-      return false;
     } catch (e) {
       logger.e('Error crearUsuario', error: e);
       return false;

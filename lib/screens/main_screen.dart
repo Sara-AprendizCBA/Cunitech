@@ -13,6 +13,7 @@ import 'dashboard/dashboard_screen.dart';
 import 'rabbits/rabbits_screen.dart';
 import 'feeding/feeding_screen.dart';
 import 'reproduction/reproduction_screen.dart';
+import 'salud/salud_screen.dart';
 import 'reports/reports_screen.dart';
 import 'admin/user_management_screen.dart';
 import 'auth/profile_screen.dart';
@@ -56,6 +57,12 @@ class _MainScreenState extends State<MainScreen> {
       'icon': Icons.favorite_border,
       'label': 'Reproducción',
       'screen': const ReproductionScreen(),
+      'roles': const ['admin', 'veterinario', 'ayudante'],
+    },
+    {
+      'icon': Icons.health_and_safety_outlined,
+      'label': 'Salud',
+      'screen': const SaludScreen(),
       'roles': const ['admin', 'veterinario', 'ayudante'],
     },
     {

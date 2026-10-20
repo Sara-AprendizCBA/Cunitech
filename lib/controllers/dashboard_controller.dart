@@ -24,6 +24,12 @@ class DashboardController extends GetxController {
   final overduePregnancies = <Rabbit>[].obs;
   final isLoading = false.obs;
 
+  // Valores derivados para las tarjetas del resumen
+  final rabbitsThisMonth = 0.obs;
+  final birthsThisMonth = 0.obs;
+  final liveKitsTotal = 0.obs;
+  final healthAlerts = 0.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -81,7 +87,7 @@ class DashboardController extends GetxController {
       updateDashboardMetrics();
       await generateAlerts();
     } catch (e) {
-      print('Error loading dashboard data: $e');
+      debugPrint('Error loading dashboard data: $e');
     } finally {
       isLoading(false);
     }
@@ -142,6 +148,31 @@ class DashboardController extends GetxController {
       survivalRate.value = '0%';
     }
 
+    // Conejos registrados este mes
+    final now = DateTime.now();
+    rabbitsThisMonth.value = rabbitController.rabbits
+        .where((r) =>
+            r.registrationDate.year == now.year &&
+            r.registrationDate.month == now.month)
+        .length;
+
+    // Partos de este mes
+    birthsThisMonth.value = birthController.births
+        .where((b) =>
+            b.birthDate.year == now.year && b.birthDate.month == now.month)
+        .length;
+
+    // Crías vivas acumuladas
+    liveKitsTotal.value = birthController.births.fold<int>(
+      0,
+      (sum, b) => sum + b.liveKits,
+    );
+
+    // Conejos en tratamiento
+    healthAlerts.value = rabbitController.rabbits
+        .where((r) => r.healthStatus.contains('Tratamiento'))
+        .length;
+
     // Próximos partos esperados
     final upcoming = rabbitController.rabbits
         .where(
@@ -192,6 +223,27 @@ class DashboardController extends GetxController {
       '${date.month.toString().padLeft(2, '0')}-'
       '${date.day.toString().padLeft(2, '0')}';
 
+  /// Cuenta los tratamientos con fecha de próxima aplicación en los próximos
+  /// 7 días. Devuelve 0 si la tabla `tratamientos` aún no existe.
+  Future<int> _countTratamientosProximos(
+    String userId,
+    DateTime today,
+    DateTime inSevenDays,
+  ) async {
+    try {
+      final rows = await Supabase.instance.client
+          .from('tratamientos')
+          .select('id')
+          .eq('user_id', userId)
+          .gte('fecha_proxima', _dateOnly(today))
+          .lte('fecha_proxima', _dateOnly(inSevenDays));
+      return (rows as List).length;
+    } catch (e) {
+      debugPrint('Error counting upcoming treatments: $e');
+      return 0;
+    }
+  }
+
   /// Consultar alertas reproductivas con fechas de calendario locales
   Future<void> loadAlerts({int baseAlertCount = 0}) async {
     final supabase = Supabase.instance.client;
@@ -208,6 +260,12 @@ class DashboardController extends GetxController {
     final inSevenDays = today.add(const Duration(days: 7));
     final overdueCutoff = today.subtract(const Duration(days: 33));
     final palpationCutoff = today.subtract(const Duration(days: 14));
+
+    final tratamientosProximos = await _countTratamientosProximos(
+      userId,
+      today,
+      inSevenDays,
+    );
 
     try {
       final upcomingBirths = await supabase
@@ -249,10 +307,11 @@ class DashboardController extends GetxController {
           upcomingBirths.length +
           birthsToday.length +
           overdueRows.length +
-          unpalpatedBirths.length;
+          unpalpatedBirths.length +
+          tratamientosProximos;
     } catch (e) {
       debugPrint('Error loading reproductive alerts: $e');
-      alerts.value = baseAlertCount;
+      alerts.value = baseAlertCount + tratamientosProximos;
     }
   }
 

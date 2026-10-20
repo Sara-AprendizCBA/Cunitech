@@ -6,6 +6,7 @@ import '../../core/utils/responsive.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../models/rabbit.dart';
 import '../../controllers/rabbit_controller.dart';
+import '../../controllers/auth_controller.dart';
 import 'rabbit_form_dialog.dart';
 
 // ─────────────────────────────────────────────
@@ -386,36 +387,38 @@ class RabbitDetailScreen extends StatelessWidget {
       elevation: 0,
       foregroundColor: AppTheme.textPrimary,
       actions: [
-        ElevatedButton.icon(
-          onPressed: () => Get.dialog(
-            RabbitFormDialog(rabbit: rabbit),
-            barrierDismissible: false,
-          ),
-          icon: const Icon(Icons.edit),
-          label: const Text('Editar'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.accent,
-            foregroundColor: Colors.white,
-          ),
-        ),
-        PopupMenuButton<String>(
-          tooltip: 'Más acciones',
-          onSelected: (action) {
-            if (action == 'delete') _confirmDelete(context, rabbit);
-          },
-          itemBuilder: (context) => const [
-            PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(Icons.delete_outline, color: AppTheme.danger),
-                  SizedBox(width: 8),
-                  Text('Eliminar conejo'),
-                ],
-              ),
+        if (Get.find<AuthController>().isAdmin) ...[
+          ElevatedButton.icon(
+            onPressed: () => Get.dialog(
+              RabbitFormDialog(rabbit: rabbit),
+              barrierDismissible: false,
             ),
-          ],
-        ),
+            icon: const Icon(Icons.edit),
+            label: const Text('Editar'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.accent,
+              foregroundColor: Colors.white,
+            ),
+          ),
+          PopupMenuButton<String>(
+            tooltip: 'Más acciones',
+            onSelected: (action) {
+              if (action == 'delete') _confirmDelete(context, rabbit);
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_outline, color: AppTheme.danger),
+                    SizedBox(width: 8),
+                    Text('Eliminar conejo'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
         const SizedBox(width: 8),
       ],
     );

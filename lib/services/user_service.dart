@@ -64,18 +64,30 @@ class UserService {
 
   /// Crea un usuario nuevo.
   ///
-  /// TODO: implementar con una Supabase Edge Function ('create-user') que
-  /// use la service_role key para crear el registro en auth.users y luego
-  /// insertar en la tabla `usuario`. No puede hacerse desde el cliente
-  /// porque requiere privilegios de admin de Auth.
+  /// Invoca la Edge Function `create-user`, que crea el registro en
+  /// auth.users, inserta la fila en `usuario` y envía un correo al correo
+  /// personal con el enlace para crear la contraseña. La función valida que
+  /// el solicitante tenga rol `admin`.
   Future<bool> createUser({
-    required String email,
-    required String password,
+    required String personalEmail,
+    required String laboralEmail,
     required String nombre,
     required String rol,
   }) async {
-    throw UnimplementedError(
-      'createUser requiere la Edge Function "create-user"',
-    );
+    try {
+      final response = await supabase.functions.invoke(
+        'create-user',
+        body: {
+          'personalEmail': personalEmail,
+          'laboralEmail': laboralEmail,
+          'nombre': nombre,
+          'rol': rol,
+        },
+      );
+      return response.status == 200;
+    } catch (e) {
+      logger.e('Error createUser', error: e);
+      return false;
+    }
   }
 }

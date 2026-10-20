@@ -5,6 +5,7 @@ import '../../core/utils/responsive.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../models/rabbit.dart';
 import '../../controllers/rabbit_controller.dart';
+import '../../controllers/auth_controller.dart';
 import 'rabbit_form_dialog.dart';
 import 'rabbit_detail_screen.dart';
 
@@ -17,6 +18,7 @@ class RabbitsScreen extends StatefulWidget {
 
 class _RabbitsScreenState extends State<RabbitsScreen> {
   late final RabbitController rabbitController;
+  final AuthController authController = Get.find<AuthController>();
   late TextEditingController _searchController;
 
   @override
@@ -59,7 +61,7 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.bgLight,
-      floatingActionButton: context.isMobile
+      floatingActionButton: context.isMobile && authController.isAdmin
           ? FloatingActionButton(
               onPressed: () => _showRabbitForm(),
               backgroundColor: AppTheme.accent,
@@ -111,12 +113,14 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
                         icon: const Icon(Icons.filter_list_rounded),
                         label: const Text('Filtrar'),
                       ),
-                      const SizedBox(width: 12),
-                      FilledButton.icon(
-                        onPressed: () => _showRabbitForm(),
-                        icon: const Icon(Icons.add_rounded),
-                        label: const Text('Nuevo Conejo'),
-                      ),
+                      if (authController.isAdmin) ...[
+                        const SizedBox(width: 12),
+                        FilledButton.icon(
+                          onPressed: () => _showRabbitForm(),
+                          icon: const Icon(Icons.add_rounded),
+                          label: const Text('Nuevo Conejo'),
+                        ),
+                      ],
                     ],
                   ),
           ),
@@ -139,7 +143,7 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
                     _searchController.text.isEmpty
                         ? 'No hay conejos registrados'
                         : 'No se encontraron resultados',
-                    style: TextStyle(color: AppTheme.textSecondary),
+                    style: const TextStyle(color: AppTheme.textSecondary),
                   ),
                 );
               }
@@ -167,6 +171,7 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
                       ),
                       onEdit: () => _showRabbitForm(rabbit: rabbit),
                       onDelete: () => _showDeleteDialog(rabbit),
+                      canManage: authController.isAdmin,
                     );
                   },
                 ),
@@ -216,12 +221,14 @@ class _RabbitCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
+  final bool canManage;
 
   const _RabbitCard({
     required this.rabbit,
     required this.onTap,
     required this.onDelete,
     required this.onEdit,
+    this.canManage = false,
   });
 
   @override
@@ -309,34 +316,38 @@ class _RabbitCard extends StatelessWidget {
                   ),
                 ),
                 // Menú de tres puntos (onSelected, NO onTap)
-                PopupMenuButton<String>(
-                  onSelected: (value) {
-                    if (value == 'edit') onEdit();
-                    if (value == 'delete') onDelete();
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit),
-                          SizedBox(width: 8),
-                          Text('Editar'),
-                        ],
+                if (canManage)
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'edit') onEdit();
+                      if (value == 'delete') onDelete();
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit),
+                            SizedBox(width: 8),
+                            Text('Editar'),
+                          ],
+                        ),
                       ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete, color: Colors.red),
-                          SizedBox(width: 8),
-                          Text('Eliminar', style: TextStyle(color: Colors.red)),
-                        ],
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text(
+                              'Eliminar',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
               ],
             ),
           ),
