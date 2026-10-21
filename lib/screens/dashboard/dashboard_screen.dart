@@ -12,6 +12,7 @@ import '../../controllers/dashboard_controller.dart';
 import '../../models/insight_recomendacion.dart';
 import '../../models/rabbit.dart';
 import '../../services/insight_service.dart';
+import '../chat/voice_assistant_screen.dart';
 import '../rabbits/rabbit_detail_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -64,7 +65,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Scaffold(
       backgroundColor: AppTheme.bgLight,
-      floatingActionButton: _buildInsightFab(context, isDesktop),
+      floatingActionButton: null,
       body: Obx(() {
         // Este Obx principal controla el loading y todo el contenido
         if (dashboardController.isLoading.value) {

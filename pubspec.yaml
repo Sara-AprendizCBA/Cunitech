@@ -47,8 +47,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   supabase_flutter: ^2.12.4
   logger: ^2.4.0
-  image_picker: ^1.1.2
+  image_picker: ^1.2.4
   shared_preferences: ^2.5.0
+  speech_to_text: ^7.5.0
+  flutter_tts: ^4.2.5
 
 dev_dependencies:
   flutter_test:

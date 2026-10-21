@@ -1,13 +1,17 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
+import '../../../controllers/auth_controller.dart';
 import '../../../controllers/dashboard_controller.dart';
 import '../../../controllers/rabbit_controller.dart';
 import '../../../models/rabbit.dart';
 import '../../../services/rabbit_service.dart';
+import '../vision/vision_screen.dart';
 
 /// Formulario para CREAR (rabbit == null) y EDITAR (rabbit != null)
 class RabbitFormDialog extends StatefulWidget {
@@ -41,13 +45,22 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
   int? _motherId;
   int? _fatherId;
   XFile? _pickedPhoto;
+  Uint8List? _aiPhotoBytes;
   String? _currentPhotoUrl;
   bool _isActiveBreeder = true;
   bool _saving = false;
+  bool _chapetaAutoGenerada = false;
+  String? _ultimaChapetaSugerida;
 
   late final Future<List<Map<String, dynamic>>> _farmsFuture;
 
   bool get _isEditing => widget.rabbit != null;
+
+  /// La identificación con IA es solo para Admin y Veterinario (no Operario).
+  bool get _canUseAI {
+    final auth = Get.find<AuthController>();
+    return auth.isAdmin || auth.isVeterinario;
+  }
 
   @override
   void initState() {
@@ -80,6 +93,11 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
     _motherId = r?.motherId;
     _fatherId = r?.fatherId;
 
+    // Autogenerar la chapeta cuando cambie la raza y el campo esté vacío.
+    _breedCtrl.addListener(_onBreedChanged);
+    // Si el usuario edita la chapeta manualmente, dejar de autogenerarla.
+    _chapetaCtrl.addListener(_onChapetaChanged);
+
     // Cargar granjas desde la tabla `granja`
     _farmsFuture = Supabase.instance.client
         .from('granja')
@@ -90,6 +108,8 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
 
   @override
   void dispose() {
+    _breedCtrl.removeListener(_onBreedChanged);
+    _chapetaCtrl.removeListener(_onChapetaChanged);
     _breedCtrl.dispose();
     _weightCtrl.dispose();
     _originCtrl.dispose();
@@ -149,7 +169,10 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
         imageQuality: 80,
       );
       if (file != null && mounted) {
-        setState(() => _pickedPhoto = file);
+        setState(() {
+          _pickedPhoto = file;
+          _aiPhotoBytes = null;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -170,6 +193,9 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
         },
       );
     }
+    if (_aiPhotoBytes != null) {
+      return Image.memory(_aiPhotoBytes!, fit: BoxFit.cover);
+    }
     if (_currentPhotoUrl != null && _currentPhotoUrl!.isNotEmpty) {
       return Image.network(
         _currentPhotoUrl!,
@@ -184,6 +210,86 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
     return const Center(
       child: Icon(Icons.pets_rounded, size: 48, color: Colors.grey),
     );
+  }
+
+  Future<void> _identifyBreedWithAI() async {
+    final result = await Navigator.of(context).push<VisionResult>(
+      MaterialPageRoute(builder: (_) => const VisionScreen()),
+    );
+    if (result == null || !mounted) return;
+    // Forzar la regeneración de la chapeta con la raza detectada por la IA.
+    _chapetaAutoGenerada = true;
+    setState(() {
+      _aiPhotoBytes = result.imagenBytes;
+      _pickedPhoto = null;
+      _breedCtrl.text = result.raza;
+    });
+  }
+
+  void _onChapetaChanged() {
+    if (!_chapetaAutoGenerada) return;
+    // El listener dispara también cuando la autogeneración asigna el texto;
+    // ese caso coincide con la última sugerencia y debe ignorarse.
+    if (_chapetaCtrl.text == _ultimaChapetaSugerida) return;
+    // El usuario sobrescribió el valor sugerido.
+    _chapetaAutoGenerada = false;
+  }
+
+  /// Sugiere la chapeta cuando el usuario escribe/elige una raza y el campo
+  /// de identificación todavía está vacío (o fue autogenerado antes).
+  void _onBreedChanged() {
+    if (_chapetaAutoGenerada || _chapetaCtrl.text.trim().isEmpty) {
+      _sugerirChapeta(_breedCtrl.text);
+    }
+  }
+
+  /// Prefijo de 2 letras a partir de la raza (ej. "Cabeza de León" -> "CL").
+  String _prefijoRaza(String raza) {
+    final palabras = raza
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (palabras.length >= 2) {
+      return (palabras[0][0] + palabras[1][0]).toUpperCase();
+    }
+    final limpio = raza.replaceAll(RegExp(r'[^A-Za-zÁÉÍÓÚÑáéíóúñ]'), '');
+    if (limpio.isEmpty) return 'CN';
+    return limpio.substring(0, limpio.length >= 2 ? 2 : 1).toUpperCase();
+  }
+
+  /// Consulta cuántos conejos hay de esta raza y propone la siguiente
+  /// chapeta correlativa (ej. CL-001, CL-002). No sobreescribe si el campo
+  /// ya tiene un valor distinto.
+  Future<void> _sugerirChapeta(String raza) async {
+    if (raza.trim().isEmpty) return;
+    final prefijo = _prefijoRaza(raza);
+    try {
+      final rows = await Supabase.instance.client
+          .from('conejo')
+          .select('chapeta')
+          .eq('user_id', Supabase.instance.client.auth.currentUser!.id)
+          .ilike('chapeta', '$prefijo-%');
+      final regex = RegExp('^$prefijo-(\\d+)\$');
+      int max = 0;
+      for (final row in rows) {
+        final chapeta = (row['chapeta'] as String?) ?? '';
+        final m = regex.firstMatch(chapeta);
+        if (m != null) {
+          final n = int.tryParse(m.group(1)!) ?? 0;
+          if (n > max) max = n;
+        }
+      }
+      final sugerida = '$prefijo-${(max + 1).toString().padLeft(3, '0')}';
+      if (!mounted) return;
+      _ultimaChapetaSugerida = sugerida;
+      _chapetaAutoGenerada = true;
+      setState(() {
+        _chapetaCtrl.text = sugerida;
+      });
+    } catch (e) {
+      debugPrint('No se pudo sugerir chapeta: $e');
+    }
   }
 
   Future<void> _pickBirthDate() async {
@@ -213,6 +319,16 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
         photoUrl = await RabbitService().uploadPhoto(_pickedPhoto!);
         if (photoUrl == null) {
           throw Exception('No se pudo subir la foto');
+        }
+      } else if (_aiPhotoBytes != null) {
+        final aiFile = XFile.fromData(
+          _aiPhotoBytes!,
+          name: 'ai_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          mimeType: 'image/jpeg',
+        );
+        photoUrl = await RabbitService().uploadPhoto(aiFile);
+        if (photoUrl == null) {
+          throw Exception('No se pudo subir la foto de la IA');
         }
       }
 
@@ -416,10 +532,36 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
                   },
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
-                  controller: _breedCtrl,
-                  decoration: const InputDecoration(labelText: 'Raza *'),
-                  validator: _required,
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _breedCtrl,
+                        decoration: const InputDecoration(labelText: 'Raza *'),
+                        validator: _required,
+                      ),
+                    ),
+                    if (_canUseAI) ...[
+                      const SizedBox(width: 8),
+                      OutlinedButton(
+                        onPressed: _saving ? null : _identifyBreedWithAI,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 16,
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.auto_awesome_rounded, size: 16),
+                            SizedBox(width: 6),
+                            Text('Identificar con IA'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 12),
                 TextFormField(

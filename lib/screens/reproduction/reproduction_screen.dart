@@ -5,6 +5,7 @@ import '../../models/mating.dart';
 import '../../controllers/reproduccion_controller.dart';
 import '../../models/reproduccion.dart';
 import '../../services/notification_service.dart';
+import '../../services/predictor_service.dart';
 import '../../controllers/auth_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
@@ -20,6 +21,7 @@ class ReproductionScreen extends StatefulWidget {
 class _ReproductionScreenState extends State<ReproductionScreen> {
   final reproController = Get.put(ReproduccionController());
   final authController = Get.find<AuthController>();
+  final predictor = PredictorService();
   String _matingFilter = 'Todas';
 
   @override
@@ -246,6 +248,8 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
         : _rabbitLabel(reproController.machos, r.idConejopadre!);
     final days = r.diasDesdeMonta ?? 0;
     final (phaseTitle, phaseSubtitle) = _faseActualInfo(r);
+    final partoInminente = r.estado == 'Gestante' && _dentroDelRangoDeParto(r);
+
 
     late IconData headerIcon;
     late Color headerIconColor;
@@ -293,7 +297,21 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: AppTheme.borderLight),
+        border: Border.all(
+          color: partoInminente
+              ? const Color(0xFFDC2626)
+              : AppTheme.borderLight,
+          width: partoInminente ? 2 : 1,
+        ),
+        boxShadow: partoInminente
+            ? [
+                BoxShadow(
+                  color: const Color(0xFFDC2626).withValues(alpha: 0.35),
+                  blurRadius: 14,
+                  spreadRadius: 1,
+                ),
+              ]
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -372,6 +390,10 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           if (r.estado == 'Servida' && r.tocaPalpacion) ...[
             SizedBox(height: context.isMobile ? 12 : 16),
             const Divider(color: AppTheme.borderLight, height: 1),
+          ],
+          if (r.estado == 'Gestante' || r.estado == 'Servida') ...[
+            SizedBox(height: context.isMobile ? 12 : 16),
+            _SmartPredictorLine(reproduccion: r, predictor: predictor),
           ],
           SizedBox(height: context.isMobile ? 12 : 16),
           Wrap(
@@ -479,6 +501,20 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
       default:
         return ('', '');
     }
+  }
+
+  bool _dentroDelRangoDeParto(Reproduccion r) {
+    final due =
+        r.fechaProbableParto ?? r.fechaMonta.add(const Duration(days: 31));
+    final hoy = DateTime.now();
+    final d = DateTime(hoy.year, hoy.month, hoy.day);
+    final inicio = DateTime(due.year, due.month, due.day).subtract(
+      const Duration(days: 1),
+    );
+    final fin = DateTime(due.year, due.month, due.day).add(
+      const Duration(days: 1),
+    );
+    return !d.isBefore(inicio) && !d.isAfter(fin);
   }
 
   String _rabbitLabel(List<Map<String, dynamic>> rabbits, int id) {
@@ -950,6 +986,176 @@ class _MatingStatusBadge extends StatelessWidget {
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
+        ),
+      );
+}
+
+/// Línea de IA predictiva: muestra la estimación de parto (Gestante) o el
+/// rango óptimo de palpación (Servida), con alertas inteligentes.
+class _SmartPredictorLine extends StatefulWidget {
+  final Reproduccion reproduccion;
+  final PredictorService predictor;
+
+  const _SmartPredictorLine({
+    required this.reproduccion,
+    required this.predictor,
+  });
+
+  @override
+  State<_SmartPredictorLine> createState() => _SmartPredictorLineState();
+}
+
+class _SmartPredictorLineState extends State<_SmartPredictorLine> {
+  late final Future<PrediccionFecha> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _calcular();
+  }
+
+  Future<PrediccionFecha> _calcular() {
+    final r = widget.reproduccion;
+    if (r.estado == 'Gestante') {
+      return widget.predictor.estimarParto(
+        r.idConeja.toString(),
+        fechaMonta: r.fechaMonta,
+      );
+    }
+    return Future.value(widget.predictor.estimarPalpacion(r.fechaMonta));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<PrediccionFecha>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Text(
+            '🤖 Analizando historial...',
+            style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
+          );
+        }
+
+        final p = snapshot.data!;
+        final esGestante = widget.reproduccion.estado == 'Gestante';
+        final enRango = p.esHoy;
+
+        if (esGestante) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.auto_awesome,
+                    size: 16,
+                    color: AppTheme.accent,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      '🤖 Parto estimado: '
+                      '${PredictorService.formatearCorta(p.fecha)} '
+                      '(rango ${p.rangoInicio.day}-${p.rangoFin.day})'
+                      '${p.basadoEnHistorial ? ' · según su historial' : ''}',
+                      style: const TextStyle(
+                        color: AppTheme.accent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (enRango) ...[
+                const SizedBox(height: 8),
+                const _SmartChip(
+                  text: '¡Parto inminente!',
+                  color: Color(0xFFFEE2E2),
+                  foreground: Color(0xFF991B1B),
+                  icon: Icons.priority_high_rounded,
+                ),
+              ],
+            ],
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.auto_awesome,
+                  size: 16,
+                  color: AppTheme.accent,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '🤖 Palpación óptima: '
+                    '${PredictorService.formatearCorta(p.rangoInicio)} al '
+                    '${PredictorService.formatearCorta(p.rangoFin)}',
+                    style: const TextStyle(
+                      color: AppTheme.accent,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (enRango) ...[
+              const SizedBox(height: 8),
+              const _SmartChip(
+                text: '¡Hora de palpar!',
+                color: Color(0xFFFEF3C7),
+                foreground: Color(0xFF92400E),
+                icon: Icons.touch_app_rounded,
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SmartChip extends StatelessWidget {
+  final String text;
+  final Color color;
+  final Color foreground;
+  final IconData icon;
+
+  const _SmartChip({
+    required this.text,
+    required this.color,
+    required this.foreground,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: foreground),
+            const SizedBox(width: 6),
+            Text(
+              text,
+              style: TextStyle(
+                color: foreground,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
       );
 }

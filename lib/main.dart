@@ -6,6 +6,7 @@ import 'controllers/auth_controller.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/set_password_screen.dart';
 import 'screens/main_screen.dart';
 import 'services/notification_service.dart';
 
@@ -101,6 +102,7 @@ class _CunitechAppState extends State<CunitechApp> {
           initialRoute: '/',
           routes: {
             '/': (context) => const AuthScreen(),
+            '/set-password': (context) => const SetPasswordScreen(),
             '/main': (context) => MainScreen(
                   themeController: _themeController,
                 ),
