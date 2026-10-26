@@ -31,6 +31,7 @@ void main() async {
 
 // Cliente global de Supabase
 final supabase = Supabase.instance.client;
+final navigatorKey = GlobalKey<NavigatorState>();
 
 class CunitechApp extends StatefulWidget {
   const CunitechApp({super.key});
@@ -69,8 +70,8 @@ class _CunitechAppState extends State<CunitechApp> {
               break;
 
             case AuthChangeEvent.signedOut:
-              if (ModalRoute.of(context)?.settings.name != '/') {
-                Navigator.of(context).pushReplacementNamed('/');
+              if (Get.currentRoute != '/') {
+                navigatorKey.currentState?.pushReplacementNamed('/');
                 print('✅ Navegando a login');
               }
               break;
@@ -94,6 +95,9 @@ class _CunitechAppState extends State<CunitechApp> {
         return GetMaterialApp(
           title: 'CUNITECH',
           debugShowCheckedModeBanner: false,
+          navigatorKey: navigatorKey,
+          defaultTransition: Transition.rightToLeftWithFade,
+          transitionDuration: const Duration(milliseconds: 250),
 
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
@@ -109,6 +113,7 @@ class _CunitechAppState extends State<CunitechApp> {
           },
 
           builder: (context, child) {
+            AppTheme.sync(context);
             return MediaQuery(
               data: MediaQuery.of(context).copyWith(
                 textScaler: TextScaler.noScaling,

@@ -22,7 +22,7 @@ import 'reports/reports_screen.dart';
 import 'admin/user_management_screen.dart';
 import 'auth/profile_screen.dart';
 import 'auth/settings_screen.dart';
-import 'chat/voice_assistant_screen.dart';
+import 'notifications/notifications_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final ThemeController themeController;
@@ -66,19 +66,19 @@ class _MainScreenState extends State<MainScreen>
       'icon': Icons.home_outlined,
       'label': 'Inicio',
       'screen': const DashboardScreen(),
-      'roles': const ['admin', 'veterinario', 'ayudante'],
+      'roles': const ['admin', 'veterinario', 'ayudante', 'usuario'],
     },
     {
       'icon': Icons.pets_outlined,
       'label': 'Conejos',
       'screen': const RabbitsScreen(),
-      'roles': const ['admin', 'veterinario', 'ayudante'],
+      'roles': const ['admin', 'veterinario', 'ayudante', 'usuario'],
     },
     {
       'icon': Icons.restaurant_outlined,
       'label': 'Alimentación',
       'screen': const FeedingScreen(),
-      'roles': const ['admin', 'veterinario', 'ayudante'],
+      'roles': const ['admin', 'veterinario', 'ayudante', 'usuario'],
     },
     {
       'icon': Icons.favorite_border,
@@ -90,7 +90,7 @@ class _MainScreenState extends State<MainScreen>
       'icon': Icons.health_and_safety_outlined,
       'label': 'Salud',
       'screen': const SaludScreen(),
-      'roles': const ['admin', 'veterinario', 'ayudante'],
+      'roles': const ['admin', 'veterinario', 'ayudante', 'usuario'],
     },
     {
       'icon': Icons.analytics_outlined,
@@ -171,12 +171,25 @@ class _MainScreenState extends State<MainScreen>
 
     try {
       await Supabase.instance.client.auth.signOut();
-      // El listener en main.dart detectará signedOut y navegará al login.
     } catch (e) {
       if (mounted) {
         AppSnackbar.error(context, 'Error al cerrar sesión: $e');
       }
+      return;
     }
+
+    await Get.deleteAll();
+
+    if (!mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+  }
+
+  // Ir a Notificaciones
+  void _goToNotifications() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+    );
   }
 
   // Ir a Perfil
@@ -258,8 +271,11 @@ class _MainScreenState extends State<MainScreen>
         PopupMenuItem<String>(
           value: 'logout',
           child: const ListTile(
-            leading: Icon(Icons.logout_rounded, color: Colors.red),
-            title: Text("Cerrar Sesión", style: TextStyle(color: Colors.red)),
+            leading: Icon(Icons.logout_rounded, color: AppTheme.danger),
+            title: Text(
+              "Cerrar Sesión",
+              style: TextStyle(color: AppTheme.danger),
+            ),
           ),
         ),
       ],
@@ -285,37 +301,40 @@ class _MainScreenState extends State<MainScreen>
     });
   }
 
-  Widget _buildInsightFab(BuildContext context) {
-    return ScaleTransition(
-      scale: _pulseAnimation,
-      child: Container(
-        width: 60,
-        height: 60,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppTheme.accent, Color(0xFF6B5339)],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.accent.withValues(alpha: 0.45),
-              blurRadius: 18,
-              spreadRadius: 1,
+  Widget _buildInsightOrb(BuildContext context, {double size = 40}) {
+    return Tooltip(
+      message: 'CUNITECH Insight',
+      child: ScaleTransition(
+        scale: _pulseAnimation,
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppTheme.accent, Color(0xFF6B5339)],
             ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          shape: const CircleBorder(),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () => _showHolographicPanel(context),
-            child: const Icon(
-              Icons.auto_awesome,
-              color: Color(0xFFFDF6EC),
-              size: 28,
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.accent.withValues(alpha: 0.45),
+                blurRadius: 18,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () => _showHolographicPanel(context),
+              child: Icon(
+                Icons.auto_awesome,
+                color: const Color(0xFFFDF6EC),
+                size: size * 0.47,
+              ),
             ),
           ),
         ),
@@ -336,7 +355,10 @@ class _MainScreenState extends State<MainScreen>
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
+                constraints: BoxConstraints(
+                  maxWidth: 560,
+                  maxHeight: MediaQuery.of(dialogContext).size.height - 40,
+                ),
                 child: Material(
                   color: Colors.transparent,
                   child: ClipRRect(
@@ -387,48 +409,54 @@ class _MainScreenState extends State<MainScreen>
                               ],
                             ),
                             const SizedBox(height: 16),
-                            FutureBuilder<InsightPanel>(
-                              future: InsightService().obtenerRecomendaciones(),
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return const Center(
-                                    child: CircularProgressIndicator(
-                                      color: AppTheme.accentLight,
-                                    ),
-                                  );
-                                }
-                                if (snapshot.hasError ||
-                                    !snapshot.hasData ||
-                                    snapshot.data!.recomendaciones.isEmpty) {
-                                  return const Text(
-                                    'No hay recomendaciones disponibles.',
-                                    style: TextStyle(color: Colors.white70),
-                                  );
-                                }
-                                final panel = snapshot.data!;
-                                return Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    if (panel.diagnosticoGeneral.isNotEmpty)
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 12),
-                                        child: Text(
-                                          panel.diagnosticoGeneral,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 14,
-                                          ),
+                            Flexible(
+                              child: SingleChildScrollView(
+                                child: FutureBuilder<InsightPanel>(
+                                  future:
+                                      InsightService().obtenerRecomendaciones(),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return const Center(
+                                        child: CircularProgressIndicator(
+                                          color: AppTheme.accentLight,
                                         ),
-                                      ),
-                                    ...panel.recomendaciones.map(
-                                      (r) => _buildInsightCard(r),
-                                    ),
-                                  ],
-                                );
-                              },
+                                      );
+                                    }
+                                    if (snapshot.hasError ||
+                                        !snapshot.hasData ||
+                                        snapshot.data!.recomendaciones.isEmpty) {
+                                      return const Text(
+                                        'No hay recomendaciones disponibles.',
+                                        style: TextStyle(color: Colors.white70),
+                                      );
+                                    }
+                                    final panel = snapshot.data!;
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        if (panel.diagnosticoGeneral.isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 12,
+                                            ),
+                                            child: Text(
+                                              panel.diagnosticoGeneral,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ),
+                                        ...panel.recomendaciones.map(
+                                          (r) => _buildInsightCard(r),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -511,6 +539,46 @@ class _MainScreenState extends State<MainScreen>
     );
   }
 
+  Widget _buildAnimatedScreen(
+    BuildContext context,
+    List<Map<String, dynamic>> items,
+    int index,
+  ) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 220),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      layoutBuilder: (currentChild, previousChildren) => Stack(
+        fit: StackFit.expand,
+        children: [
+          ...previousChildren,
+          if (currentChild != null) currentChild,
+        ],
+      ),
+      transitionBuilder: (child, animation) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.02, 0),
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
+          ),
+        );
+      },
+      child: KeyedSubtree(
+        key: ValueKey(index),
+        child: items[index]['screen'] as Widget,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
@@ -542,32 +610,6 @@ class _MainScreenState extends State<MainScreen>
       return Scaffold(
         key: _scaffoldKey,
         backgroundColor: theme.scaffoldBackgroundColor,
-        floatingActionButton: (authController.isAdmin ||
-                authController.isVeterinario)
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FloatingActionButton(
-                    heroTag: 'main_voice',
-                    backgroundColor: AppTheme.accent,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const VoiceAssistantScreen(),
-                        ),
-                      );
-                    },
-                    child: const Icon(
-                      Icons.mic,
-                      color: Color(0xFFFDF6EC),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildInsightFab(context),
-                ],
-              )
-            : null,
         drawer: (isMobile || isTablet)
             ? Drawer(
                 child: _buildNavigationDrawer(
@@ -581,8 +623,14 @@ class _MainScreenState extends State<MainScreen>
               ? Column(
                   children: [
                     _buildMobileTopBar(context,
-                        isTablet: isTablet, items: items, currentIndex: index),
-                    Expanded(child: items[index]['screen'] as Widget),
+                        isTablet: isTablet,
+                        items: items,
+                        currentIndex: index,
+                        showInsight: authController.isAdmin ||
+                            authController.isVeterinario),
+                            Expanded(
+                              child: _buildAnimatedScreen(context, items, index),
+                            ),
                   ],
                 )
               : Row(
@@ -655,7 +703,9 @@ class _MainScreenState extends State<MainScreen>
                                           AppTheme.radiusMd),
                                       onTap: () =>
                                           setState(() => _currentIndex = i),
-                                      child: Container(
+                                      child: AnimatedContainer(
+                                        duration: const Duration(milliseconds: 180),
+                                        curve: Curves.easeOutCubic,
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 20, vertical: 14),
                                         decoration: BoxDecoration(
@@ -774,19 +824,25 @@ class _MainScreenState extends State<MainScreen>
                                         .headlineMedium,
                                   ),
                                   const Spacer(),
+                                  if (authController.isAdmin ||
+                                      authController.isVeterinario) ...[
+                                    _buildInsightOrb(context),
+                                    const SizedBox(width: 8),
+                                  ],
                                   IconButton(
-                                      icon: const Icon(
-                                          Icons.notifications_outlined),
-                                      onPressed: () {}),
-                                  const SizedBox(width: 8),
-                                  IconButton(
-                                      icon: const Icon(Icons.search),
-                                      onPressed: () {}),
+                                    tooltip: 'Notificaciones',
+                                    icon: const Icon(
+                                      Icons.notifications_outlined,
+                                    ),
+                                    onPressed: _goToNotifications,
+                                  ),
                                 ],
                               ),
                             ),
 
-                            Expanded(child: items[index]['screen'] as Widget),
+                    Expanded(
+                      child: _buildAnimatedScreen(context, items, index),
+                    ),
                           ],
                         ),
                       ),
@@ -897,6 +953,7 @@ class _MainScreenState extends State<MainScreen>
     required bool isTablet,
     required List<Map<String, dynamic>> items,
     required int currentIndex,
+    required bool showInsight,
   }) {
     return Container(
       height: isTablet ? 72 : 64,
@@ -919,34 +976,16 @@ class _MainScreenState extends State<MainScreen>
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          if (showInsight) ...[
+            const SizedBox(width: 4),
+            _buildInsightOrb(context, size: 38),
+            const SizedBox(width: 4),
+          ],
           IconButton(
             tooltip: 'Notificaciones',
             icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
+            onPressed: _goToNotifications,
           ),
-          if (authController.isAdmin || authController.isVeterinario) ...[
-            IconButton(
-              tooltip: 'Asistente IA',
-              icon: const Icon(Icons.auto_awesome),
-              color: AppTheme.accent,
-              onPressed: () {
-                // Panel de IA - por ahora sin implementación
-              },
-            ),
-            IconButton(
-              tooltip: 'Asistente por Voz',
-              icon: const Icon(Icons.mic),
-              color: AppTheme.accent,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const VoiceAssistantScreen(),
-                  ),
-                );
-              },
-            ),
-          ],
           IconButton(
             key: _mobileProfileKey,
             tooltip: 'Perfil',

@@ -7,7 +7,6 @@ import 'package:get/get.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/responsive.dart';
-import '../../controllers/auth_controller.dart';
 import '../../controllers/dashboard_controller.dart';
 import '../../models/insight_recomendacion.dart';
 import '../../models/rabbit.dart';
@@ -27,7 +26,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   final DashboardController dashboardController = Get.put(
     DashboardController(),
   );
-  final AuthController authController = Get.find<AuthController>();
   final InsightService _insightService = InsightService();
   late Future<InsightPanel> _insightFuture;
   late final AnimationController _pulseController;
@@ -79,12 +77,10 @@ class _DashboardScreenState extends State<DashboardScreen>
             children: [
               _buildHeader(context),
               SizedBox(height: isMobile ? 24 : (isTablet ? 32 : 40)),
-              if (!authController.isAyudante) ...[
-                _sectionLabel(context, 'RESUMEN GENERAL'),
-                SizedBox(height: isMobile ? 12 : 16),
-                _buildMetricsGrid(context),
-                SizedBox(height: isMobile ? 24 : (isTablet ? 32 : 40)),
-              ],
+              _sectionLabel(context, 'RESUMEN GENERAL'),
+              SizedBox(height: isMobile ? 12 : 16),
+              _buildMetricsGrid(context),
+              SizedBox(height: isMobile ? 24 : (isTablet ? 32 : 40)),
               _buildNextBirthBanner(context),
               SizedBox(height: isMobile ? 24 : (isTablet ? 32 : 40)),
               _buildTableHeader(context),
@@ -225,7 +221,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
           border: Border.all(color: AppTheme.borderLight),
         ),
-        child: const Text(
+        child: Text(
           'No hay partos próximos programados',
           style: TextStyle(color: AppTheme.textSecondary),
         ),
@@ -435,7 +431,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             width: 130,
             child: Text(
               label,
-              style: const TextStyle(color: AppTheme.textSecondary),
+              style: TextStyle(color: AppTheme.textSecondary),
             ),
           ),
           Expanded(
