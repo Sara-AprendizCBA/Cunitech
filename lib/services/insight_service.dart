@@ -18,8 +18,10 @@ class InsightService {
 
   /// Devuelve el panel de IA (diagnóstico + recomendaciones) del criadero.
   Future<InsightPanel> obtenerRecomendaciones() async {
+    if (_supabase.auth.currentUser == null) return InsightPanel.empty;
     try {
       final contexto = await _construirContexto();
+      if (_supabase.auth.currentUser == null) return InsightPanel.empty;
       final response = await _supabase.functions.invoke(
         'generate-insights',
         body: {'contexto': contexto},
@@ -33,6 +35,11 @@ class InsightService {
       final data = response.data;
       if (data is! Map) return InsightPanel.empty;
       return InsightPanel.fromJson(data.cast<String, dynamic>());
+    } on FunctionException catch (e) {
+      if (e.status != 401) {
+        logger.e('Error obtenerRecomendaciones', error: e);
+      }
+      return InsightPanel.empty;
     } catch (e) {
       logger.e('Error obtenerRecomendaciones', error: e);
       return InsightPanel.empty;

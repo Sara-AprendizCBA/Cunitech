@@ -368,20 +368,23 @@ class _CageFeedingTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         border: Border.all(color: AppTheme.borderLight),
       ),
-      child: ListTile(
-        onTap: onTap,
-        leading: Icon(
-          registered ? Icons.check_circle : Icons.circle_outlined,
-          color: color,
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          onTap: onTap,
+          leading: Icon(
+            registered ? Icons.check_circle : Icons.circle_outlined,
+            color: color,
+          ),
+          title: Text('Jaula $jaula'),
+          subtitle: registered
+              ? Text(
+                  '${registro!.cantidadKg} kg'
+                  '${registro!.tipoComida == null ? '' : ' · ${registro!.tipoComida}'}',
+                )
+              : const Text('Pendiente de registro'),
+          trailing: const Icon(Icons.chevron_right_rounded),
         ),
-        title: Text('Jaula $jaula'),
-        subtitle: registered
-            ? Text(
-                '${registro!.cantidadKg} kg'
-                '${registro!.tipoComida == null ? '' : ' · ${registro!.tipoComida}'}',
-              )
-            : const Text('Pendiente de registro'),
-        trailing: const Icon(Icons.chevron_right_rounded),
       ),
     );
   }
@@ -433,31 +436,34 @@ class _HistoryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         border: Border.all(color: AppTheme.borderLight),
       ),
-      child: ListTile(
-        leading: Icon(Icons.restaurant_rounded, color: color),
-        title: Text('Jaula ${item.jaula} · $dateLabel'),
-        subtitle: Text(
-          '${item.cantidadKg} kg'
-          '${item.tipoComida == null ? '' : ' · ${item.tipoComida}'}',
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (canEdit) ...[
-              IconButton(
-                tooltip: 'Eliminar registro',
-                onPressed: onDelete,
-                icon: const Icon(
-                  Icons.delete_outline_rounded,
-                  size: 20,
-                  color: AppTheme.danger,
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          leading: Icon(Icons.restaurant_rounded, color: color),
+          title: Text('Jaula ${item.jaula} · $dateLabel'),
+          subtitle: Text(
+            '${item.cantidadKg} kg'
+            '${item.tipoComida == null ? '' : ' · ${item.tipoComida}'}',
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (canEdit) ...[
+                IconButton(
+                  tooltip: 'Eliminar registro',
+                  onPressed: onDelete,
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    size: 20,
+                    color: AppTheme.danger,
+                  ),
+                  visualDensity: VisualDensity.compact,
                 ),
-                visualDensity: VisualDensity.compact,
-              ),
-              const SizedBox(width: 4),
+                const SizedBox(width: 4),
+              ],
+              _StatusBadge(status: item.estado, color: color),
             ],
-            _StatusBadge(status: item.estado, color: color),
-          ],
+          ),
         ),
       ),
     );
