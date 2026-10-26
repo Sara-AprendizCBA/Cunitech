@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
+
 enum SnackType { success, error, warning, info }
 
 class AppSnackbar {
@@ -11,30 +13,22 @@ class AppSnackbar {
   }) {
     final messenger = ScaffoldMessenger.of(context);
 
-    final (Color bg, Color fg, Color iconBg, IconData icon) = switch (type) {
+    final (Color bg, IconData icon) = switch (type) {
       SnackType.success => (
-          const Color(0xFF1F2937),
-          Colors.white,
-          const Color(0xFF10B981),
-          Icons.check_circle_rounded,
+          AppTheme.successDark,
+          Icons.check_circle_outline,
         ),
       SnackType.error => (
-          const Color(0xFF1F2937),
-          Colors.white,
-          const Color(0xFFEF4444),
-          Icons.error_rounded,
+          AppTheme.dangerDark,
+          Icons.error_outline,
         ),
       SnackType.warning => (
-          const Color(0xFF1F2937),
-          Colors.white,
-          const Color(0xFFF59E0B),
-          Icons.warning_amber_rounded,
+          AppTheme.warningDark,
+          Icons.warning_amber_outlined,
         ),
       SnackType.info => (
-          const Color(0xFF1F2937),
-          Colors.white,
-          const Color(0xFF3B82F6),
-          Icons.info_rounded,
+          AppTheme.infoDark,
+          Icons.info_outline,
         ),
     };
 
@@ -42,46 +36,52 @@ class AppSnackbar {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(8),
+          content: Center(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Material(
+                color: bg,
+                elevation: 6,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: Colors.white, size: 18),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  message,
-                  style: TextStyle(
-                    color: fg,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    height: 1.4,
+                clipBehavior: Clip.antiAlias,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(icon, color: Colors.white, size: 22),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          message,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
+            ),
           ),
-          backgroundColor: bg,
+          backgroundColor: Colors.transparent,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          margin: const EdgeInsets.all(16),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-          duration: duration ??
-              (type == SnackType.error
-                  ? const Duration(seconds: 5)
-                  : const Duration(seconds: 3)),
-          elevation: 6,
+          margin: const EdgeInsets.all(20),
+          padding: EdgeInsets.zero,
+          duration: duration ?? const Duration(seconds: 3),
+          elevation: 0,
         ),
       );
   }

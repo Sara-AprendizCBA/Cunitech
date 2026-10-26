@@ -30,7 +30,7 @@ class RazaIdentificacion {
   }
 }
 
-/// Identifica la raza de un conejo a partir de una foto usando Gemini 1.5
+/// Identifica la raza de un conejo a partir de una foto usando Gemini 2.0
 /// Flash vía la Edge Function `identify-breed` (la API key vive en los
 /// secretos de Supabase, nunca en el cliente).
 class VisionService {

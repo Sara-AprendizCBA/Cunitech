@@ -63,6 +63,7 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
       backgroundColor: AppTheme.bgLight,
       floatingActionButton: context.isMobile && authController.isAdmin
           ? FloatingActionButton(
+              tooltip: 'Agregar conejo',
               onPressed: () => _showRabbitForm(),
               backgroundColor: AppTheme.accent,
               foregroundColor: Colors.white,
@@ -138,12 +139,25 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
                   : rabbitController.searchRabbits(_searchController.text);
 
               if (rabbits.isEmpty) {
-                return Center(
-                  child: Text(
-                    _searchController.text.isEmpty
-                        ? 'No hay conejos registrados'
-                        : 'No se encontraron resultados',
-                    style: const TextStyle(color: AppTheme.textSecondary),
+                return RefreshIndicator(
+                  onRefresh: rabbitController.loadAllRabbits,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: Center(
+                            child: _EmptyRabbitsState(
+                              isSearching:
+                                  _searchController.text.isNotEmpty,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 );
               }
@@ -400,6 +414,61 @@ class _InfoChip extends StatelessWidget {
         const SizedBox(width: 6),
         Text(label, style: Theme.of(context).textTheme.bodyMedium),
       ],
+    );
+  }
+}
+
+class _EmptyRabbitsState extends StatelessWidget {
+  final bool isSearching;
+
+  const _EmptyRabbitsState({required this.isSearching});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(AppTheme.spacingLg),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 112,
+            height: 112,
+            decoration: BoxDecoration(
+              color: AppTheme.accent.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isSearching
+                  ? Icons.search_off_rounded
+                  : Icons.cruelty_free_rounded,
+              size: 56,
+              color: AppTheme.accent.withValues(alpha: 0.35),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingMd),
+          Text(
+            isSearching
+                ? 'No se encontraron resultados'
+                : 'Aún no hay conejos registrados',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          if (!isSearching) ...[
+            const SizedBox(height: AppTheme.spacingSm),
+            Text(
+              'Los conejos que registres aparecerán aquí.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

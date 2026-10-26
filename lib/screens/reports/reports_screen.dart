@@ -69,73 +69,90 @@ class _ReportsScreenState extends State<ReportsScreen> {
   Widget build(BuildContext context) {
     return Container(
       color: AppTheme.bgLight,
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(context.adaptivePadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context),
-            SizedBox(
-              height: context.isMobile
-                  ? 24
-                  : (ResponsiveBuildContext(context).isTablet ? 32 : 40),
-            ),
+      child: RefreshIndicator(
+        color: AppTheme.accent,
+        onRefresh: reportesController.loadAll,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.all(context.adaptivePadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(context),
+              Obx(
+                () => reportesController.isLoading.value
+                    ? Padding(
+                        padding: EdgeInsets.only(top: AppTheme.spacingSm),
+                        child: LinearProgressIndicator(
+                          minHeight: 2,
+                          color: AppTheme.accent,
+                          backgroundColor: AppTheme.borderLight,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              SizedBox(
+                height: context.isMobile
+                    ? 24
+                    : (ResponsiveBuildContext(context).isTablet ? 32 : 40),
+              ),
 
-            // Main Chart
-            _buildPopulationChart(context),
-            SizedBox(
-              height: context.isMobile
-                  ? 24
-                  : (ResponsiveBuildContext(context).isTablet ? 32 : 40),
-            ),
+              // Main Chart
+              _buildPopulationChart(context),
+              SizedBox(
+                height: context.isMobile
+                    ? 24
+                    : (ResponsiveBuildContext(context).isTablet ? 32 : 40),
+              ),
 
-            // Summary Cards
-            Text(
-              'Resumen General',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            Obx(() => _buildSummaryGrid(context)),
+              // Summary Cards
+              Text(
+                'Resumen General',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 16),
+              Obx(() => _buildSummaryGrid(context)),
 
-            SizedBox(
-              height: context.isMobile
-                  ? 32
-                  : (ResponsiveBuildContext(context).isTablet ? 40 : 48),
-            ),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth >= 900;
-                if (isWide) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              SizedBox(
+                height: context.isMobile
+                    ? 32
+                    : (ResponsiveBuildContext(context).isTablet ? 40 : 48),
+              ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isWide = constraints.maxWidth >= 900;
+                  if (isWide) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 4,
+                          child: _buildMetasSection(context),
+                        ),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          flex: 5,
+                          child: _buildRecentActivity(context),
+                        ),
+                      ],
+                    );
+                  }
+                  return Column(
                     children: [
-                      Expanded(
-                        flex: 4,
-                        child: _buildMetasSection(context),
-                      ),
-                      const SizedBox(width: 24),
-                      Expanded(
-                        flex: 5,
-                        child: _buildRecentActivity(context),
-                      ),
+                      _buildMetasSection(context),
+                      const SizedBox(height: 24),
+                      _buildRecentActivity(context),
                     ],
                   );
-                }
-                return Column(
-                  children: [
-                    _buildMetasSection(context),
-                    const SizedBox(height: 24),
-                    _buildRecentActivity(context),
-                  ],
-                );
-              },
-            ),
-            SizedBox(
-              height: context.isMobile
-                  ? 32
-                  : (ResponsiveBuildContext(context).isTablet ? 40 : 48),
-            ),
-          ],
+                },
+              ),
+              SizedBox(
+                height: context.isMobile
+                    ? 32
+                    : (ResponsiveBuildContext(context).isTablet ? 40 : 48),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -145,25 +162,21 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Reportes y Estadísticas',
-              style: context.isMobile
-                  ? Theme.of(context).textTheme.headlineMedium
-                  : Theme.of(context).textTheme.headlineLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Cunicultura CBA · '
-              '${_getMonthName(DateTime.now().month)} ${DateTime.now().year}',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppTheme.textSecondary,
-                  ),
-            ),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Cunicultura CBA · '
+                '${_getMonthName(DateTime.now().month)} ${DateTime.now().year}',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: AppTheme.textSecondary,
+                    ),
+              ),
+            ],
+          ),
         ),
+        const SizedBox(width: AppTheme.spacingMd),
         if (!context.isMobile)
           ElevatedButton.icon(
             onPressed:
@@ -181,6 +194,26 @@ class _ReportsScreenState extends State<ReportsScreen> {
             label: Text(
               _exportando ? 'Generando…' : 'Exportar Reporte',
             ),
+          )
+        else
+          IconButton(
+            tooltip: 'Exportar reporte',
+            onPressed: _exportando ? null : () => _exportarReporte(context),
+            style: IconButton.styleFrom(
+              backgroundColor: AppTheme.surfaceLight,
+              foregroundColor: AppTheme.accent,
+              side: BorderSide(color: AppTheme.borderLight),
+            ),
+            icon: _exportando
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppTheme.accent,
+                    ),
+                  )
+                : const Icon(Icons.download_rounded, size: 20),
           ),
       ],
     );
@@ -254,7 +287,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 return Container(
                   height: context.isMobile ? 180 : 280,
                   alignment: Alignment.center,
-                  child: const Text(
+                  child: Text(
                     'Sin datos para mostrar.\n'
                     'Registra conejos y partos para ver el crecimiento.',
                     textAlign: TextAlign.center,
@@ -503,7 +536,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               ),
               child: Column(
                 children: [
-                  const Text(
+                  Text(
                     'Aún no has configurado metas para este mes.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppTheme.textSecondary),
@@ -599,7 +632,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               IconButton(
                 tooltip: 'Opciones',
                 onPressed: () => _mostrarOpcionesMeta(context, meta),
-                icon: const Icon(
+                icon: Icon(
                   Icons.settings_rounded,
                   size: 18,
                   color: AppTheme.textSecondary,
@@ -820,7 +853,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               border: Border.all(color: AppTheme.borderLight),
             ),
             child: recientes.isEmpty
-                ? const Text(
+                ? Text(
                     'Sin actividad reciente. Registra conejos, montas o partos.',
                     style: TextStyle(
                       color: AppTheme.textSecondary,

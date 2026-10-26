@@ -200,15 +200,19 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
       return Image.network(
         _currentPhotoUrl!,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const Icon(
+        errorBuilder: (_, __, ___) => Icon(
           Icons.broken_image_rounded,
           size: 40,
-          color: Colors.grey,
+          color: AppTheme.textTertiary,
         ),
       );
     }
-    return const Center(
-      child: Icon(Icons.pets_rounded, size: 48, color: Colors.grey),
+    return Center(
+      child: Icon(
+        Icons.pets_rounded,
+        size: 48,
+        color: AppTheme.textTertiary,
+      ),
     );
   }
 
@@ -467,9 +471,9 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
                       width: 140,
                       height: 140,
                       decoration: BoxDecoration(
-                        color: Colors.grey[200],
+                        color: AppTheme.surfaceLight,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey[300]!),
+                        border: Border.all(color: AppTheme.borderLight),
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: _buildPhotoPreview(),
@@ -673,7 +677,7 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             'El estado reproductivo se gestiona desde el módulo de '
                             'Reproducción (monta, palpación, parto y destete).',
                             style: TextStyle(

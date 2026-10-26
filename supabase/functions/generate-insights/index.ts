@@ -1,5 +1,5 @@
 // supabase/functions/generate-insights/index.ts
-// Edge Function: recibe el contexto del criadero y pide a Gemini 1.5 Flash
+// Edge Function: recibe el contexto del criadero y pide a Gemini 2.0 Flash
 // un diagnóstico + 2-3 recomendaciones en JSON estricto. Si Gemini falla,
 // devuelve un panel por defecto para que la app nunca se rompa.
 // Solo usuarios autenticados.
@@ -8,13 +8,13 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // ── Configuración / secretos (auto-inyectados por Supabase) ──────────────
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:60144'
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? ''
-const GEMINI_MODEL = 'gemini-3.5-flash-lite'
+const GEMINI_MODEL = 'gemini-2.0-flash'
 const GEMINI_URL =
   `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
 
-// ── CORS: solo el origen de la app (APP_URL) puede invocar ───────────────
+// ── CORS ────────────────────────────────────────────────────────────────
 const corsHeaders = {
-  'Access-Control-Allow-Origin': APP_URL,
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers':
     'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',

@@ -128,7 +128,7 @@ class _VisionScreenState extends State<VisionScreen> {
       ),
       clipBehavior: Clip.antiAlias,
       child: bytes == null
-          ? const Center(
+          ? Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -207,7 +207,7 @@ class _VisionScreenState extends State<VisionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
+            Text(
               'Sube o toma una foto del conejo y la IA detectará la raza.',
               style: TextStyle(
                 fontSize: 14,
@@ -230,7 +230,7 @@ class _VisionScreenState extends State<VisionScreen> {
             if (_analizando) ...[
               const Center(child: CircularProgressIndicator()),
               const SizedBox(height: 8),
-              const Center(
+              Center(
                 child: Text(
                   'Analizando foto con IA…',
                   style: TextStyle(color: AppTheme.textSecondary),
@@ -348,7 +348,7 @@ class _ResultCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 descripcion,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   color: AppTheme.textSecondary,
                   height: 1.45,

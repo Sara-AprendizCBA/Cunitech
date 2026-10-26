@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -8,12 +9,36 @@ class AppTheme {
   static const Color accentDark  = Color(0xFF1A1A1A);
 
   // Neutros light
-  static const Color bgLight        = Color(0xFFFEFBF7);
-  static const Color surfaceLight   = Color(0xFFF5F3F0);
-  static const Color borderLight    = Color(0xFFE0E0E0);
-  static const Color textPrimary    = Color(0xFF2C2C2C);
-  static const Color textSecondary  = Color(0xFF5A5A5A);
-  static const Color textTertiary   = Color(0xFF64748B);
+  static const Color _bgLightBase = Color(0xFFFEFBF7);
+  static const Color _surfaceLightBase = Color(0xFFF5F3F0);
+  static const Color _borderLightBase = Color(0xFFE0E0E0);
+  static const Color _textPrimaryBase = Color(0xFF2C2C2C);
+  static const Color _textSecondaryBase = Color(0xFF5A5A5A);
+  static const Color _textTertiaryBase = Color(0xFF64748B);
+
+  static Color _bgLight = _bgLightBase;
+  static Color _surfaceLight = _surfaceLightBase;
+  static Color _borderLight = _borderLightBase;
+  static Color _textPrimary = _textPrimaryBase;
+  static Color _textSecondary = _textSecondaryBase;
+  static Color _textTertiary = _textTertiaryBase;
+
+  static Color get bgLight => _bgLight;
+  static Color get surfaceLight => _surfaceLight;
+  static Color get borderLight => _borderLight;
+  static Color get textPrimary => _textPrimary;
+  static Color get textSecondary => _textSecondary;
+  static Color get textTertiary => _textTertiary;
+
+  static void sync(BuildContext context) {
+    final theme = Theme.of(context);
+    _bgLight = theme.scaffoldBackgroundColor;
+    _surfaceLight = theme.cardTheme.color ?? theme.colorScheme.surface;
+    _borderLight = theme.colorScheme.outline;
+    _textPrimary = theme.colorScheme.onSurface;
+    _textSecondary = theme.colorScheme.onSurfaceVariant;
+    _textTertiary = theme.colorScheme.onSurfaceVariant;
+  }
 
   // Neutros dark
   static const Color bgDark       = Color(0xFF111111);
@@ -26,6 +51,11 @@ class AppTheme {
   static const Color danger  = Color(0xFFD85A30);
   static const Color info    = Color(0xFF3B82F6);
 
+  static const Color successDark = Color(0xFF0F5132);
+  static const Color warningDark = Color(0xFF78350F);
+  static const Color dangerDark  = Color(0xFF7F1D1D);
+  static const Color infoDark    = Color(0xFF4A3B2F);
+
   // ── Tokens de diseño ────────────────────────────────────
   static const double radiusSm  = 8.0;
   static const double radiusMd  = 14.0;
@@ -37,6 +67,18 @@ class AppTheme {
   static const double spacingMd = 16.0;
   static const double spacingLg = 24.0;
   static const double spacingXl = 32.0;
+
+  static const PageTransitionsTheme _pageTransitionsTheme =
+      PageTransitionsTheme(
+    builders: {
+      TargetPlatform.android: _FadeSlidePageTransitionsBuilder(),
+      TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+      TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+      TargetPlatform.windows: _FadeSlidePageTransitionsBuilder(),
+      TargetPlatform.linux: _FadeSlidePageTransitionsBuilder(),
+      TargetPlatform.fuchsia: _FadeSlidePageTransitionsBuilder(),
+    },
+  );
 
   // ── LIGHT THEME ─────────────────────────────────────────
   static final ThemeData lightTheme = ThemeData(
@@ -57,21 +99,22 @@ class AppTheme {
       onTertiary: Colors.white,
       error: danger,
       onError: Colors.white,
-      surface: surfaceLight,
-      onSurface: textPrimary,
-      onSurfaceVariant: textSecondary,
-      outline: borderLight,
+      surface: _surfaceLightBase,
+      onSurface: _textPrimaryBase,
+      onSurfaceVariant: _textSecondaryBase,
+      outline: _borderLightBase,
       outlineVariant: const Color(0xFFF0F0EE),
       
     ),
 
     fontFamily: GoogleFonts.inter().fontFamily,
-    scaffoldBackgroundColor: bgLight,
+    scaffoldBackgroundColor: _bgLightBase,
+    pageTransitionsTheme: _pageTransitionsTheme,
 
     // Cards — Premium con profundidad sutil
     cardTheme: CardThemeData(
       elevation: 0,
-      color: surfaceLight,
+      color: _surfaceLightBase,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radiusLg),
         side: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
@@ -89,7 +132,7 @@ class AppTheme {
     // Inputs Modernos
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: surfaceLight,
+      fillColor: _surfaceLightBase,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(radiusMd),
@@ -107,8 +150,8 @@ class AppTheme {
         borderRadius: BorderRadius.circular(radiusMd),
         borderSide: const BorderSide(color: danger, width: 1),
       ),
-      hintStyle: TextStyle(color: textTertiary, fontSize: 14),
-      labelStyle: TextStyle(color: textSecondary, fontSize: 14),
+      hintStyle: TextStyle(color: _textTertiaryBase, fontSize: 14),
+      labelStyle: TextStyle(color: _textSecondaryBase, fontSize: 14),
     ),
 
     // Botones Primarios
@@ -313,6 +356,7 @@ class AppTheme {
 
     fontFamily: GoogleFonts.inter().fontFamily,
     scaffoldBackgroundColor: bgDark,
+    pageTransitionsTheme: _pageTransitionsTheme,
 
     cardTheme: CardThemeData(
       elevation: 0,
@@ -476,4 +520,33 @@ class AppTheme {
       ),
     ),
   );
+}
+
+class _FadeSlidePageTransitionsBuilder extends PageTransitionsBuilder {
+  const _FadeSlidePageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    return FadeTransition(
+      opacity: curved,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0.02, 0),
+          end: Offset.zero,
+        ).animate(curved),
+        child: child,
+      ),
+    );
+  }
 }

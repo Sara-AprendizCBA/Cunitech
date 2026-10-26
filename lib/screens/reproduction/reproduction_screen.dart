@@ -47,6 +47,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
                       !authController.isVeterinario
                   ? FloatingActionButton(
                       onPressed: () => _showMatingForm(),
+                      tooltip: 'Nueva monta',
                       backgroundColor: AppTheme.accent,
                       foregroundColor: Colors.white,
                       child: const Icon(Icons.add_rounded),
@@ -62,31 +63,9 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
                 context.adaptivePaddingH,
                 0,
               ),
-              child: isMobile
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Reproducción',
-                          style: context.isMobile
-                              ? Theme.of(context).textTheme.titleLarge
-                              : Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildTabs(context),
-                      ],
-                    )
-                  : Row(
-                children: [
-                  Text(
-                    'Reproducción',
-                    style: context.isMobile
-                        ? Theme.of(context).textTheme.titleLarge
-                        : Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  const Spacer(),
-                  Expanded(child: _buildTabs(context)),
-                ],
+              child: SizedBox(
+                width: double.infinity,
+                child: _buildTabs(context),
               ),
             ),
 
@@ -118,7 +97,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         border: Border.all(color: AppTheme.borderLight),
       ),
-      child: const TabBar(
+      child: TabBar(
         isScrollable: true,
         dividerColor: Colors.transparent,
         indicatorSize: TabBarIndicatorSize.tab,
@@ -153,7 +132,6 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           filtered = reproController.reproducciones.toList();
       }
       final isMobile = context.isMobile;
-      final isTablet = ResponsiveBuildContext(context).isTablet;
 
       return ListView(
         padding: EdgeInsets.fromLTRB(
@@ -222,17 +200,8 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           ),
           SizedBox(height: isMobile ? 16 : 20),
           if (filtered.isEmpty)
-            Padding(
-              padding: EdgeInsets.symmetric(
-                vertical: isMobile ? 32 : (isTablet ? 40 : 48),
-              ),
-              child: Center(
-                child: Text(
-                  'No hay montas registradas. Registra la primera con el botón +',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppTheme.textSecondary),
-                ),
-              ),
+            _EmptyMatingsState(
+              hasAnyMatings: reproController.reproducciones.isNotEmpty,
             )
           else
             ...filtered.map(_buildMatingCard),
@@ -364,15 +333,15 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           const SizedBox(height: 8),
           Text(
             '📅 ${_formatMatingDate(r.fechaMonta)} · Hace $days días',
-            style: const TextStyle(color: AppTheme.textSecondary),
+            style: TextStyle(color: AppTheme.textSecondary),
           ),
           SizedBox(height: context.isMobile ? 12 : 16),
-          const Divider(color: AppTheme.borderLight, height: 1),
+          Divider(color: AppTheme.borderLight, height: 1),
           SizedBox(height: context.isMobile ? 12 : 16),
           _MatingTimeline(r: r),
           if (phaseTitle.isNotEmpty) ...[
             SizedBox(height: context.isMobile ? 12 : 16),
-            const Divider(color: AppTheme.borderLight, height: 1),
+            Divider(color: AppTheme.borderLight, height: 1),
             SizedBox(height: context.isMobile ? 12 : 16),
             Text(
               '📍 Fase actual: $phaseTitle',
@@ -381,7 +350,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
             const SizedBox(height: 4),
             Text(
               '⏰ $phaseSubtitle',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppTheme.textSecondary,
                 fontSize: 13,
               ),
@@ -389,7 +358,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           ],
           if (r.estado == 'Servida' && r.tocaPalpacion) ...[
             SizedBox(height: context.isMobile ? 12 : 16),
-            const Divider(color: AppTheme.borderLight, height: 1),
+            Divider(color: AppTheme.borderLight, height: 1),
           ],
           if (r.estado == 'Gestante' || r.estado == 'Servida') ...[
             SizedBox(height: context.isMobile ? 12 : 16),
@@ -1031,7 +1000,7 @@ class _SmartPredictorLineState extends State<_SmartPredictorLine> {
       future: _future,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const Text(
+          return Text(
             '🤖 Analizando historial...',
             style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
           );
@@ -1435,7 +1404,7 @@ class _MatingFormDialogState extends State<_MatingFormDialog> {
                 Text(
                   'Fecha probable de parto: ${_formatFullDate(partoEstimado)} '
                   '(monta + 31 días)',
-                  style: const TextStyle(color: AppTheme.textSecondary),
+                  style: TextStyle(color: AppTheme.textSecondary),
                 ),
                 if (_estado == 'Gestante') ...[
                   const SizedBox(height: 4),
@@ -1513,7 +1482,7 @@ class _MatingFormDialogState extends State<_MatingFormDialog> {
           children: [
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppTheme.textSecondary,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -1521,7 +1490,7 @@ class _MatingFormDialogState extends State<_MatingFormDialog> {
               ),
             ),
             const SizedBox(height: 8),
-            const Divider(height: 1, color: AppTheme.borderLight),
+            Divider(height: 1, color: AppTheme.borderLight),
           ],
         ),
       );
@@ -1896,7 +1865,7 @@ class _BirthCard extends StatelessWidget {
                 if (averageWeight != null) 'Peso promedio: ${averageWeight.toStringAsFixed(1)} g',
                 if (weaningDate != null) 'Destete estimado: ${_formatFullDate(weaningDate)}',
               ].join(' · '),
-              style: const TextStyle(color: AppTheme.textSecondary),
+              style: TextStyle(color: AppTheme.textSecondary),
             ),
           ],
         ],
@@ -1977,11 +1946,11 @@ class _KitCard extends StatelessWidget {
                   Text([
                     if (weight != null) '${weight.toStringAsFixed(2)} kg',
                     if (healthStatus != null && healthStatus.isNotEmpty) healthStatus,
-                  ].join(' · '), style: const TextStyle(color: AppTheme.textSecondary)),
+                  ].join(' · '), style: TextStyle(color: AppTheme.textSecondary)),
                 ],
                 if (weaningDate != null) ...[
                   const SizedBox(height: 4),
-                  Text('Destete: ${_formatFullDate(weaningDate)}', style: const TextStyle(color: AppTheme.textSecondary)),
+                  Text('Destete: ${_formatFullDate(weaningDate)}', style: TextStyle(color: AppTheme.textSecondary)),
                 ],
               ],
             ),
@@ -2019,4 +1988,60 @@ class _Chip extends StatelessWidget {
           ),
         ),
       );
+}
+
+class _EmptyMatingsState extends StatelessWidget {
+  final bool hasAnyMatings;
+
+  const _EmptyMatingsState({required this.hasAnyMatings});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final filtered = hasAnyMatings;
+    return Padding(
+      padding: const EdgeInsets.all(AppTheme.spacingLg),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 112,
+            height: 112,
+            decoration: BoxDecoration(
+              color: AppTheme.accent.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              filtered
+                  ? Icons.filter_alt_off_rounded
+                  : Icons.favorite_border_rounded,
+              size: 56,
+              color: AppTheme.accent.withValues(alpha: 0.35),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingMd),
+          Text(
+            filtered
+                ? 'No hay montas en este filtro'
+                : 'Aún no hay montas registradas',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          if (!filtered) ...[
+            const SizedBox(height: AppTheme.spacingSm),
+            Text(
+              'Registra la primera monta con el botón +.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }

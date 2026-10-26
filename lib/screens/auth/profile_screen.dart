@@ -109,13 +109,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Mi Perfil'),
-        centerTitle: true,
       ),
       body: Obx(() {
         final user = _auth.currentUser.value;
@@ -161,11 +159,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         CircleAvatar(
           radius: 50,
-          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+          backgroundColor: AppTheme.accent,
           child: Text(
             _initials(nombre),
             style: theme.textTheme.headlineLarge?.copyWith(
-              color: theme.colorScheme.primary,
+              color: Colors.white,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -229,6 +227,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Expanded(
           child: OutlinedButton(
             onPressed: _saving ? null : _cancel,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppTheme.accent,
+              side: const BorderSide(color: AppTheme.accent),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: const Text('Cancelar'),
           ),
         ),
@@ -236,6 +242,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Expanded(
           child: ElevatedButton(
             onPressed: _saving ? null : _save,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.accent,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: _saving
                 ? const SizedBox(
                     width: 20,
@@ -280,11 +295,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _card(BuildContext context, Widget child) {
     final theme = Theme.of(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color,
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 2,
+      shadowColor: theme.colorScheme.shadow.withValues(alpha: 0.16),
+      surfaceTintColor: Colors.transparent,
+      color: theme.cardTheme.color,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: theme.colorScheme.outline),
+        side: BorderSide(color: theme.colorScheme.outline),
       ),
       clipBehavior: Clip.antiAlias,
       child: child,

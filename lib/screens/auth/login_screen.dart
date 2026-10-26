@@ -26,6 +26,7 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _obscureConfirmPassword = true;
 
   String? _errorMessage;
+  static final _emailRe = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
 
   int _totalConejos = 0;
   double _tasaSupervivencia = 0;
@@ -72,6 +73,19 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     final isMobile = context.isMobile;
     final isTablet = context.isTablet;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final errorBackground = isDark
+        ? AppTheme.dangerDark.withValues(alpha: 0.18)
+        : const Color(0xFFFFF1F1);
+    final errorBorder = isDark
+        ? AppTheme.dangerDark
+        : const Color(0xFFF3B5B5);
+    final errorIcon = isDark
+        ? const Color(0xFFFCA5A5)
+        : const Color(0xFFB54747);
+    final errorText = isDark
+        ? const Color(0xFFFECACA)
+        : const Color(0xFF9B3434);
 
     return Scaffold(
       backgroundColor: AppTheme.bgLight,
@@ -208,24 +222,24 @@ class _AuthScreenState extends State<AuthScreen> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFFF1F1),
+                              color: errorBackground,
                               border: Border.all(
-                                color: const Color(0xFFF3B5B5),
+                                color: errorBorder,
                               ),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.warning_amber_rounded,
-                                  color: Color(0xFFB54747),
+                                  color: errorIcon,
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
                                     _errorMessage!,
-                                    style: const TextStyle(
-                                      color: Color(0xFF9B3434),
+                                    style: TextStyle(
+                                      color: errorText,
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -239,6 +253,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         // Form
                         Form(
                           key: _formKey,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
                           child: Column(
                             children: [
                               if (!isLogin) ...[
@@ -247,6 +262,12 @@ class _AuthScreenState extends State<AuthScreen> {
                                   label: "Nombre de la Granja",
                                   hint: "Granja Los Conejos",
                                   icon: Icons.business_rounded,
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Ingresa el nombre de la granja';
+                                    }
+                                    return null;
+                                  },
                                 ),
                                 const SizedBox(height: 20),
                               ],
@@ -256,6 +277,16 @@ class _AuthScreenState extends State<AuthScreen> {
                                 hint: "Correo electrónico",
                                 icon: Icons.email_rounded,
                                 keyboardType: TextInputType.emailAddress,
+                                validator: (value) {
+                                  final email = value?.trim() ?? '';
+                                  if (email.isEmpty) {
+                                    return 'Ingresa tu correo electrónico';
+                                  }
+                                  if (!_emailRe.hasMatch(email)) {
+                                    return 'Ingresa un correo válido';
+                                  }
+                                  return null;
+                                },
                               ),
                               const SizedBox(height: 20),
                               _buildPasswordField(
@@ -265,6 +296,15 @@ class _AuthScreenState extends State<AuthScreen> {
                                 onToggle: () => setState(
                                   () => _obscurePassword = !_obscurePassword,
                                 ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Ingresa tu contraseña';
+                                  }
+                                  if (value.length < 6) {
+                                    return 'La contraseña debe tener al menos 6 caracteres';
+                                  }
+                                  return null;
+                                },
                               ),
                               if (!isLogin) ...[
                                 const SizedBox(height: 20),
@@ -276,6 +316,15 @@ class _AuthScreenState extends State<AuthScreen> {
                                     () => _obscureConfirmPassword =
                                         !_obscureConfirmPassword,
                                   ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Confirma tu contraseña';
+                                    }
+                                    if (value != _passwordController.text) {
+                                      return 'Las contraseñas no coinciden';
+                                    }
+                                    return null;
+                                  },
                                 ),
                               ],
                               const SizedBox(height: 28),
@@ -286,7 +335,10 @@ class _AuthScreenState extends State<AuthScreen> {
 
                         const SizedBox(height: 20),
                         GestureDetector(
-                          onTap: () => setState(() => isLogin = !isLogin),
+                          onTap: () => setState(() {
+                            isLogin = !isLogin;
+                            _errorMessage = null;
+                          }),
                           child: RichText(
                             text: TextSpan(
                               text: isLogin
@@ -550,6 +602,7 @@ class _AuthScreenState extends State<AuthScreen> {
     required String hint,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -578,6 +631,7 @@ class _AuthScreenState extends State<AuthScreen> {
           child: TextFormField(
             controller: controller,
             keyboardType: keyboardType,
+            validator: validator,
             decoration: InputDecoration(
               hintText: hint,
               prefixIcon: Icon(
@@ -624,6 +678,7 @@ class _AuthScreenState extends State<AuthScreen> {
     required String label,
     required bool obscure,
     required VoidCallback onToggle,
+    String? Function(String?)? validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -652,6 +707,7 @@ class _AuthScreenState extends State<AuthScreen> {
           child: TextFormField(
             controller: controller,
             obscureText: obscure,
+            validator: validator,
             decoration: InputDecoration(
               hintText: "••••••••",
               prefixIcon: Icon(
@@ -754,34 +810,17 @@ class _AuthScreenState extends State<AuthScreen> {
 
   // ==================== AUTENTICACIÓN CON SUPABASE (VIA EDGE FUNCTION) ====================
   Future<void> _authenticate() async {
-    if (!_formKey.currentState!.validate()) return;
+    final form = _formKey.currentState;
+    if (form == null || !form.validate()) return;
 
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
-    if (!isLogin &&
-        _passwordController.text != _confirmPasswordController.text) {
-      setState(() {
-        _errorMessage = "Las contraseñas no coinciden";
-        _isLoading = false;
-      });
-      return;
-    }
-
-    if (!isLogin && _nameController.text.trim().isEmpty) {
-      setState(() {
-        _errorMessage = "El nombre de la granja es requerido";
-        _isLoading = false;
-      });
-      return;
-    }
-
     try {
       if (isLogin) {
-        // ---------- LOGIN VIA EDGE FUNCTION ----------
-        final FunctionResponse response = await _supabase.functions.invoke(
+        final response = await _supabase.functions.invoke(
           'login',
           body: {
             'email': _emailController.text.trim(),
@@ -789,23 +828,21 @@ class _AuthScreenState extends State<AuthScreen> {
           },
         );
 
-        if (response.status == 200) {
-          final data = response.data;
-          if (data is Map && data['session'] is Map) {
-            final session = data['session'] as Map;
-            final refreshToken = session['refresh_token'];
-            if (refreshToken is String && refreshToken.isNotEmpty) {
-              await _supabase.auth.setSession(refreshToken);
-            }
-          }
-        } else {
-          final errorMsg = response.data is Map
-              ? (response.data['error'] ?? 'Credenciales inválidas').toString()
-              : 'Error al iniciar sesión (${response.status})';
-          throw Exception(errorMsg);
+        final data = response.data;
+        if (data is! Map || data['session'] is! Map) {
+          _setError('No se pudo iniciar sesión. Intenta de nuevo.');
+          return;
         }
+
+        final session = data['session'] as Map;
+        final refreshToken = session['refresh_token'];
+        if (refreshToken is! String || refreshToken.isEmpty) {
+          _setError('No se pudo iniciar sesión. Intenta de nuevo.');
+          return;
+        }
+
+        await _supabase.auth.setSession(refreshToken);
       } else {
-        // ---------- REGISTER ----------
         final response = await _supabase.auth.signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text,
@@ -813,55 +850,106 @@ class _AuthScreenState extends State<AuthScreen> {
 
         final user = response.user;
         if (user == null) {
-          throw Exception("No se pudo crear la cuenta");
+          _setError('No se pudo crear la cuenta. Intenta de nuevo.');
+          return;
         }
 
-        // Insertamos los datos extra en la tabla usuario
         await _supabase.from('usuario').insert({
           'id_usuario': user.id,
           'nombre': _nameController.text.trim(),
         });
 
-        // Supabase puede iniciar sesión automáticamente al registrarse.
         if (response.session != null) {
           await _supabase.auth.signOut();
         }
 
-        if (mounted) {
-          setState(() {
-            isLogin = true;
-            _nameController.clear();
-            _passwordController.clear();
-            _confirmPasswordController.clear();
-          });
-          AppSnackbar.success(
-            context,
-            'Cuenta creada correctamente. Inicia sesión.',
-          );
-        }
+        if (!mounted) return;
+        setState(() {
+          isLogin = true;
+          _nameController.clear();
+          _passwordController.clear();
+          _confirmPasswordController.clear();
+        });
+        AppSnackbar.success(
+          context,
+          'Cuenta creada correctamente. Inicia sesión.',
+        );
         return;
       }
 
-      if (mounted) {
-        AppSnackbar.success(
-          context,
-          isLogin ? 'Bienvenido' : 'Cuenta creada correctamente',
-        );
-        Navigator.of(context).pushReplacementNamed('/main');
-      }
+      if (!mounted) return;
+      AppSnackbar.success(context, 'Bienvenido');
+      Navigator.of(context).pushReplacementNamed('/main');
+    } on FunctionException catch (e) {
+      _setError(_friendlyFunctionError(e));
     } on AuthException catch (e) {
-      setState(() {
-        _errorMessage = e.message;
-      });
+      _setError(_friendlyAuthError(e));
+    } on PostgrestException catch (e) {
+      debugPrint('Error guardando usuario: $e');
+      _setError('No se pudo completar el registro. Intenta de nuevo.');
     } catch (e) {
-      final msg = e.toString().replaceFirst('Exception: ', '');
-      setState(() {
-        _errorMessage = msg;
-      });
+      debugPrint('Error de autenticación: $e');
+      _setError('No se pudo conectar. Revisa tu conexión e intenta de nuevo.');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _setError(String message) {
+    if (!mounted) return;
+    setState(() => _errorMessage = message);
+  }
+
+  String _friendlyFunctionError(FunctionException e) {
+    final details = e.details;
+    if (details is Map && details['error'] is String) {
+      final message = (details['error'] as String).trim();
+      if (message.isNotEmpty) return message;
+    }
+    if (details is String && details.trim().isNotEmpty) {
+      return details.trim();
+    }
+    return switch (e.status) {
+      400 => 'Revisa los datos ingresados.',
+      401 => 'Correo o contraseña incorrectos.',
+      403 => 'No tienes permisos para iniciar sesión.',
+      429 => 'Demasiados intentos. Espera un momento.',
+      >= 500 => 'Error del servidor. Intenta de nuevo.',
+      _ => 'No se pudo iniciar sesión. Intenta de nuevo.',
+    };
+  }
+
+  String _friendlyAuthError(AuthException e) {
+    final message = e.message.toLowerCase();
+    if (message.contains('invalid login credentials')) {
+      return 'Correo o contraseña incorrectos.';
+    }
+    if (message.contains('email not confirmed')) {
+      return 'Confirma tu correo antes de iniciar sesión.';
+    }
+    if (message.contains('user already registered') ||
+        message.contains('already been registered')) {
+      return 'Este correo ya está registrado.';
+    }
+    if (message.contains('password should be at least') ||
+        message.contains('password is too short')) {
+      return 'La contraseña debe tener al menos 6 caracteres.';
+    }
+    if (message.contains('rate limit') ||
+        message.contains('too many') ||
+        message.contains('security purposes')) {
+      return 'Demasiados intentos. Espera un momento.';
+    }
+    if (message.contains('invalid refresh token')) {
+      return 'La sesión expiró. Inicia sesión de nuevo.';
+    }
+    if (message.contains('invalid email')) {
+      return 'Ingresa un correo electrónico válido.';
+    }
+    return e.message.trim().isEmpty
+        ? 'No se pudo completar la operación.'
+        : e.message;
   }
 }

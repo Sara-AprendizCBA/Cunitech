@@ -24,6 +24,8 @@ class _SaludScreenState extends State<SaludScreen> {
   bool _loading = true;
   String _filtro = 'todos';
 
+  bool get _puedeGestionar => _auth.isVeterinario || _auth.isAdmin;
+
   static const List<String> _meses = [
     'ene', 'feb', 'mar', 'abr', 'may', 'jun',
     'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
@@ -79,6 +81,7 @@ class _SaludScreenState extends State<SaludScreen> {
 
   // ==================== ACCIONES ====================
   Future<void> _abrirFormulario({Tratamiento? existing}) async {
+    if (!_puedeGestionar) return;
     final guardado = await showDialog<bool>(
       context: context,
       builder: (_) => _TratamientoFormDialog(
@@ -97,12 +100,8 @@ class _SaludScreenState extends State<SaludScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        title: const Text('Salud'),
-      ),
       floatingActionButton: Obx(() {
-        if (!_auth.isVeterinario) return const SizedBox.shrink();
+        if (!_puedeGestionar) return const SizedBox.shrink();
         return FloatingActionButton(
           tooltip: 'Registrar tratamiento',
           onPressed: () => _abrirFormulario(),
@@ -188,7 +187,7 @@ class _SaludScreenState extends State<SaludScreen> {
 
   Widget _buildCard(BuildContext context, Tratamiento t) {
     final theme = Theme.of(context);
-    final esVet = _auth.isVeterinario;
+    final puedeGestionar = _puedeGestionar;
     final destino = t.nombreConejo ?? t.jaulaGrupo ?? 'Sin ID';
 
     return Card(
@@ -198,7 +197,7 @@ class _SaludScreenState extends State<SaludScreen> {
         side: BorderSide(color: theme.colorScheme.outline),
       ),
       child: ListTile(
-        onTap: esVet ? () => _abrirFormulario(existing: t) : null,
+        onTap: puedeGestionar ? () => _abrirFormulario(existing: t) : null,
         leading: Icon(_iconoTipo(t.tipo), color: theme.colorScheme.primary),
         title: Text('$destino - ${t.producto}'),
         subtitle: Column(
@@ -213,7 +212,7 @@ class _SaludScreenState extends State<SaludScreen> {
           ],
         ),
         isThreeLine: t.fechaProxima != null,
-        trailing: esVet
+        trailing: puedeGestionar
             ? Icon(Icons.chevron_right_rounded,
                 color: theme.colorScheme.outline)
             : null,

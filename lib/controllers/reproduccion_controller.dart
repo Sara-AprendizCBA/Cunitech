@@ -23,8 +23,6 @@ class ReproduccionController extends GetxController {
   final crias = <Map<String, dynamic>>[].obs;
   final isLoading = false.obs;
 
-  String get _userId => Supabase.instance.client.auth.currentUser!.id;
-
   List<Reproduccion> get servidas =>
       reproducciones.where((r) => r.estado == 'Servida').toList();
 
@@ -75,7 +73,6 @@ class ReproduccionController extends GetxController {
             'id, birth_date, mother_id, father_id, litter_size, live_kits, '
             'dead_kits, adopted_kits, average_weight, notes, reproduccion_id',
           )
-          .eq('user_id', _userId)
           .order('birth_date', ascending: false);
       nacimientos.assignAll((data as List).cast<Map<String, dynamic>>());
     } catch (e) {
@@ -92,7 +89,6 @@ class ReproduccionController extends GetxController {
             'age_days, health_status, estado_nacimiento, weaning_date, '
             'parto_numero, kit_numero, current_weight',
           )
-          .eq('user_id', _userId)
           .order('birth_date', ascending: false);
       crias.assignAll((data as List).cast<Map<String, dynamic>>());
     } catch (e) {
@@ -102,11 +98,9 @@ class ReproduccionController extends GetxController {
 
   Future<void> loadConejos() async {
     try {
-      final userId = Supabase.instance.client.auth.currentUser!.id;
       final data = await Supabase.instance.client
           .from('conejo')
-          .select('id_conejo, chapeta, genero, reproductive_status')
-          .eq('user_id', userId);
+          .select('id_conejo, chapeta, genero, reproductive_status');
 
       debugPrint('=== CONEJOS CARGADOS ===');
       debugPrint('Total: ${(data as List).length}');

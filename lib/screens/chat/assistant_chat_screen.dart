@@ -154,7 +154,7 @@ class _AssistantChatScreenState extends State<AssistantChatScreen> {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
           const SizedBox(width: 8),
-          const Text(
+          Text(
             'Escribiendo…',
             style: TextStyle(
               color: AppTheme.textSecondary,
@@ -195,7 +195,7 @@ class _AssistantChatScreenState extends State<AssistantChatScreen> {
             ),
             Container(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppTheme.surfaceLight,
                 border: Border(top: BorderSide(color: AppTheme.borderLight)),
               ),

@@ -211,7 +211,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
           border: Border.all(color: AppTheme.borderLight),
         ),
-        child: const Text(
+        child: Text(
           'Asigna N° de jaula a tus conejos para usar este módulo',
           textAlign: TextAlign.center,
           style: TextStyle(color: AppTheme.textSecondary),
@@ -239,7 +239,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
   Widget _buildHistoryList() {
     final history = controller.feedings;
     if (history.isEmpty) {
-      return const Text(
+      return Text(
         'Aún no hay registros de alimentación',
         style: TextStyle(color: AppTheme.textSecondary),
       );

@@ -214,7 +214,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
                     child: CircleAvatar(
                       radius: 80,
                       backgroundColor: _escuchando
-                          ? Colors.red
+                          ? AppTheme.danger
                           : _pensando
                               ? AppTheme.accent.withValues(alpha: 0.5)
                               : AppTheme.accent,

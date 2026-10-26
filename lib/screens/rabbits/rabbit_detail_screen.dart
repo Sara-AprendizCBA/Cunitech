@@ -95,7 +95,7 @@ class RabbitDetailScreen extends StatelessWidget {
             for (var index = 0; index < rows.length; index++) ...[
               rows[index],
               if (index < rows.length - 1)
-                const Divider(height: 1, color: AppTheme.borderLight),
+                Divider(height: 1, color: AppTheme.borderLight),
             ],
           ],
         ),
@@ -104,7 +104,7 @@ class RabbitDetailScreen extends StatelessWidget {
   }
 
   Widget _photoPlaceholder() {
-    return const ColoredBox(
+    return ColoredBox(
       color: AppTheme.surfaceLight,
       child: Center(
         child: Icon(Icons.pets_rounded, size: 80, color: AppTheme.textTertiary),
@@ -255,7 +255,7 @@ class RabbitDetailScreen extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppTheme.textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -268,7 +268,7 @@ class RabbitDetailScreen extends StatelessWidget {
             for (var index = 0; index < rows.length; index++) ...[
               rows[index],
               if (index < rows.length - 1)
-                const Divider(height: 1, color: AppTheme.borderLight),
+                Divider(height: 1, color: AppTheme.borderLight),
             ],
           ],
         ),
@@ -285,7 +285,7 @@ class RabbitDetailScreen extends StatelessWidget {
             width: 140,
             child: Text(
               label,
-              style: const TextStyle(color: AppTheme.textSecondary),
+              style: TextStyle(color: AppTheme.textSecondary),
             ),
           ),
           Expanded(
@@ -296,7 +296,7 @@ class RabbitDetailScreen extends StatelessWidget {
                   Text(
                     value,
                     textAlign: TextAlign.end,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppTheme.textPrimary,
                       fontWeight: FontWeight.w700,
                     ),
