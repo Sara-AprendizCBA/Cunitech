@@ -93,11 +93,10 @@ class DashboardController extends GetxController {
     }
   }
 
-  /// Cargar conejas activas desde Supabase con filtros de usuario y estado
+  /// Cargar conejas activas del criadero con filtros de estado
   Future<void> loadActiveRabbits() async {
     final supabase = Supabase.instance.client;
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) {
+    if (supabase.auth.currentUser == null) {
       activeRabbits.clear();
       return;
     }
@@ -106,7 +105,6 @@ class DashboardController extends GetxController {
       final rows = await supabase
           .from('conejo')
           .select()
-          .eq('user_id', userId)
           .eq('genero', 'Hembra')
           .inFilter('reproductive_status', [
             'Vacía',
@@ -226,7 +224,6 @@ class DashboardController extends GetxController {
   /// Cuenta los tratamientos con fecha de próxima aplicación en los próximos
   /// 7 días. Devuelve 0 si la tabla `tratamientos` aún no existe.
   Future<int> _countTratamientosProximos(
-    String userId,
     DateTime today,
     DateTime inSevenDays,
   ) async {
@@ -234,7 +231,6 @@ class DashboardController extends GetxController {
       final rows = await Supabase.instance.client
           .from('tratamientos')
           .select('id')
-          .eq('user_id', userId)
           .gte('fecha_proxima', _dateOnly(today))
           .lte('fecha_proxima', _dateOnly(inSevenDays));
       return (rows as List).length;
@@ -247,8 +243,7 @@ class DashboardController extends GetxController {
   /// Consultar alertas reproductivas con fechas de calendario locales
   Future<void> loadAlerts({int baseAlertCount = 0}) async {
     final supabase = Supabase.instance.client;
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) {
+    if (supabase.auth.currentUser == null) {
       overduePregnancies.clear();
       alerts.value = baseAlertCount;
       return;
@@ -262,7 +257,6 @@ class DashboardController extends GetxController {
     final palpationCutoff = today.subtract(const Duration(days: 14));
 
     final tratamientosProximos = await _countTratamientosProximos(
-      userId,
       today,
       inSevenDays,
     );
@@ -271,7 +265,6 @@ class DashboardController extends GetxController {
       final upcomingBirths = await supabase
           .from('conejo')
           .select('id_conejo')
-          .eq('user_id', userId)
           .eq('reproductive_status', 'Gestante')
           .gte('expected_birth_date', _dateOnly(tomorrow))
           .lte('expected_birth_date', _dateOnly(inSevenDays));
@@ -279,21 +272,18 @@ class DashboardController extends GetxController {
       final birthsToday = await supabase
           .from('conejo')
           .select('id_conejo')
-          .eq('user_id', userId)
           .eq('reproductive_status', 'Gestante')
           .eq('expected_birth_date', _dateOnly(today));
 
       final overdueRows = await supabase
           .from('conejo')
           .select()
-          .eq('user_id', userId)
           .eq('reproductive_status', 'Gestante')
           .lt('mating_date', _dateOnly(overdueCutoff));
 
       final unpalpatedBirths = await supabase
           .from('conejo')
           .select('id_conejo')
-          .eq('user_id', userId)
           .eq('reproductive_status', 'Servida')
           .lte('mating_date', _dateOnly(palpationCutoff));
 

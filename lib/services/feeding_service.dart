@@ -8,11 +8,9 @@ class FeedingService {
 
   Future<List<AlimentacionJaula>> getAll() async {
     try {
-      final userId = supabase.auth.currentUser!.id;
       final data = await supabase
           .from('alimentacion')
           .select()
-          .eq('user_id', userId)
           .order('fecha', ascending: false)
           .limit(100);
       return (data as List)

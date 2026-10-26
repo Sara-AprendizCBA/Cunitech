@@ -7,8 +7,6 @@ class RabbitService {
   static const _tableName = 'conejo';
   static const _idColumn = 'id_conejo';
 
-  String get _userId => _supabase.auth.currentUser!.id;
-
   /// id_conejo es int4 en la BD; en la app se maneja como String
   Object _id(String id) => int.tryParse(id) ?? id;
 
@@ -41,7 +39,6 @@ class RabbitService {
       final response = await _supabase
           .from(_tableName)
           .select()
-          .eq('user_id', _userId)
           .order(_idColumn);
       return (response as List)
           .map((json) => Rabbit.fromJson(json as Map<String, dynamic>))
@@ -59,7 +56,6 @@ class RabbitService {
           .from(_tableName)
           .select()
           .eq(_idColumn, _id(id))
-          .eq('user_id', _userId)
           .single();
       return Rabbit.fromJson(response as Map<String, dynamic>);
     } catch (e) {
@@ -74,8 +70,7 @@ class RabbitService {
       final response = await _supabase
           .from(_tableName)
           .select()
-          .eq('genero', 'Hembra')
-          .eq('user_id', _userId);
+          .eq('genero', 'Hembra');
       return (response as List)
           .map((json) => Rabbit.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -107,7 +102,6 @@ class RabbitService {
           .from(_tableName)
           .update(rabbit.toInsertJson())
           .eq(_idColumn, _id(id))
-          .eq('user_id', _userId)
           .select()
           .single();
       return Rabbit.fromJson(response as Map<String, dynamic>);
@@ -123,8 +117,7 @@ class RabbitService {
       await _supabase
           .from(_tableName)
           .delete()
-          .eq(_idColumn, _id(id))
-          .eq('user_id', _userId);
+          .eq(_idColumn, _id(id));
     } catch (e) {
       print('Error deleting rabbit: $e');
       rethrow;

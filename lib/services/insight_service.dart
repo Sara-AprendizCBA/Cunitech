@@ -42,8 +42,7 @@ class InsightService {
   /// Recolecta las métricas del criadero. Cada consulta es tolerante a fallos:
   /// si una tabla/columna no existe, el valor queda en 0.
   Future<Map<String, dynamic>> _construirContexto() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return {};
+    if (_supabase.auth.currentUser == null) return {};
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -51,13 +50,12 @@ class InsightService {
     final en7 = today.add(const Duration(days: 7));
 
     final totalConejos = await _contar(
-      _supabase.from('conejo').select('id_conejo').eq('user_id', userId),
+      _supabase.from('conejo').select('id_conejo'),
     );
     final conejasActivas = await _contar(
       _supabase
           .from('conejo')
           .select('id_conejo')
-          .eq('user_id', userId)
           .eq('genero', 'Hembra')
           .inFilter('reproductive_status', [
             'Vacía',
@@ -71,14 +69,12 @@ class InsightService {
       _supabase
           .from('conejo')
           .select('id_conejo')
-          .eq('user_id', userId)
           .eq('genero', 'Macho'),
     );
     final enTratamiento = await _contar(
       _supabase
           .from('conejo')
           .select('id_conejo')
-          .eq('user_id', userId)
           .ilike('estado', '%Tratamiento%'),
     );
     final partos30Dias = await _contar(
@@ -92,7 +88,6 @@ class InsightService {
       _supabase
           .from('conejo')
           .select('id_conejo')
-          .eq('user_id', userId)
           .eq('reproductive_status', 'Gestante')
           .gte('expected_birth_date', _dateOnly(today))
           .lte('expected_birth_date', _dateOnly(en7)),

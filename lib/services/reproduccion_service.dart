@@ -13,7 +13,6 @@ class ReproduccionService {
       final data = await supabase
           .from('reproduccion')
           .select()
-          .eq('user_id', _userId)
           .order('fecha_monta', ascending: false);
       return (data as List)
           .map((json) =>
@@ -51,12 +50,12 @@ class ReproduccionService {
           : item.copyWith(
               fechaProbableParto: calcularProbableParto(item.fechaMonta),
             );
-      final data = actualizada.toJson()..['user_id'] = _userId;
+      final data = actualizada.toJson();
+      data.remove('user_id');
       await supabase
           .from('reproduccion')
           .update(data)
-          .eq('id_reproduccion', id)
-          .eq('user_id', _userId);
+          .eq('id_reproduccion', id);
       await _syncConejoStatus(actualizada);
       return true;
     } catch (e) {
@@ -70,8 +69,7 @@ class ReproduccionService {
       await supabase
           .from('reproduccion')
           .delete()
-          .eq('id_reproduccion', id)
-          .eq('user_id', _userId);
+          .eq('id_reproduccion', id);
       return true;
     } catch (e) {
       logger.e('Error deleting reproduction', error: e);
@@ -113,8 +111,7 @@ class ReproduccionService {
             'peso_promedio_camada': pesoPromedio,
             'notas': notas,
           })
-          .eq('id_reproduccion', r.idReproduccion!)
-          .eq('user_id', _userId);
+          .eq('id_reproduccion', r.idReproduccion!);
 
       await _syncConejoStatus(actualizada);
 
@@ -136,7 +133,6 @@ class ReproduccionService {
           .from('births')
           .select('id')
           .eq('reproduccion_id', r.idReproduccion!)
-          .eq('user_id', _userId)
           .limit(1)
           .maybeSingle();
 
@@ -146,8 +142,7 @@ class ReproduccionService {
         await supabase
             .from('births')
             .update(birthData)
-            .eq('id', birthId)
-            .eq('user_id', _userId);
+            .eq('id', birthId);
       } else {
         final inserted = await supabase
             .from('births')
@@ -182,7 +177,6 @@ class ReproduccionService {
         .from('conejo')
         .select('chapeta')
         .eq('id_conejo', reproduccion.idConeja)
-        .eq('user_id', _userId)
         .single();
     final chapetaMadre = madre['chapeta'] as String? ?? 'SIN-ID';
 
@@ -190,7 +184,6 @@ class ReproduccionService {
         .from('reproduccion')
         .select('id_reproduccion')
         .eq('id_coneja', reproduccion.idConeja)
-        .eq('user_id', _userId)
         .lte('fecha_parto', _dateToJson(fechaParto));
     final partoNumero = (partos as List).length;
     final fechaStr = _dateToJson(fechaParto);
@@ -198,8 +191,7 @@ class ReproduccionService {
     final existingKits = await supabase
         .from('kits')
         .select('kit_numero')
-        .eq('birth_id', birthId)
-        .eq('user_id', _userId);
+        .eq('birth_id', birthId);
     final kitNumbers = (existingKits as List)
         .map((kit) => (kit as Map<String, dynamic>)['kit_numero'])
         .whereType<int>()
@@ -271,8 +263,7 @@ class ReproduccionService {
                 )
               : null,
         })
-        .eq('id_conejo', r.idConeja)
-        .eq('user_id', _userId);
+        .eq('id_conejo', r.idConeja);
   }
 
   static String _dateToJson(DateTime date) =>

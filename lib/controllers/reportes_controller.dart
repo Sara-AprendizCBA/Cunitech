@@ -51,8 +51,7 @@ class ReportesController extends GetxController {
     try {
       final data = await supabase
           .from('conejo')
-          .select('id_conejo')
-          .eq('user_id', _userId);
+          .select('id_conejo');
       totalConejos.value = (data as List).length;
     } catch (e) {
       logger.e('Error loadTotalConejos', error: e);
@@ -64,7 +63,6 @@ class ReportesController extends GetxController {
       final data = await supabase
           .from('conejo')
           .select('id_conejo')
-          .eq('user_id', _userId)
           .eq('genero', 'Hembra')
           .inFilter('reproductive_status', [
             'Servida',
@@ -85,7 +83,6 @@ class ReportesController extends GetxController {
       final data = await supabase
           .from('births')
           .select('id')
-          .eq('user_id', _userId)
           .gte('birth_date', inicioMes.toIso8601String().split('T')[0]);
       nacimientosMes.value = (data as List).length;
     } catch (e) {
@@ -97,8 +94,7 @@ class ReportesController extends GetxController {
     try {
       final data = await supabase
           .from('births')
-          .select('live_kits, litter_size')
-          .eq('user_id', _userId);
+          .select('live_kits, litter_size');
 
       if ((data as List).isEmpty) {
         tasaSupervivencia.value = 0;
@@ -122,7 +118,6 @@ class ReportesController extends GetxController {
       final data = await supabase
           .from('conejo')
           .select('peso')
-          .eq('user_id', _userId)
           .not('peso', 'is', null);
 
       if ((data as List).isEmpty) {
@@ -152,13 +147,11 @@ class ReportesController extends GetxController {
       final conejos = await supabase
           .from('conejo')
           .select('fecha_nacimiento')
-          .eq('user_id', _userId)
           .not('fecha_nacimiento', 'is', null);
 
       final kits = await supabase
           .from('kits')
           .select('birth_date')
-          .eq('user_id', _userId)
           .eq('estado_nacimiento', 'Vivo');
 
       final conejosList = (conejos as List).cast<Map<String, dynamic>>();
@@ -207,7 +200,6 @@ class ReportesController extends GetxController {
       final nacimientos = await supabase
           .from('births')
           .select('id, birth_date, live_kits, dead_kits, mother_id')
-          .eq('user_id', _userId)
           .order('birth_date', ascending: false)
           .limit(5);
       final listaNac =
@@ -225,7 +217,6 @@ class ReportesController extends GetxController {
       final montas = await supabase
           .from('reproduccion')
           .select('id_reproduccion, fecha_monta, id_coneja, estado')
-          .eq('user_id', _userId)
           .order('fecha_monta', ascending: false)
           .limit(5);
       final listaMontas =
@@ -243,7 +234,6 @@ class ReportesController extends GetxController {
       final alertas = await supabase
           .from('conejo')
           .select('id_conejo, chapeta, estado')
-          .eq('user_id', _userId)
           .inFilter('estado', ['En tratamiento', 'Enfermo'])
           .limit(3);
       alertasSalud.assignAll(
@@ -260,7 +250,6 @@ class ReportesController extends GetxController {
       final data = await supabase
           .from('metas_mensuales')
           .select()
-          .eq('user_id', _userId)
           .eq('anio', ahora.year)
           .eq('mes', ahora.month);
 
@@ -295,8 +284,7 @@ class ReportesController extends GetxController {
       case 'prolificidad':
         final data = await supabase
             .from('births')
-            .select('litter_size')
-            .eq('user_id', _userId);
+            .select('litter_size');
         final nacimientos = data as List;
         if (nacimientos.isEmpty) return 0;
         var totalGazapos = 0;
@@ -309,12 +297,10 @@ class ReportesController extends GetxController {
       case 'fertilidad':
         final montas = await supabase
             .from('reproduccion')
-            .select('id_reproduccion')
-            .eq('user_id', _userId);
+            .select('id_reproduccion');
         final partos = await supabase
             .from('reproduccion')
             .select('id_reproduccion')
-            .eq('user_id', _userId)
             .eq('estado', 'Lactante');
         final totalMontas = (montas as List).length;
         final totalPartos = (partos as List).length;
@@ -368,8 +354,7 @@ class ReportesController extends GetxController {
       await supabase
           .from('metas_mensuales')
           .update(meta.toJson())
-          .eq('id', id)
-          .eq('user_id', _userId);
+          .eq('id', id);
       await _loadMetas();
       return true;
     } catch (e) {
@@ -383,8 +368,7 @@ class ReportesController extends GetxController {
       await supabase
           .from('metas_mensuales')
           .delete()
-          .eq('id', id)
-          .eq('user_id', _userId);
+          .eq('id', id);
       await _loadMetas();
       return true;
     } catch (e) {

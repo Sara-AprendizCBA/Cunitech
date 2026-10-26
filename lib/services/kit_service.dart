@@ -12,8 +12,7 @@ class KitService {
     try {
         final response = await _supabase
           .from(_tableName)
-          .select()
-          .eq('user_id', _userId);
+          .select();
       return (response as List)
           .map((json) => Kit.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -30,7 +29,6 @@ class KitService {
           .from(_tableName)
           .select()
           .eq('mother_id', int.parse(motherId))
-          .eq('user_id', _userId)
           .order('birth_date', ascending: false);
       return (response as List)
           .map((json) => Kit.fromJson(json as Map<String, dynamic>))
@@ -47,7 +45,6 @@ class KitService {
         final response = await _supabase
           .from(_tableName)
           .select()
-          .eq('user_id', _userId)
           .eq('id', id)
           .single();
       return Kit.fromJson(response as Map<String, dynamic>);
@@ -81,7 +78,6 @@ class KitService {
           .from(_tableName)
           .update(data)
           .eq('id', id)
-          .eq('user_id', _userId)
           .select()
           .single();
       return Kit.fromJson(response as Map<String, dynamic>);
@@ -97,8 +93,7 @@ class KitService {
         await _supabase
           .from(_tableName)
           .delete()
-          .eq('id', id)
-          .eq('user_id', _userId);
+          .eq('id', id);
     } catch (e) {
       logger.e('Error deleting kit', error: e);
       rethrow;
@@ -111,8 +106,7 @@ class KitService {
         final response = await _supabase
           .from(_tableName)
           .select()
-          .isFilter('weaning_date', null)
-          .eq('user_id', _userId);
+          .isFilter('weaning_date', null);
       return (response as List)
           .map((json) => Kit.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -128,8 +122,7 @@ class KitService {
       await _supabase
           .from(_tableName)
           .update({'current_weight': newWeight})
-          .eq('id', kitId)
-          .eq('user_id', _userId);
+          .eq('id', kitId);
     } catch (e) {
       logger.e('Error updating kit weight', error: e);
       rethrow;
@@ -142,8 +135,7 @@ class KitService {
       await _supabase
           .from(_tableName)
           .update({'weaning_date': DateTime.now().toIso8601String()})
-          .eq('id', kitId)
-          .eq('user_id', _userId);
+          .eq('id', kitId);
     } catch (e) {
       logger.e('Error marking kit as weaned', error: e);
       rethrow;

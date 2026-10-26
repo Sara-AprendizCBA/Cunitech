@@ -12,8 +12,7 @@ class BirthService {
     try {
         final response = await _supabase
           .from(_tableName)
-          .select()
-          .eq('user_id', _userId);
+          .select();
       return (response as List)
           .map((json) => Birth.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -30,7 +29,6 @@ class BirthService {
           .from(_tableName)
           .select()
           .eq('mother_id', int.parse(motherId))
-          .eq('user_id', _userId)
           .order('birth_date', ascending: false);
       return (response as List)
           .map((json) => Birth.fromJson(json as Map<String, dynamic>))
@@ -47,7 +45,6 @@ class BirthService {
         final response = await _supabase
           .from(_tableName)
           .select()
-          .eq('user_id', _userId)
           .eq('id', id)
           .single();
       return Birth.fromJson(response as Map<String, dynamic>);
@@ -81,7 +78,6 @@ class BirthService {
           .from(_tableName)
           .update(data)
           .eq('id', id)
-          .eq('user_id', _userId)
           .select()
           .single();
       return Birth.fromJson(response as Map<String, dynamic>);
@@ -97,8 +93,7 @@ class BirthService {
         await _supabase
           .from(_tableName)
           .delete()
-          .eq('id', id)
-          .eq('user_id', _userId);
+          .eq('id', id);
     } catch (e) {
       logger.e('Error deleting birth', error: e);
       rethrow;
@@ -114,7 +109,6 @@ class BirthService {
           .from(_tableName)
           .select()
           .gte('birth_date', since)
-          .eq('user_id', _userId)
           .order('birth_date', ascending: false);
       return (response as List)
           .map((json) => Birth.fromJson(json as Map<String, dynamic>))

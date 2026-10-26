@@ -114,8 +114,7 @@ class PdfService {
     DateTime inicioMes,
     DateTime inicioMesSiguiente,
   ) async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) {
+    if (_supabase.auth.currentUser == null) {
       throw StateError('No hay un usuario autenticado para generar el reporte.');
     }
     final inicio = _fechaIso(inicioMes);
@@ -124,26 +123,22 @@ class PdfService {
     final montas = await _supabase
         .from('reproduccion')
         .select('id_reproduccion')
-        .eq('user_id', userId)
         .gte('fecha_monta', inicio)
         .lt('fecha_monta', fin);
     final preneces = await _supabase
         .from('reproduccion')
         .select('id_reproduccion')
-        .eq('user_id', userId)
         .inFilter('estado', ['Gestante', 'Lactante', 'Destete'])
         .gte('fecha_monta', inicio)
         .lt('fecha_monta', fin);
     final partos = await _supabase
         .from('births')
         .select('live_kits, dead_kits, adopted_kits, litter_size')
-        .eq('user_id', userId)
         .gte('birth_date', inicio)
         .lt('birth_date', fin);
     final reproductoras = await _supabase
         .from('conejo')
         .select('id_conejo')
-        .eq('user_id', userId)
         .eq('genero', 'Hembra')
         .inFilter('reproductive_status', [
           'Servida',
@@ -154,13 +149,11 @@ class PdfService {
     final gestantes = await _supabase
         .from('conejo')
         .select('id_conejo')
-        .eq('user_id', userId)
         .eq('genero', 'Hembra')
         .eq('reproductive_status', 'Gestante');
     final alertas = await _supabase
         .from('conejo')
         .select('id_conejo')
-        .eq('user_id', userId)
         .inFilter('estado', ['En tratamiento', 'Enfermo']);
 
     var vivos = 0;

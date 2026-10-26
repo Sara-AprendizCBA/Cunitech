@@ -60,11 +60,9 @@ class FeedingController extends GetxController {
 
   Future<void> loadJaulas() async {
     try {
-      final userId = Supabase.instance.client.auth.currentUser!.id;
       final data = await Supabase.instance.client
           .from('conejo')
           .select('cage_number')
-          .eq('user_id', userId)
           .not('cage_number', 'is', null);
 
       final jaulas = (data as List)
