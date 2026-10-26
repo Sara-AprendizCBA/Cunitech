@@ -9,6 +9,7 @@ class UserController extends GetxController {
 
   final users = <UserProfile>[].obs;
   final isLoading = false.obs;
+  String? lastError;
 
   // Filtros
   final searchQuery = ''.obs;
@@ -78,25 +79,24 @@ class UserController extends GetxController {
     return ok;
   }
 
-  Future<bool> crearUsuario({
-    required String personalEmail,
-    required String laboralEmail,
+  /// Crea un usuario y devuelve su id. Si falla, devuelve `null` y el
+  /// mensaje real queda en [lastError].
+  Future<String?> crearUsuario({
+    required String email,
+    required String password,
     required String nombre,
     required String rol,
   }) async {
-    try {
-      final ok = await _service.createUser(
-        personalEmail: personalEmail,
-        laboralEmail: laboralEmail,
-        nombre: nombre,
-        rol: rol,
-      );
-      if (ok) await loadAll();
-      return ok;
-    } catch (e) {
-      logger.e('Error crearUsuario', error: e);
-      return false;
-    }
+    lastError = null;
+    final idUsuario = await _service.createUser(
+      email: email,
+      password: password,
+      nombre: nombre,
+      rol: rol,
+    );
+    lastError = _service.lastError;
+    if (idUsuario != null) await loadAll();
+    return idUsuario;
   }
 
   // ────── Filtros ──────

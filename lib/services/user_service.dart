@@ -6,6 +6,9 @@ import '../models/user_profile.dart';
 class UserService {
   final supabase = Supabase.instance.client;
 
+  String? _lastError;
+  String? get lastError => _lastError;
+
   /// Lista todos los usuarios (la RLS deja al admin ver todos).
   Future<List<UserProfile>> getAll() async {
     try {
@@ -65,29 +68,57 @@ class UserService {
   /// Crea un usuario nuevo.
   ///
   /// Invoca la Edge Function `create-user`, que crea el registro en
-  /// auth.users, inserta la fila en `usuario` y envía un correo al correo
-  /// personal con el enlace para crear la contraseña. La función valida que
-  /// el solicitante tenga rol `admin`.
-  Future<bool> createUser({
-    required String personalEmail,
-    required String laboralEmail,
+  /// auth.users, inserta la fila en `usuario` y devuelve el `id_usuario`.
+  /// La contraseña la define el admin. La función valida que el solicitante
+  /// tenga rol `admin`.
+  ///
+  /// Devuelve el `id_usuario` o `null` si falló. El mensaje real del error
+  /// queda disponible en [lastError].
+  Future<String?> createUser({
+    required String email,
+    required String password,
     required String nombre,
     required String rol,
   }) async {
+    _lastError = null;
     try {
       final response = await supabase.functions.invoke(
         'create-user',
         body: {
-          'personalEmail': personalEmail,
-          'laboralEmail': laboralEmail,
+          'email': email,
+          'password': password,
           'nombre': nombre,
           'rol': rol,
         },
       );
-      return response.status == 200;
+      final data = response.data;
+      if (response.status == 200 &&
+          data is Map &&
+          data['id_usuario'] is String) {
+        return data['id_usuario'] as String;
+      }
+      _lastError = _extractError(data, response.status);
+      return null;
+    } on FunctionException catch (e) {
+      _lastError = _extractError(e.details, e.status);
+      return null;
     } catch (e) {
       logger.e('Error createUser', error: e);
-      return false;
+      _lastError = 'No se pudo conectar con el servidor.';
+      return null;
     }
+  }
+
+  String _extractError(dynamic data, int status) {
+    if (data is Map && data['error'] is String) {
+      return data['error'] as String;
+    }
+    if (data is String && data.trim().isNotEmpty) {
+      return data;
+    }
+    if (status == 0) {
+      return 'No se pudo conectar con el servidor.';
+    }
+    return 'No se pudo crear el usuario (código $status).';
   }
 }

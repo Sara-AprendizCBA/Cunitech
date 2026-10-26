@@ -50,13 +50,18 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        title: const Text('Gestión de Usuarios'),
-      ),
       body: SafeArea(
         child: Column(
           children: [
+            Obx(
+              () => userController.isLoading.value
+                  ? LinearProgressIndicator(
+                      minHeight: 2,
+                      color: AppTheme.accent,
+                      backgroundColor: AppTheme.borderLight,
+                    )
+                  : const SizedBox.shrink(),
+            ),
             _buildStats(),
             _buildFilters(context),
             Expanded(child: _buildList(context)),
@@ -65,8 +70,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showCreateUserDialog,
+        tooltip: 'Crear usuario',
         icon: const Icon(Icons.person_add_alt_1),
         label: const Text('Crear usuario'),
+        backgroundColor: AppTheme.accent,
+        foregroundColor: Colors.white,
       ),
     );
   }
@@ -187,19 +195,43 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         return const Center(child: CircularProgressIndicator());
       }
       final list = userController.filteredUsers;
-      if (list.isEmpty) {
-        return const Center(child: Text('No hay usuarios registrados'));
-      }
-      return ListView.builder(
-        padding: EdgeInsets.all(context.adaptivePadding).copyWith(top: 8),
-        itemCount: list.length,
-        itemBuilder: (context, index) {
-          final user = list[index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _buildUserCard(context, user, key: ValueKey(user.idUsuario)),
-          );
-        },
+      final hasFilters = userController.searchQuery.value.isNotEmpty ||
+          userController.rolFilter.value != 'todos';
+      return RefreshIndicator(
+        color: AppTheme.accent,
+        onRefresh: userController.loadAll,
+        child: list.isEmpty
+            ? LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: _EmptyUsersState(
+                      hasFilters: hasFilters,
+                      onClearFilters: _clearFilters,
+                    ),
+                  ),
+                ),
+              )
+            : ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding:
+                    EdgeInsets.all(context.adaptivePadding).copyWith(top: 8),
+                itemCount: list.length,
+                itemBuilder: (context, index) {
+                  final user = list[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildUserCard(
+                      context,
+                      user,
+                      key: ValueKey(user.idUsuario),
+                    ),
+                  );
+                },
+              ),
       );
     });
   }
@@ -335,6 +367,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     return source.isEmpty ? '?' : source[0].toUpperCase();
   }
 
+  void _clearFilters() {
+    _searchCtrl.clear();
+    userController.clearFilters();
+  }
+
   // ────── Acciones ──────
 
   Future<void> _changeRol(UserProfile user, String nuevoRol) async {
@@ -361,13 +398,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   Future<void> _showCreateUserDialog() async {
-    final created = await showDialog<bool>(
+    final creado = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (_) => const _CreateUserDialog(),
     );
-    if (created == true && mounted) {
-      AppSnackbar.success(context, 'Invitación enviada y usuario creado');
+    if (creado == true && mounted) {
+      AppSnackbar.success(context, 'Usuario creado');
     }
   }
 
@@ -438,7 +475,7 @@ class _StatChip extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             label,
-            style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+            style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
           ),
         ],
       ),
@@ -455,54 +492,42 @@ class _CreateUserDialog extends StatefulWidget {
 
 class _CreateUserDialogState extends State<_CreateUserDialog> {
   final _formKey = GlobalKey<FormState>();
+  final _emailCtrl = TextEditingController();
   final _nombreCtrl = TextEditingController();
-  final _personalCtrl = TextEditingController();
-  final _laboralCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
   final _userController = Get.find<UserController>();
-
-  static final _emailRe = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-  static const List<String> _rolesPermitidos = [
-    'admin',
-    'veterinario',
-    'ayudante',
-  ];
 
   String _rol = 'ayudante';
   bool _saving = false;
 
   @override
   void dispose() {
+    _emailCtrl.dispose();
     _nombreCtrl.dispose();
-    _personalCtrl.dispose();
-    _laboralCtrl.dispose();
+    _passwordCtrl.dispose();
     super.dispose();
   }
-
-  String _rolLabel(String rol) => switch (rol) {
-        'admin' => 'Admin',
-        'veterinario' => 'Veterinario',
-        _ => 'Ayudante',
-      };
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
-    final ok = await _userController.crearUsuario(
-      personalEmail: _personalCtrl.text.trim(),
-      laboralEmail: _laboralCtrl.text.trim(),
+    final idUsuario = await _userController.crearUsuario(
+      email: _emailCtrl.text.trim(),
+      password: _passwordCtrl.text,
       nombre: _nombreCtrl.text.trim(),
       rol: _rol,
     );
     if (!mounted) return;
-    if (ok) {
-      Navigator.of(context).pop(true);
-    } else {
+    if (idUsuario == null) {
       setState(() => _saving = false);
       AppSnackbar.error(
         context,
-        'No se pudo crear el usuario. Revisa los datos y tu conexión.',
+        _userController.lastError ??
+            'No se pudo crear el usuario. Revisa los datos y tu conexión.',
       );
+      return;
     }
+    Navigator.of(context).pop(true);
   }
 
   @override
@@ -518,47 +543,54 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
-                  controller: _nombreCtrl,
-                  enabled: !_saving,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre completo',
-                    prefixIcon: Icon(Icons.person_outline),
-                  ),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Ingresa el nombre'
-                      : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _personalCtrl,
+                  controller: _emailCtrl,
                   enabled: !_saving,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
-                    labelText: 'Correo personal',
-                    hintText: 'donde recibirá la invitación',
+                    labelText: 'Email',
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
                   validator: (v) {
-                    final value = v?.trim() ?? '';
-                    if (value.isEmpty) return 'Ingresa el correo personal';
-                    if (!_emailRe.hasMatch(value)) return 'Correo no válido';
-                    return null;
+                    final t = (v ?? '').trim();
+                    if (t.isEmpty) return 'El email es obligatorio';
+                    final ok =
+                        RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(t);
+                    return ok ? null : 'Email inválido';
                   },
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
-                  controller: _laboralCtrl,
+                  controller: _nombreCtrl,
                   enabled: !_saving,
-                  keyboardType: TextInputType.emailAddress,
+                  textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(
-                    labelText: 'Correo laboral (login)',
-                    prefixIcon: Icon(Icons.badge_outlined),
+                    labelText: 'Nombre',
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
+                  validator: (v) => (v ?? '').trim().isEmpty
+                      ? 'El nombre es obligatorio'
+                      : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _passwordCtrl,
+                  enabled: !_saving,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Contraseña',
+                    prefixIcon: Icon(Icons.lock_outline),
                   ),
                   validator: (v) {
-                    final value = v?.trim() ?? '';
-                    if (value.isEmpty) return 'Ingresa el correo laboral';
-                    if (!_emailRe.hasMatch(value)) return 'Correo no válido';
+                    final value = v ?? '';
+                    if (value.length < 8) {
+                      return 'Mínimo 8 caracteres';
+                    }
+                    if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                      return 'Debe incluir al menos una mayúscula';
+                    }
+                    if (!RegExp(r'\d').hasMatch(value)) {
+                      return 'Debe incluir al menos un número';
+                    }
                     return null;
                   },
                 ),
@@ -567,20 +599,21 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
                   initialValue: _rol,
                   decoration: const InputDecoration(
                     labelText: 'Rol',
-                    prefixIcon: Icon(Icons.workspace_premium_outlined),
+                    prefixIcon: Icon(Icons.badge_outlined),
                   ),
-                  items: _rolesPermitidos
-                      .map(
-                        (r) => DropdownMenuItem(
-                          value: r,
-                          child: Text(_rolLabel(r)),
-                        ),
-                      )
-                      .toList(),
+                  items: const [
+                    DropdownMenuItem(value: 'usuario', child: Text('Usuario')),
+                    DropdownMenuItem(value: 'ayudante', child: Text('Ayudante')),
+                    DropdownMenuItem(
+                      value: 'veterinario',
+                      child: Text('Veterinario'),
+                    ),
+                    DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                  ],
                   onChanged: _saving
                       ? null
-                      : (value) {
-                          if (value != null) setState(() => _rol = value);
+                      : (v) {
+                          if (v != null) setState(() => _rol = v);
                         },
                 ),
               ],
@@ -590,7 +623,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: _saving ? null : () => Navigator.of(context).pop(false),
+          onPressed: _saving ? null : () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         FilledButton.icon(
@@ -602,9 +635,83 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.person_add_alt_1),
-          label: Text(_saving ? 'Creando...' : 'Crear y enviar'),
+          label: Text(_saving ? 'Creando...' : 'Crear usuario'),
         ),
       ],
+    );
+  }
+}
+
+class _EmptyUsersState extends StatelessWidget {
+  final bool hasFilters;
+  final VoidCallback onClearFilters;
+
+  const _EmptyUsersState({
+    required this.hasFilters,
+    required this.onClearFilters,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(AppTheme.spacingLg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    hasFilters
+                        ? Icons.search_off_rounded
+                        : Icons.group_outlined,
+                    size: 22,
+                    color: AppTheme.accent,
+                  ),
+                ),
+                const SizedBox(height: AppTheme.spacingMd),
+                Text(
+                  hasFilters
+                      ? 'No se encontraron usuarios'
+                      : 'Aún no hay usuarios registrados',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: AppTheme.spacingSm),
+                Text(
+                  hasFilters
+                      ? 'Prueba con otro nombre, email o rol.'
+                      : 'Crea el primer usuario con el botón Crear usuario.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.outline,
+                  ),
+                ),
+                if (hasFilters) ...[
+                  const SizedBox(height: AppTheme.spacingMd),
+                  OutlinedButton.icon(
+                    onPressed: onClearFilters,
+                    icon: const Icon(Icons.filter_alt_off_rounded, size: 18),
+                    label: const Text('Limpiar filtros'),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
