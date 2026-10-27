@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
+import '../../core/widgets/app_card.dart';
+import '../../core/widgets/app_loading.dart';
 import '../../controllers/auth_controller.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -43,11 +45,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ==================== HELPERS ====================
 
   String _rolLabel(String rol) => switch (rol) {
-        'admin' => 'Administrador',
-        'veterinario' => 'Veterinario',
-        'ayudante' => 'Ayudante',
-        _ => 'Usuario sin asignar',
-      };
+    'admin' => 'Administrador',
+    'veterinario' => 'Veterinario',
+    'ayudante' => 'Ayudante',
+    _ => 'Usuario sin asignar',
+  };
 
   String _initials(String? nombre) {
     final n = (nombre ?? '').trim();
@@ -81,7 +83,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       await _supabase
           .from('usuario')
-          .update({'nombre': nuevo}).eq('id_usuario', id);
+          .update({'nombre': nuevo})
+          .eq('id_usuario', id);
       await _auth.loadCurrentUser();
       if (!mounted) return;
 
@@ -109,6 +112,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Navigator.pop(context),
@@ -118,7 +125,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: Obx(() {
         final user = _auth.currentUser.value;
         if (user == null) {
-          return const Center(child: CircularProgressIndicator());
+          return const AppLoadingIndicator(label: 'Cargando perfil…');
         }
         final nombre = user['nombre'] as String? ?? 'Usuario';
         final rol = _rolLabel(_auth.currentRol.value);
@@ -184,71 +191,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final theme = Theme.of(context);
     return _card(
       context,
-      Padding(
-        padding: const EdgeInsets.all(AppTheme.spacingMd),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _fieldLabel(context, 'Nombre Completo'),
-            const SizedBox(height: AppTheme.spacingSm),
-            TextField(
-              controller: _nameController,
-              enabled: !_saving,
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) {
-                if (!_saving) _save();
-              },
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.person_outline),
-                hintText: 'Tu nombre completo',
-              ),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _fieldLabel(context, 'Nombre Completo'),
+          const SizedBox(height: AppTheme.spacingSm),
+          TextField(
+            controller: _nameController,
+            enabled: !_saving,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) {
+              if (!_saving) _save();
+            },
+            decoration: const InputDecoration(
+              prefixIcon: Icon(Icons.person_outline),
+              hintText: 'Tu nombre completo',
             ),
-            const SizedBox(height: AppTheme.spacingMd),
-            _fieldLabel(context, 'Correo Electrónico'),
-            const SizedBox(height: AppTheme.spacingSm),
-            TextField(
-              controller: _emailController,
-              readOnly: true,
-              style: theme.textTheme.bodyMedium,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.email_outlined),
-                helperText: 'El correo no se puede modificar',
-              ),
+          ),
+          const SizedBox(height: AppTheme.spacingMd),
+          _fieldLabel(context, 'Correo Electrónico'),
+          const SizedBox(height: AppTheme.spacingSm),
+          TextField(
+            controller: _emailController,
+            readOnly: true,
+            style: theme.textTheme.bodyMedium,
+            decoration: const InputDecoration(
+              prefixIcon: Icon(Icons.email_outlined),
+              helperText: 'El correo no se puede modificar',
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buttons(BuildContext context) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: OutlinedButton(
-            onPressed: _saving ? null : _cancel,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.accent,
-              side: const BorderSide(color: AppTheme.accent),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('Cancelar'),
-          ),
-        ),
-        const SizedBox(width: AppTheme.spacingMd),
-        Expanded(
+        SizedBox(
+          width: double.infinity,
           child: ElevatedButton(
             onPressed: _saving ? null : _save,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.accent,
               foregroundColor: Colors.white,
               elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
               ),
             ),
             child: _saving
@@ -262,6 +252,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   )
                 : const Text('Guardar Cambios'),
           ),
+        ),
+        const SizedBox(height: AppTheme.spacingSm),
+        TextButton(
+          onPressed: _saving ? null : _cancel,
+          child: const Text('Cancelar'),
         ),
       ],
     );
@@ -295,17 +290,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _card(BuildContext context, Widget child) {
     final theme = Theme.of(context);
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 2,
-      shadowColor: theme.colorScheme.shadow.withValues(alpha: 0.16),
-      surfaceTintColor: Colors.transparent,
-      color: theme.cardTheme.color,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        side: BorderSide(color: theme.colorScheme.outline),
-      ),
-      clipBehavior: Clip.antiAlias,
+    return AppCard(
+      color: theme.brightness == Brightness.light ? Colors.white : null,
       child: child,
     );
   }

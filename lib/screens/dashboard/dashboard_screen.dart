@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/responsive.dart';
+import '../../core/widgets/app_loading.dart';
 import '../../controllers/dashboard_controller.dart';
 import '../../models/insight_recomendacion.dart';
 import '../../models/rabbit.dart';
@@ -67,7 +68,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       body: Obx(() {
         // Este Obx principal controla el loading y todo el contenido
         if (dashboardController.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return const AppLoadingIndicator(label: 'Cargando criadero…');
         }
 
         return SingleChildScrollView(
@@ -412,7 +413,11 @@ class _DashboardScreenState extends State<DashboardScreen>
           ElevatedButton.icon(
             onPressed: () {
               Get.back();
-              Get.to(() => RabbitDetailScreen(rabbit: rabbit));
+              Get.to(
+                () => RabbitDetailScreen(rabbit: rabbit),
+                transition: Transition.rightToLeft,
+                duration: const Duration(milliseconds: 300),
+              );
             },
             icon: const Icon(Icons.arrow_forward),
             label: const Text('Ver coneja'),
@@ -491,7 +496,11 @@ class _DashboardScreenState extends State<DashboardScreen>
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-          onTap: () => Get.to(() => RabbitDetailScreen(rabbit: rabbit)),
+          onTap: () => Get.to(
+            () => RabbitDetailScreen(rabbit: rabbit),
+            transition: Transition.rightToLeft,
+            duration: const Duration(milliseconds: 300),
+          ),
           child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: context.isMobile ? 16 : 24,

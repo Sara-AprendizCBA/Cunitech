@@ -6,6 +6,9 @@ import '../../controllers/auth_controller.dart';
 import '../../controllers/rabbit_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
+import '../../core/utils/dialog_animations.dart';
+import '../../core/widgets/animated_list_item.dart';
+import '../../core/widgets/app_loading.dart';
 import '../../models/tratamiento.dart';
 import '../../services/salud_service.dart';
 
@@ -82,7 +85,7 @@ class _SaludScreenState extends State<SaludScreen> {
   // ==================== ACCIONES ====================
   Future<void> _abrirFormulario({Tratamiento? existing}) async {
     if (!_puedeGestionar) return;
-    final guardado = await showDialog<bool>(
+    final guardado = await showScaleDialog<bool>(
       context: context,
       builder: (_) => _TratamientoFormDialog(
         service: _service,
@@ -116,7 +119,7 @@ class _SaludScreenState extends State<SaludScreen> {
             _buildFiltros(context),
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const AppLoadingList(itemCount: 3)
                   : _buildLista(context),
             ),
           ],
@@ -160,7 +163,10 @@ class _SaludScreenState extends State<SaludScreen> {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
       itemCount: items.length,
-      itemBuilder: (context, i) => _buildCard(context, items[i]),
+      itemBuilder: (context, i) => AnimatedListItem(
+        index: i,
+        child: _buildCard(context, items[i]),
+      ),
     );
   }
 

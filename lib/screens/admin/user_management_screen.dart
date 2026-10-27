@@ -3,7 +3,10 @@ import 'package:get/get.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
+import '../../core/utils/dialog_animations.dart';
 import '../../core/utils/responsive.dart';
+import '../../core/widgets/animated_list_item.dart';
+import '../../core/widgets/app_loading.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/user_controller.dart';
 import '../../models/user_profile.dart';
@@ -192,7 +195,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   Widget _buildList(BuildContext context) {
     return Obx(() {
       if (userController.isLoading.value && userController.users.isEmpty) {
-        return const Center(child: CircularProgressIndicator());
+        return const AppLoadingList();
       }
       final list = userController.filteredUsers;
       final hasFilters = userController.searchQuery.value.isNotEmpty ||
@@ -222,12 +225,15 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 itemCount: list.length,
                 itemBuilder: (context, index) {
                   final user = list[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _buildUserCard(
-                      context,
-                      user,
-                      key: ValueKey(user.idUsuario),
+                  return AnimatedListItem(
+                    index: index,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildUserCard(
+                        context,
+                        user,
+                        key: ValueKey(user.idUsuario),
+                      ),
                     ),
                   );
                 },
@@ -398,7 +404,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   Future<void> _showCreateUserDialog() async {
-    final creado = await showDialog<bool>(
+    final creado = await showScaleDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (_) => const _CreateUserDialog(),

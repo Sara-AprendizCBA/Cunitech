@@ -42,9 +42,13 @@ class AppSnackbar {
               constraints: const BoxConstraints(maxWidth: 400),
               child: Material(
                 color: bg,
-                elevation: 6,
+                elevation: 10,
+                shadowColor: bg.withValues(alpha: 0.35),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.14),
+                  ),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Padding(
@@ -54,7 +58,14 @@ class AppSnackbar {
                   ),
                   child: Row(
                     children: [
-                      Icon(icon, color: Colors.white, size: 22),
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.14),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(icon, color: Colors.white, size: 18),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -67,6 +78,21 @@ class AppSnackbar {
                           ),
                         ),
                       ),
+                      IconButton(
+                        tooltip: 'Cerrar',
+                        onPressed: messenger.hideCurrentSnackBar,
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: Colors.white70,
+                          size: 18,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 28,
+                          minHeight: 28,
+                        ),
+                        visualDensity: VisualDensity.compact,
+                      ),
                     ],
                   ),
                 ),
@@ -78,10 +104,11 @@ class AppSnackbar {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          margin: const EdgeInsets.all(20),
+          margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
           padding: EdgeInsets.zero,
           duration: duration ?? const Duration(seconds: 3),
           elevation: 0,
+          dismissDirection: DismissDirection.horizontal,
         ),
       );
   }

@@ -8,7 +8,11 @@ import '../../controllers/feeding_controller.dart';
 import '../../controllers/auth_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
+import '../../core/utils/dialog_animations.dart';
 import '../../core/utils/responsive.dart';
+import '../../core/widgets/animated_list_item.dart';
+import '../../core/widgets/app_card.dart';
+import '../../core/widgets/app_loading.dart';
 import '../../models/alimentacion_jaula.dart';
 
 class FeedingScreen extends StatefulWidget {
@@ -54,14 +58,14 @@ class _FeedingScreenState extends State<FeedingScreen> {
             )
           : null,
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(context.adaptivePadding).copyWith(
-          bottom: context.isMobile ? 96 : context.adaptivePadding,
-        ),
+        padding: EdgeInsets.all(
+          context.adaptivePadding,
+        ).copyWith(bottom: context.isMobile ? 96 : context.adaptivePadding),
         child: Obx(() {
           if (controller.isLoading.value &&
               controller.feedings.isEmpty &&
               controller.jaulasDelUsuario.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return const AppLoadingList(shrinkWrap: true, itemCount: 3);
           }
 
           final pendientes = controller.jaulasPendientesHoy;
@@ -95,22 +99,22 @@ class _FeedingScreenState extends State<FeedingScreen> {
               SizedBox(height: context.adaptivePadding),
               if (!context.isMobile && !authController.isVeterinario)
                 SizedBox(
-                width: double.infinity,
-                height: 60,
-                child: FilledButton.icon(
-                  onPressed: controller.jaulasDelUsuario.isEmpty
-                      ? null
-                      : () => _showFeedingForm(),
-                  icon: const Icon(Icons.add_rounded),
-                  label: const Text('REGISTRAR ALIMENTACIÓN'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppTheme.accent,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                  width: double.infinity,
+                  height: 60,
+                  child: FilledButton.icon(
+                    onPressed: controller.jaulasDelUsuario.isEmpty
+                        ? null
+                        : () => _showFeedingForm(),
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text('REGISTRAR ALIMENTACIÓN'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.accent,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      ),
                     ),
                   ),
-                ),
                 ),
             ],
           );
@@ -123,45 +127,39 @@ class _FeedingScreenState extends State<FeedingScreen> {
     final now = DateTime.now();
     return Text(
       '${now.day} de ${_getMonthName(now.month)} · Cunicultura CBA',
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
     ).animate().fadeIn(duration: 400.ms);
   }
 
   Widget _buildPendingBanner(int count) => Container(
-        padding: EdgeInsets.all(context.isMobile ? 12 : 16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFF3E0),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFFFCC80)),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.warning_amber_rounded, color: Color(0xFFE65100)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Faltan $count ${count == 1 ? 'jaula' : 'jaulas'} por registrar',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFFE65100),
-                ),
-              ),
+    padding: EdgeInsets.all(context.isMobile ? 12 : 16),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFF3E0),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: const Color(0xFFFFCC80)),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.warning_amber_rounded, color: Color(0xFFE65100)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            'Faltan $count ${count == 1 ? 'jaula' : 'jaulas'} por registrar',
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Color(0xFFE65100),
             ),
-          ],
+          ),
         ),
-      );
+      ],
+    ),
+  );
 
   Widget _buildDailyProgressCard(BuildContext context) {
     final percent = controller.porcentajeHoy.round().clamp(0, 100);
-    return Container(
-      padding: EdgeInsets.all(context.isMobile ? 16 : 24),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceLight,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: AppTheme.borderLight),
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -171,8 +169,8 @@ class _FeedingScreenState extends State<FeedingScreen> {
                 child: Text(
                   'Progreso del Día',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               _PercentageBadge(percent: percent),
@@ -185,8 +183,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
               value: percent / 100,
               minHeight: 10,
               backgroundColor: AppTheme.borderLight,
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppTheme.accent),
+              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accent),
             ),
           ),
           SizedBox(height: context.isMobile ? 12 : 16),
@@ -203,34 +200,32 @@ class _FeedingScreenState extends State<FeedingScreen> {
     ).animate().fadeIn(delay: 100.ms, duration: 500.ms);
   }
 
-  Widget _buildNoCagesMessage() => Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(context.isMobile ? 16 : 24),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceLight,
-          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-          border: Border.all(color: AppTheme.borderLight),
-        ),
-        child: Text(
-          'Asigna N° de jaula a tus conejos para usar este módulo',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: AppTheme.textSecondary),
-        ),
-      );
+  Widget _buildNoCagesMessage() => AppCard(
+    child: Text(
+      'Asigna N° de jaula a tus conejos para usar este módulo',
+      textAlign: TextAlign.center,
+      style: TextStyle(color: AppTheme.textSecondary),
+    ),
+  );
 
   Widget _buildTodayCages() {
     final registros = controller.registrosDeHoy;
     return Column(
-      children: controller.jaulasDelUsuario.map((jaula) {
-        final coincidencias =
-            registros.where((item) => item.jaula == jaula).toList();
+      children: controller.jaulasDelUsuario.asMap().entries.map((entry) {
+        final jaula = entry.value;
+        final coincidencias = registros
+            .where((item) => item.jaula == jaula)
+            .toList();
         final registro = coincidencias.isEmpty ? null : coincidencias.first;
-        return _CageFeedingTile(
-          jaula: jaula,
-          registro: registro,
-          onTap: authController.isVeterinario
-              ? null
-              : () => _showFeedingForm(jaula: jaula, existing: registro),
+        return AnimatedListItem(
+          index: entry.key,
+          child: _CageFeedingTile(
+            jaula: jaula,
+            registro: registro,
+            onTap: authController.isVeterinario
+                ? null
+                : () => _showFeedingForm(jaula: jaula, existing: registro),
+          ),
         );
       }).toList(),
     );
@@ -246,17 +241,18 @@ class _FeedingScreenState extends State<FeedingScreen> {
     }
 
     final mostrarTodos = _historialExpandido || history.length <= 4;
-    final visibles = mostrarTodos
-        ? history.toList()
-        : history.take(4).toList();
+    final visibles = mostrarTodos ? history.toList() : history.take(4).toList();
 
     return Column(
       children: [
-        ...visibles.map(
-          (item) => _HistoryCard(
-            item: item,
-            canEdit: !authController.isVeterinario,
-            onDelete: () => _confirmarEliminarRegistro(item),
+        ...visibles.asMap().entries.map(
+          (entry) => AnimatedListItem(
+            index: entry.key,
+            child: _HistoryCard(
+              item: entry.value,
+              canEdit: !authController.isVeterinario,
+              onDelete: () => _confirmarEliminarRegistro(entry.value),
+            ),
           ),
         ),
         if (history.length > 4)
@@ -265,9 +261,8 @@ class _FeedingScreenState extends State<FeedingScreen> {
             child: SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () => setState(
-                  () => _historialExpandido = !_historialExpandido,
-                ),
+                onPressed: () =>
+                    setState(() => _historialExpandido = !_historialExpandido),
                 icon: Icon(
                   _historialExpandido
                       ? Icons.expand_less_rounded
@@ -285,9 +280,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
     );
   }
 
-  Future<void> _confirmarEliminarRegistro(
-    AlimentacionJaula item,
-  ) async {
+  Future<void> _confirmarEliminarRegistro(AlimentacionJaula item) async {
     final confirmado = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -304,9 +297,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppTheme.danger,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.danger),
             child: const Text('Eliminar'),
           ),
         ],
@@ -327,7 +318,7 @@ class _FeedingScreenState extends State<FeedingScreen> {
     String? jaula,
     AlimentacionJaula? existing,
   }) async {
-    await showDialog<void>(
+    await showScaleDialog<void>(
       context: context,
       builder: (_) => _FeedingFormDialog(
         controller: controller,
@@ -339,8 +330,18 @@ class _FeedingScreenState extends State<FeedingScreen> {
 
   String _getMonthName(int month) {
     const months = [
-      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+      'enero',
+      'febrero',
+      'marzo',
+      'abril',
+      'mayo',
+      'junio',
+      'julio',
+      'agosto',
+      'septiembre',
+      'octubre',
+      'noviembre',
+      'diciembre',
     ];
     return months[month - 1];
   }
@@ -361,30 +362,24 @@ class _CageFeedingTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final registered = registro != null;
     final color = registered ? AppTheme.success : AppTheme.warning;
-    return Container(
+    return AppCard(
       margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceLight,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: AppTheme.borderLight),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: ListTile(
-          onTap: onTap,
-          leading: Icon(
-            registered ? Icons.check_circle : Icons.circle_outlined,
-            color: color,
-          ),
-          title: Text('Jaula $jaula'),
-          subtitle: registered
-              ? Text(
-                  '${registro!.cantidadKg} kg'
-                  '${registro!.tipoComida == null ? '' : ' · ${registro!.tipoComida}'}',
-                )
-              : const Text('Pendiente de registro'),
-          trailing: const Icon(Icons.chevron_right_rounded),
+      padding: EdgeInsets.zero,
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        onTap: onTap,
+        leading: Icon(
+          registered ? Icons.check_circle : Icons.circle_outlined,
+          color: color,
         ),
+        title: Text('Jaula $jaula'),
+        subtitle: registered
+            ? Text(
+                '${registro!.cantidadKg} kg'
+                '${registro!.tipoComida == null ? '' : ' · ${registro!.tipoComida}'}',
+              )
+            : const Text('Pendiente de registro'),
+        trailing: const Icon(Icons.chevron_right_rounded),
       ),
     );
   }
@@ -397,19 +392,19 @@ class _PercentageBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        decoration: BoxDecoration(
-          color: AppTheme.success.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Text(
-          '$percent% Completado',
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            color: AppTheme.success,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+    decoration: BoxDecoration(
+      color: AppTheme.success.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: Text(
+      '$percent% Completado',
+      style: const TextStyle(
+        fontWeight: FontWeight.w600,
+        color: AppTheme.success,
+      ),
+    ),
+  );
 }
 
 class _HistoryCard extends StatelessWidget {
@@ -429,41 +424,35 @@ class _HistoryCard extends StatelessWidget {
     final color = completed ? AppTheme.success : AppTheme.warning;
     final dateLabel =
         '${item.fecha.day} de ${_monthName(item.fecha.month)} ${item.fecha.year}';
-    return Container(
+    return AppCard(
       margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceLight,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: AppTheme.borderLight),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: ListTile(
-          leading: Icon(Icons.restaurant_rounded, color: color),
-          title: Text('Jaula ${item.jaula} · $dateLabel'),
-          subtitle: Text(
-            '${item.cantidadKg} kg'
-            '${item.tipoComida == null ? '' : ' · ${item.tipoComida}'}',
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (canEdit) ...[
-                IconButton(
-                  tooltip: 'Eliminar registro',
-                  onPressed: onDelete,
-                  icon: const Icon(
-                    Icons.delete_outline_rounded,
-                    size: 20,
-                    color: AppTheme.danger,
-                  ),
-                  visualDensity: VisualDensity.compact,
+      padding: EdgeInsets.zero,
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        leading: Icon(Icons.restaurant_rounded, color: color),
+        title: Text('Jaula ${item.jaula} · $dateLabel'),
+        subtitle: Text(
+          '${item.cantidadKg} kg'
+          '${item.tipoComida == null ? '' : ' · ${item.tipoComida}'}',
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (canEdit) ...[
+              IconButton(
+                tooltip: 'Eliminar registro',
+                onPressed: onDelete,
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  size: 20,
+                  color: AppTheme.danger,
                 ),
-                const SizedBox(width: 4),
-              ],
-              _StatusBadge(status: item.estado, color: color),
+                visualDensity: VisualDensity.compact,
+              ),
+              const SizedBox(width: 4),
             ],
-          ),
+            _StatusBadge(status: item.estado, color: color),
+          ],
         ),
       ),
     );
@@ -471,8 +460,18 @@ class _HistoryCard extends StatelessWidget {
 
   static String _monthName(int month) {
     const months = [
-      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+      'enero',
+      'febrero',
+      'marzo',
+      'abril',
+      'mayo',
+      'junio',
+      'julio',
+      'agosto',
+      'septiembre',
+      'octubre',
+      'noviembre',
+      'diciembre',
     ];
     return months[month - 1];
   }
@@ -486,20 +485,16 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Text(
-          status,
-          style: TextStyle(
-            color: color,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: Text(
+      status,
+      style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+    ),
+  );
 }
 
 class _FeedingFormDialog extends StatefulWidget {
@@ -535,8 +530,9 @@ class _FeedingFormDialogState extends State<_FeedingFormDialog> {
     _fecha = item?.fecha ?? DateTime.now();
     _tipoComida = item?.tipoComida;
     _estado = item?.estado ?? 'Completado';
-    _cantidadController =
-        TextEditingController(text: item?.cantidadKg.toString() ?? '');
+    _cantidadController = TextEditingController(
+      text: item?.cantidadKg.toString() ?? '',
+    );
     _notasController = TextEditingController(text: item?.notas ?? '');
   }
 
@@ -550,17 +546,20 @@ class _FeedingFormDialogState extends State<_FeedingFormDialog> {
   @override
   Widget build(BuildContext context) {
     final jaulas = widget.controller.jaulasDelUsuario.toList();
-    final dialogWidth =
-        MediaQuery.of(context).size.width < 500 ? double.infinity : 420.0;
+    final dialogWidth = MediaQuery.of(context).size.width < 500
+        ? double.infinity
+        : 420.0;
     return AlertDialog(
       title: Row(
         children: [
           const Icon(Icons.restaurant_menu_rounded, color: AppTheme.accent),
           const SizedBox(width: 12),
           Flexible(
-            child: Text(widget.existing == null
-                ? 'Registrar alimentación'
-                : 'Editar alimentación'),
+            child: Text(
+              widget.existing == null
+                  ? 'Registrar alimentación'
+                  : 'Editar alimentación',
+            ),
           ),
         ],
       ),
@@ -598,12 +597,8 @@ class _FeedingFormDialogState extends State<_FeedingFormDialog> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: ListTile(
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16),
-                    leading: const Icon(
-                      Icons.calendar_today_rounded,
-                      size: 20,
-                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    leading: const Icon(Icons.calendar_today_rounded, size: 20),
                     title: const Text('Fecha', style: TextStyle(fontSize: 12)),
                     subtitle: Text(
                       '${_fecha.day}/${_fecha.month}/${_fecha.year}',
@@ -625,8 +620,9 @@ class _FeedingFormDialogState extends State<_FeedingFormDialog> {
                     suffixText: 'kg',
                     prefixIcon: Icon(Icons.scale_rounded),
                   ),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   validator: (value) {
                     final amount = double.tryParse(value ?? '');
                     return amount == null || amount <= 0
@@ -643,8 +639,10 @@ class _FeedingFormDialogState extends State<_FeedingFormDialog> {
                     prefixIcon: Icon(Icons.restaurant_rounded),
                   ),
                   items: ['Mañana', 'Tarde', 'Noche']
-                      .map((value) =>
-                          DropdownMenuItem(value: value, child: Text(value)))
+                      .map(
+                        (value) =>
+                            DropdownMenuItem(value: value, child: Text(value)),
+                      )
                       .toList(),
                   onChanged: (value) => setState(() => _tipoComida = value),
                 ),
@@ -656,8 +654,10 @@ class _FeedingFormDialogState extends State<_FeedingFormDialog> {
                     prefixIcon: Icon(Icons.check_circle_outline_rounded),
                   ),
                   items: ['Completado', 'Parcial']
-                      .map((value) =>
-                          DropdownMenuItem(value: value, child: Text(value)))
+                      .map(
+                        (value) =>
+                            DropdownMenuItem(value: value, child: Text(value)),
+                      )
                       .toList(),
                   onChanged: (value) {
                     if (value != null) setState(() => _estado = value);

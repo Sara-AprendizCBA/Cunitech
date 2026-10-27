@@ -4,9 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // ── Paleta ──────────────────────────────────────────────
-  static const Color accent      = Color(0xFF9E7C5E);
+  static const Color accent = Color(0xFF9E7C5E);
   static const Color accentLight = Color(0xFFD4A76A);
-  static const Color accentDark  = Color(0xFF1A1A1A);
+  static const Color accentDark = Color(0xFF1A1A1A);
 
   // Neutros light
   static const Color _bgLightBase = Color(0xFFFEFBF7);
@@ -41,26 +41,27 @@ class AppTheme {
   }
 
   // Neutros dark
-  static const Color bgDark       = Color(0xFF111111);
-  static const Color surfaceDark  = Color(0xFF1C1C1C);
-  static const Color borderDark   = Color(0xFF2A2A2A);
+  static const Color bgDark = Color(0xFF111111);
+  static const Color surfaceDark = Color(0xFF1C1C1C);
+  static const Color borderDark = Color(0xFF2A2A2A);
 
   // Semánticos
   static const Color success = Color(0xFF9E7C5E);
   static const Color warning = Color(0xFFC68B2C);
-  static const Color danger  = Color(0xFFD85A30);
-  static const Color info    = Color(0xFF3B82F6);
+  static const Color danger = Color(0xFFD85A30);
+  static const Color info = Color(0xFF3B82F6);
 
   static const Color successDark = Color(0xFF0F5132);
   static const Color warningDark = Color(0xFF78350F);
-  static const Color dangerDark  = Color(0xFF7F1D1D);
-  static const Color infoDark    = Color(0xFF4A3B2F);
+  static const Color dangerDark = Color(0xFF7F1D1D);
+  static const Color infoDark = Color(0xFF4A3B2F);
 
   // ── Tokens de diseño ────────────────────────────────────
-  static const double radiusSm  = 8.0;
-  static const double radiusMd  = 14.0;
-  static const double radiusLg  = 20.0;
-  static const double radiusXl  = 24.0;
+  static const double radiusSm = 8.0;
+  static const double radiusMd = 14.0;
+  static const double radiusCard = 16.0;
+  static const double radiusLg = 20.0;
+  static const double radiusXl = 24.0;
 
   static const double spacingXs = 4.0;
   static const double spacingSm = 8.0;
@@ -70,15 +71,15 @@ class AppTheme {
 
   static const PageTransitionsTheme _pageTransitionsTheme =
       PageTransitionsTheme(
-    builders: {
-      TargetPlatform.android: _FadeSlidePageTransitionsBuilder(),
-      TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-      TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
-      TargetPlatform.windows: _FadeSlidePageTransitionsBuilder(),
-      TargetPlatform.linux: _FadeSlidePageTransitionsBuilder(),
-      TargetPlatform.fuchsia: _FadeSlidePageTransitionsBuilder(),
-    },
-  );
+        builders: {
+          TargetPlatform.android: _FadeSlidePageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: _FadeSlidePageTransitionsBuilder(),
+          TargetPlatform.linux: _FadeSlidePageTransitionsBuilder(),
+          TargetPlatform.fuchsia: _FadeSlidePageTransitionsBuilder(),
+        },
+      );
 
   // ── LIGHT THEME ─────────────────────────────────────────
   static final ThemeData lightTheme = ThemeData(
@@ -104,7 +105,6 @@ class AppTheme {
       onSurfaceVariant: _textSecondaryBase,
       outline: _borderLightBase,
       outlineVariant: const Color(0xFFF0F0EE),
-      
     ),
 
     fontFamily: GoogleFonts.inter().fontFamily,
@@ -144,7 +144,11 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(radiusMd),
-        borderSide: const BorderSide(color: accent, width: 1.8),
+        borderSide: const BorderSide(color: accent, width: 1.4),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusMd),
+        borderSide: const BorderSide(color: danger, width: 1.4),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(radiusMd),
@@ -177,16 +181,13 @@ class AppTheme {
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         elevation: 0,
-      foregroundColor: const Color(0xFF2D3748),
-      side: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
+        foregroundColor: const Color(0xFF2D3748),
+        side: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusMd),
         ),
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-        textStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 15,
-        ),
+        textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
       ),
     ),
 
@@ -198,10 +199,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(radiusMd),
         ),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        textStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
-        ),
+        textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
       ),
     ),
 
@@ -267,7 +265,10 @@ class AppTheme {
         borderRadius: BorderRadius.circular(radiusSm),
       ),
       selectedIconTheme: const IconThemeData(color: accent, size: 24),
-      unselectedIconTheme: const IconThemeData(color: Color(0xFF5A5A5A), size: 24),
+      unselectedIconTheme: const IconThemeData(
+        color: Color(0xFF5A5A5A),
+        size: 24,
+      ),
       selectedLabelTextStyle: TextStyle(
         color: accent,
         fontSize: 13,
@@ -297,32 +298,86 @@ class AppTheme {
       backgroundColor: const Color(0xFFF5F3F0),
       selectedColor: const Color(0xFFD4A76A),
       side: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(999),
-      ),
-      labelStyle: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+      labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
     ),
 
     // Text Theme Refinado
     textTheme: GoogleFonts.interTextTheme(
       TextTheme(
-        displayLarge:  const TextStyle(fontSize: 36, fontWeight: FontWeight.w600, letterSpacing: -0.6, color: Color(0xFF2C2C2C)),
-        displayMedium: const TextStyle(fontSize: 28, fontWeight: FontWeight.w600, letterSpacing: -0.4, color: Color(0xFF2C2C2C)),
-        headlineLarge: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600, letterSpacing: -0.4, color: Color(0xFF2C2C2C)),
-        headlineMedium:const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, letterSpacing: -0.3, color: Color(0xFF2C2C2C)),
-        titleLarge:    const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.2, color: Color(0xFF2C2C2C)),
-        titleMedium:   const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF2C2C2C)),
-        titleSmall:    const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF2C2C2C)),
-        bodyLarge:     const TextStyle(fontSize: 15, fontWeight: FontWeight.w400, color: Color(0xFF2C2C2C)),
-        bodyMedium:    const TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: Color(0xFF5A5A5A)),
-        bodySmall:     const TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Color(0xFF64748B)),
-        labelLarge:    const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF2C2C2C)),
-        labelMedium:   const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF5A5A5A), letterSpacing: 0.3),
-        labelSmall:    const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Color(0xFF64748B), letterSpacing: 0.4),
+        displayLarge: const TextStyle(
+          fontSize: 36,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.6,
+          color: Color(0xFF2C2C2C),
+        ),
+        displayMedium: const TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.4,
+          color: Color(0xFF2C2C2C),
+        ),
+        headlineLarge: const TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.4,
+          color: Color(0xFF2C2C2C),
+        ),
+        headlineMedium: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.3,
+          color: Color(0xFF2C2C2C),
+        ),
+        titleLarge: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.2,
+          color: Color(0xFF2C2C2C),
+        ),
+        titleMedium: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF2C2C2C),
+        ),
+        titleSmall: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF2C2C2C),
+        ),
+        bodyLarge: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF2C2C2C),
+        ),
+        bodyMedium: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF5A5A5A),
+        ),
+        bodySmall: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF64748B),
+        ),
+        labelLarge: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF2C2C2C),
+        ),
+        labelMedium: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: Color(0xFF5A5A5A),
+          letterSpacing: 0.3,
+        ),
+        labelSmall: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          color: Color(0xFF64748B),
+          letterSpacing: 0.4,
+        ),
       ),
     ),
   );
@@ -351,7 +406,6 @@ class AppTheme {
       onSurfaceVariant: const Color(0xFF9A9A98),
       outline: borderDark,
       outlineVariant: const Color(0xFF222222),
-      
     ),
 
     fontFamily: GoogleFonts.inter().fontFamily,
@@ -388,7 +442,11 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(radiusMd),
-        borderSide: const BorderSide(color: accent, width: 1.8),
+        borderSide: const BorderSide(color: accent, width: 1.4),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusMd),
+        borderSide: const BorderSide(color: danger, width: 1.4),
       ),
       hintStyle: const TextStyle(color: Color(0xFF777777), fontSize: 14),
     ),
@@ -477,9 +535,20 @@ class AppTheme {
         borderRadius: BorderRadius.circular(radiusSm),
       ),
       selectedIconTheme: const IconThemeData(color: accent, size: 24),
-      unselectedIconTheme: const IconThemeData(color: Color(0xFF9A9A98), size: 24),
-      selectedLabelTextStyle: const TextStyle(color: accent, fontSize: 13, fontWeight: FontWeight.w600),
-      unselectedLabelTextStyle: const TextStyle(color: Color(0xFF9A9A98), fontSize: 13, fontWeight: FontWeight.w500),
+      unselectedIconTheme: const IconThemeData(
+        color: Color(0xFF9A9A98),
+        size: 24,
+      ),
+      selectedLabelTextStyle: const TextStyle(
+        color: accent,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
+      unselectedLabelTextStyle: const TextStyle(
+        color: Color(0xFF9A9A98),
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+      ),
     ),
 
     listTileTheme: ListTileThemeData(
@@ -504,19 +573,78 @@ class AppTheme {
 
     textTheme: GoogleFonts.interTextTheme(
       const TextTheme(
-        displayLarge:  TextStyle(fontSize: 36, fontWeight: FontWeight.w600, letterSpacing: -0.6, color: Color(0xFFEEEEEC)),
-        displayMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w600, letterSpacing: -0.4, color: Color(0xFFEEEEEC)),
-        headlineLarge: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, letterSpacing: -0.4, color: Color(0xFFEEEEEC)),
-        headlineMedium:TextStyle(fontSize: 20, fontWeight: FontWeight.w600, letterSpacing: -0.3, color: Color(0xFFEEEEEC)),
-        titleLarge:    TextStyle(fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.2, color: Color(0xFFEEEEEC)),
-        titleMedium:   TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFFEEEEEC)),
-        titleSmall:    TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFFEEEEEC)),
-        bodyLarge:     TextStyle(fontSize: 15, fontWeight: FontWeight.w400, color: Color(0xFFEEEEEC)),
-        bodyMedium:    TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: Color(0xFF9A9A98)),
-        bodySmall:     TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Color(0xFF9A9A98)),
-        labelLarge:    TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFFEEEEEC)),
-        labelMedium:   TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF9A9A98), letterSpacing: 0.3),
-        labelSmall:    TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Color(0xFF777777), letterSpacing: 0.4),
+        displayLarge: TextStyle(
+          fontSize: 36,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.6,
+          color: Color(0xFFEEEEEC),
+        ),
+        displayMedium: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.4,
+          color: Color(0xFFEEEEEC),
+        ),
+        headlineLarge: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.4,
+          color: Color(0xFFEEEEEC),
+        ),
+        headlineMedium: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.3,
+          color: Color(0xFFEEEEEC),
+        ),
+        titleLarge: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.2,
+          color: Color(0xFFEEEEEC),
+        ),
+        titleMedium: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFFEEEEEC),
+        ),
+        titleSmall: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFFEEEEEC),
+        ),
+        bodyLarge: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFFEEEEEC),
+        ),
+        bodyMedium: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF9A9A98),
+        ),
+        bodySmall: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF9A9A98),
+        ),
+        labelLarge: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFFEEEEEC),
+        ),
+        labelMedium: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: Color(0xFF9A9A98),
+          letterSpacing: 0.3,
+        ),
+        labelSmall: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          color: Color(0xFF777777),
+          letterSpacing: 0.4,
+        ),
       ),
     ),
   );

@@ -175,8 +175,12 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
         });
       }
     } catch (e) {
+      debugPrint('Error al obtener la foto: $e');
       if (mounted) {
-        AppSnackbar.error(context, 'Error al obtener la foto: $e');
+        AppSnackbar.error(
+          context,
+          'No se pudo cargar la foto. Intenta de nuevo.',
+        );
       }
     }
   }

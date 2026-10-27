@@ -91,11 +91,12 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
   }
 
   Widget _buildTabs(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surfaceLight,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: AppTheme.borderLight),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: TabBar(
         isScrollable: true,
@@ -103,7 +104,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
         indicatorSize: TabBarIndicatorSize.tab,
         indicator: BoxDecoration(color: AppTheme.accent, borderRadius: BorderRadius.all(Radius.circular(10))),
         labelColor: Colors.white,
-        unselectedLabelColor: AppTheme.textSecondary,
+        unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
         tabs: [
           Tab(icon: Icon(Icons.favorite_border_rounded, size: 20), text: 'Montas'),
           Tab(icon: Icon(Icons.child_care_rounded, size: 20), text: 'Nacimientos'),
@@ -132,6 +133,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           filtered = reproController.reproducciones.toList();
       }
       final isMobile = context.isMobile;
+      final theme = Theme.of(context);
 
       return ListView(
         padding: EdgeInsets.fromLTRB(
@@ -191,7 +193,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
                     labelStyle: TextStyle(
                       color: _matingFilter == filter
                           ? Colors.white
-                          : AppTheme.textSecondary,
+                          : theme.colorScheme.onSurfaceVariant,
                     ),
                     onSelected: (_) => setState(() => _matingFilter = filter),
                   ),
@@ -218,6 +220,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
     final days = r.diasDesdeMonta ?? 0;
     final (phaseTitle, phaseSubtitle) = _faseActualInfo(r);
     final partoInminente = r.estado == 'Gestante' && _dentroDelRangoDeParto(r);
+    final theme = Theme.of(context);
 
 
     late IconData headerIcon;
@@ -264,12 +267,12 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
       margin: EdgeInsets.only(bottom: context.isMobile ? 12 : 16),
       padding: EdgeInsets.all(context.isMobile ? 16 : 24),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceLight,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         border: Border.all(
           color: partoInminente
               ? const Color(0xFFDC2626)
-              : AppTheme.borderLight,
+              : theme.colorScheme.outlineVariant,
           width: partoInminente ? 2 : 1,
         ),
         boxShadow: partoInminente
@@ -333,15 +336,15 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           const SizedBox(height: 8),
           Text(
             '📅 ${_formatMatingDate(r.fechaMonta)} · Hace $days días',
-            style: TextStyle(color: AppTheme.textSecondary),
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
           SizedBox(height: context.isMobile ? 12 : 16),
-          Divider(color: AppTheme.borderLight, height: 1),
+          Divider(color: theme.colorScheme.outlineVariant, height: 1),
           SizedBox(height: context.isMobile ? 12 : 16),
           _MatingTimeline(r: r),
           if (phaseTitle.isNotEmpty) ...[
             SizedBox(height: context.isMobile ? 12 : 16),
-            Divider(color: AppTheme.borderLight, height: 1),
+            Divider(color: theme.colorScheme.outlineVariant, height: 1),
             SizedBox(height: context.isMobile ? 12 : 16),
             Text(
               '📍 Fase actual: $phaseTitle',
@@ -351,14 +354,14 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
             Text(
               '⏰ $phaseSubtitle',
               style: TextStyle(
-                color: AppTheme.textSecondary,
+                color: theme.colorScheme.onSurfaceVariant,
                 fontSize: 13,
               ),
             ),
           ],
           if (r.estado == 'Servida' && r.tocaPalpacion) ...[
             SizedBox(height: context.isMobile ? 12 : 16),
-            Divider(color: AppTheme.borderLight, height: 1),
+            Divider(color: theme.colorScheme.outlineVariant, height: 1),
           ],
           if (r.estado == 'Gestante' || r.estado == 'Servida') ...[
             SizedBox(height: context.isMobile ? 12 : 16),
@@ -1690,7 +1693,9 @@ class _BirthFormDialogState extends State<_BirthFormDialog> {
   Widget build(BuildContext context) => AlertDialog(
         title: const Text('Registrar parto'),
         content: SizedBox(
-          width: 420,
+          width: MediaQuery.sizeOf(context).width < 600
+              ? double.maxFinite
+              : 420,
           child: Form(
             key: _formKey,
             child: SingleChildScrollView(
@@ -1805,6 +1810,7 @@ class _BirthCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final motherId = (birth['mother_id'] as num?)?.toInt();
     final mother = conejas.where(
       (coneja) => (coneja['id_conejo'] as num?)?.toInt() == motherId,
@@ -1824,9 +1830,9 @@ class _BirthCard extends StatelessWidget {
       margin: EdgeInsets.only(bottom: context.isMobile ? 12 : 16),
       padding: EdgeInsets.all(context.isMobile ? 16 : 20),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceLight,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: AppTheme.borderLight),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1865,7 +1871,7 @@ class _BirthCard extends StatelessWidget {
                 if (averageWeight != null) 'Peso promedio: ${averageWeight.toStringAsFixed(1)} g',
                 if (weaningDate != null) 'Destete estimado: ${_formatFullDate(weaningDate)}',
               ].join(' · '),
-              style: TextStyle(color: AppTheme.textSecondary),
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
           ],
         ],
@@ -1881,6 +1887,7 @@ class _KitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final birthDate = DateTime.tryParse(kit['birth_date']?.toString() ?? '');
     final weaningDate = DateTime.tryParse(kit['weaning_date']?.toString() ?? '');
     final weight = (kit['current_weight'] as num?)?.toDouble();
@@ -1905,9 +1912,9 @@ class _KitCard extends StatelessWidget {
       margin: EdgeInsets.only(bottom: context.isMobile ? 12 : 16),
       padding: EdgeInsets.all(context.isMobile ? 16 : 20),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceLight,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: AppTheme.borderLight),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Row(
         children: [
@@ -1946,11 +1953,11 @@ class _KitCard extends StatelessWidget {
                   Text([
                     if (weight != null) '${weight.toStringAsFixed(2)} kg',
                     if (healthStatus != null && healthStatus.isNotEmpty) healthStatus,
-                  ].join(' · '), style: TextStyle(color: AppTheme.textSecondary)),
+                  ].join(' · '), style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
                 ],
                 if (weaningDate != null) ...[
                   const SizedBox(height: 4),
-                  Text('Destete: ${_formatFullDate(weaningDate)}', style: TextStyle(color: AppTheme.textSecondary)),
+                  Text('Destete: ${_formatFullDate(weaningDate)}', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
                 ],
               ],
             ),

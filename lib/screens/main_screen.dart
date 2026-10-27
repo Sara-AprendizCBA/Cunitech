@@ -9,6 +9,7 @@ import '../core/theme/app_theme.dart';
 import '../core/theme/theme_controller.dart';
 import '../core/utils/app_snackbar.dart';
 import '../core/utils/responsive.dart';
+import '../core/widgets/app_loading.dart';
 import '../controllers/auth_controller.dart';
 import '../models/insight_recomendacion.dart';
 import '../services/insight_service.dart';
@@ -595,7 +596,7 @@ class _MainScreenState extends State<MainScreen>
           backgroundColor: theme.scaffoldBackgroundColor,
           body: Center(
             child: authController.isLoading.value
-                ? const CircularProgressIndicator()
+                ? const AppLoadingIndicator()
                 : const Text('No tienes acceso a ningún módulo'),
           ),
         );
@@ -619,21 +620,24 @@ class _MainScreenState extends State<MainScreen>
         body: SafeArea(
           top: !isDesktop,
           bottom: false,
-          child: !isDesktop
-              ? Column(
-                  children: [
-                    _buildMobileTopBar(context,
-                        isTablet: isTablet,
-                        items: items,
-                        currentIndex: index,
-                        showInsight: authController.isAdmin ||
-                            authController.isVeterinario),
-                            Expanded(
-                              child: _buildAnimatedScreen(context, items, index),
-                            ),
-                  ],
-                )
-              : Row(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              !isDesktop
+                  ? Column(
+                      children: [
+                        _buildMobileTopBar(
+                          context,
+                          isTablet: isTablet,
+                          items: items,
+                          currentIndex: index,
+                        ),
+                        Expanded(
+                          child: _buildAnimatedScreen(context, items, index),
+                        ),
+                      ],
+                    )
+                  : Row(
                   children: [
                     // Sidebar
                     Container(
@@ -824,11 +828,6 @@ class _MainScreenState extends State<MainScreen>
                                         .headlineMedium,
                                   ),
                                   const Spacer(),
-                                  if (authController.isAdmin ||
-                                      authController.isVeterinario) ...[
-                                    _buildInsightOrb(context),
-                                    const SizedBox(width: 8),
-                                  ],
                                   IconButton(
                                     tooltip: 'Notificaciones',
                                     icon: const Icon(
@@ -849,6 +848,14 @@ class _MainScreenState extends State<MainScreen>
                     ),
                   ],
                 ),
+              if (authController.isAdmin || authController.isVeterinario)
+                Positioned(
+                  right: 20,
+                  bottom: 80,
+                  child: _buildInsightOrb(context, size: 56),
+                ),
+            ],
+          ),
         ),
       );
     });
@@ -953,7 +960,6 @@ class _MainScreenState extends State<MainScreen>
     required bool isTablet,
     required List<Map<String, dynamic>> items,
     required int currentIndex,
-    required bool showInsight,
   }) {
     return Container(
       height: isTablet ? 72 : 64,
@@ -976,11 +982,6 @@ class _MainScreenState extends State<MainScreen>
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (showInsight) ...[
-            const SizedBox(width: 4),
-            _buildInsightOrb(context, size: 38),
-            const SizedBox(width: 4),
-          ],
           IconButton(
             tooltip: 'Notificaciones',
             icon: const Icon(Icons.notifications_outlined),

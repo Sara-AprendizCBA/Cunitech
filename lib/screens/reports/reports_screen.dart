@@ -7,23 +7,24 @@ import '../../controllers/reportes_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/responsive.dart';
+import '../../core/widgets/app_card.dart';
 import '../../models/meta_mensual.dart';
 import '../../services/pdf_service.dart';
 
 String _getMonthName(int month) => const [
-      'ene',
-      'feb',
-      'mar',
-      'abr',
-      'may',
-      'jun',
-      'jul',
-      'ago',
-      'sep',
-      'oct',
-      'nov',
-      'dic',
-    ][month - 1];
+  'ene',
+  'feb',
+  'mar',
+  'abr',
+  'may',
+  'jun',
+  'jul',
+  'ago',
+  'sep',
+  'oct',
+  'nov',
+  'dic',
+][month - 1];
 
 class _ReportActivity {
   final DateTime? fecha;
@@ -62,8 +63,7 @@ class ReportsScreen extends StatefulWidget {
 class _ReportsScreenState extends State<ReportsScreen> {
   bool _exportando = false;
 
-  ReportesController get reportesController =>
-      ReportsScreen.reportesController;
+  ReportesController get reportesController => ReportsScreen.reportesController;
 
   @override
   Widget build(BuildContext context) {
@@ -125,15 +125,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          flex: 4,
-                          child: _buildMetasSection(context),
-                        ),
+                        Expanded(flex: 4, child: _buildMetasSection(context)),
                         const SizedBox(width: 24),
-                        Expanded(
-                          flex: 5,
-                          child: _buildRecentActivity(context),
-                        ),
+                        Expanded(flex: 5, child: _buildRecentActivity(context)),
                       ],
                     );
                   }
@@ -169,9 +163,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
               Text(
                 'Cunicultura CBA · '
                 '${_getMonthName(DateTime.now().month)} ${DateTime.now().year}',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppTheme.textSecondary,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: AppTheme.textSecondary),
               ),
             ],
           ),
@@ -179,8 +173,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         const SizedBox(width: AppTheme.spacingMd),
         if (!context.isMobile)
           ElevatedButton.icon(
-            onPressed:
-                _exportando ? null : () => _exportarReporte(context),
+            onPressed: _exportando ? null : () => _exportarReporte(context),
             icon: _exportando
                 ? const SizedBox(
                     width: 16,
@@ -191,9 +184,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     ),
                   )
                 : const Icon(Icons.download_rounded),
-            label: Text(
-              _exportando ? 'Generando…' : 'Exportar Reporte',
-            ),
+            label: Text(_exportando ? 'Generando…' : 'Exportar Reporte'),
           )
         else
           IconButton(
@@ -260,9 +251,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
               const Spacer(),
               Text(
                 "Últimos 30 días",
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.textSecondary,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
               ),
             ],
           ),
@@ -276,10 +267,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               final spots = <FlSpot>[];
               for (var i = 0; i < data.length; i++) {
                 spots.add(
-                  FlSpot(
-                    i.toDouble(),
-                    (data[i]['total'] as int).toDouble(),
-                  ),
+                  FlSpot(i.toDouble(), (data[i]['total'] as int).toDouble()),
                 );
               }
 
@@ -307,72 +295,77 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   maxX: (spots.length - 1).toDouble(),
                   minY: minY,
                   maxY: maxY,
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: 50,
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: AppTheme.borderLight,
-                    strokeWidth: 1,
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: 50,
+                    getDrawingHorizontalLine: (value) =>
+                        FlLine(color: AppTheme.borderLight, strokeWidth: 1),
                   ),
-                ),
-                titlesData: FlTitlesData(
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                      getTitlesWidget: (value, meta) => Text(
-                        value.toInt().toString(),
-                        style: Theme.of(context).textTheme.bodySmall,
+                  titlesData: FlTitlesData(
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 40,
+                        getTitlesWidget: (value, meta) => Text(
+                          value.toInt().toString(),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                       ),
                     ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      interval: 5,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        if (index < 0 || index >= data.length) {
-                          return const SizedBox.shrink();
-                        }
-                        final dia = DateTime.parse(data[index]['dia'] as String);
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(
-                            '${dia.day}/${dia.month}',
-                            style: const TextStyle(fontSize: 10),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                ),
-                borderData: FlBorderData(show: false),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: spots,
-                    isCurved: true,
-                    curveSmoothness: 0.4,
-                    color: AppTheme.accent,
-                    barWidth: 4,
-                    dotData: FlDotData(
-                      show: true,
-                      getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                        radius: 5,
-                        color: Colors.white,
-                        strokeWidth: 3,
-                        strokeColor: AppTheme.accent,
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: 5,
+                        getTitlesWidget: (value, meta) {
+                          final index = value.toInt();
+                          if (index < 0 || index >= data.length) {
+                            return const SizedBox.shrink();
+                          }
+                          final dia = DateTime.parse(
+                            data[index]['dia'] as String,
+                          );
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              '${dia.day}/${dia.month}',
+                              style: const TextStyle(fontSize: 10),
+                            ),
+                          );
+                        },
                       ),
                     ),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: AppTheme.accent.withValues(alpha: 0.08),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
                     ),
                   ),
-                ],
+                  borderData: FlBorderData(show: false),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: spots,
+                      isCurved: true,
+                      curveSmoothness: 0.4,
+                      color: AppTheme.accent,
+                      barWidth: 4,
+                      dotData: FlDotData(
+                        show: true,
+                        getDotPainter: (spot, percent, barData, index) =>
+                            FlDotCirclePainter(
+                              radius: 5,
+                              color: Colors.white,
+                              strokeWidth: 3,
+                              strokeColor: AppTheme.accent,
+                            ),
+                      ),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: AppTheme.accent.withValues(alpha: 0.08),
+                      ),
+                    ),
+                  ],
                 ),
               );
             }),
@@ -411,20 +404,20 @@ class _ReportsScreenState extends State<ReportsScreen> {
     ];
 
     return context.isMobile
-        ? Column(children: [for (final card in cards) ...[card, const SizedBox(height: 12)]])
+        ? Column(
+            children: [
+              for (final card in cards) ...[card, const SizedBox(height: 12)],
+            ],
+          )
         : Row(
-      children: [
-        Expanded(child: cards[0]),
-        const SizedBox(width: 24),
-        Expanded(
-          child: cards[1],
-        ),
-        const SizedBox(width: 24),
-        Expanded(
-          child: cards[2],
-        ),
-      ],
-    );
+            children: [
+              Expanded(child: cards[0]),
+              const SizedBox(width: 24),
+              Expanded(child: cards[1]),
+              const SizedBox(width: 24),
+              Expanded(child: cards[2]),
+            ],
+          );
   }
 
   Widget _buildReportSummary(
@@ -435,17 +428,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     Color color,
     String trend,
   ) {
-    return Container(
-      padding: EdgeInsets.all(
-        context.isMobile
-            ? 16
-            : (ResponsiveBuildContext(context).isTablet ? 24 : 28),
-      ),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceLight,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: AppTheme.borderLight),
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -460,16 +443,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
           SizedBox(height: context.isMobile ? 16 : 24),
           Text(
             value,
-            style: (context.isMobile
-                    ? Theme.of(context).textTheme.titleLarge
-                    : Theme.of(context).textTheme.headlineMedium)
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style:
+                (context.isMobile
+                        ? Theme.of(context).textTheme.titleLarge
+                        : Theme.of(context).textTheme.headlineMedium)
+                    ?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 16),
           Text(
             trend,
@@ -503,14 +484,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   tooltip: 'Agregar meta',
                   onPressed: () => showDialog<void>(
                     context: context,
-                    builder: (_) => _MetaFormDialog(
-                      controller: reportesController,
-                    ),
+                    builder: (_) =>
+                        _MetaFormDialog(controller: reportesController),
                   ),
-                  icon: const Icon(
-                    Icons.add_rounded,
-                    size: 20,
-                  ),
+                  icon: const Icon(Icons.add_rounded, size: 20),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
                     minWidth: 32,
@@ -522,18 +499,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           ),
           SizedBox(height: context.isMobile ? 12 : 16),
           if (metas.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(
-                context.isMobile
-                    ? 16
-                    : (ResponsiveBuildContext(context).isTablet ? 20 : 24),
-              ),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceLight,
-                borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                border: Border.all(color: AppTheme.borderLight),
-              ),
+            AppCard(
               child: Column(
                 children: [
                   Text(
@@ -548,9 +514,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     ),
                     onPressed: () => showDialog<void>(
                       context: context,
-                      builder: (_) => _MetaFormDialog(
-                        controller: reportesController,
-                      ),
+                      builder: (_) =>
+                          _MetaFormDialog(controller: reportesController),
                     ),
                     icon: const Icon(Icons.add_rounded),
                     label: const Text('Agregar meta'),
@@ -589,17 +554,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       _ => AppTheme.danger,
     };
 
-    return Container(
-      padding: EdgeInsets.all(
-        context.isMobile
-            ? 12
-            : (ResponsiveBuildContext(context).isTablet ? 16 : 20),
-      ),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceLight,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: AppTheme.borderLight),
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -609,12 +564,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 child: Text(
                   meta.kpiLabel,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: colorEstado.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppTheme.radiusMd),
@@ -638,10 +596,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   color: AppTheme.textSecondary,
                 ),
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                  minWidth: 28,
-                  minHeight: 28,
-                ),
+                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                 visualDensity: VisualDensity.compact,
               ),
             ],
@@ -704,10 +659,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             const SizedBox(height: 12),
             const Divider(height: 1),
             ListTile(
-              leading: const Icon(
-                Icons.edit_rounded,
-                color: AppTheme.accent,
-              ),
+              leading: const Icon(Icons.edit_rounded, color: AppTheme.accent),
               title: const Text('Editar meta'),
               onTap: () => Navigator.of(sheetContext).pop('editar'),
             ),
@@ -733,10 +685,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
     if (accion == 'editar') {
       await showDialog<void>(
         context: context,
-        builder: (_) => _MetaFormDialog(
-          controller: reportesController,
-          metaInicial: meta,
-        ),
+        builder: (_) =>
+            _MetaFormDialog(controller: reportesController, metaInicial: meta),
       );
     } else if (accion == 'eliminar') {
       await _confirmarEliminarMeta(context, meta);
@@ -762,9 +712,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppTheme.danger,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.danger),
             child: const Text('Eliminar'),
           ),
         ],
@@ -792,7 +740,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
             icono: Icons.child_care_rounded,
             color: AppTheme.success,
             titulo: 'Nacimiento registrado',
-            subtitulo: '${birth['live_kits'] ?? 0} vivos · '
+            subtitulo:
+                '${birth['live_kits'] ?? 0} vivos · '
                 '${birth['dead_kits'] ?? 0} muertos · '
                 '${birth['chapeta_madre'] ?? 'Sin ID'}',
           ),
@@ -806,7 +755,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
             icono: Icons.favorite_rounded,
             color: AppTheme.accent,
             titulo: 'Monta registrada',
-            subtitulo: '${mating['chapeta_coneja'] ?? 'Sin ID'} · '
+            subtitulo:
+                '${mating['chapeta_coneja'] ?? 'Sin ID'} · '
                 '${mating['estado'] ?? ''}',
           ),
         );
@@ -819,7 +769,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
             icono: Icons.warning_rounded,
             color: AppTheme.danger,
             titulo: 'Alerta de salud',
-            subtitulo: '${alert['chapeta'] ?? 'Conejo'} · '
+            subtitulo:
+                '${alert['chapeta'] ?? 'Conejo'} · '
                 '${alert['estado'] ?? ''}',
           ),
         );
@@ -841,17 +792,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 16),
-          Container(
-            padding: EdgeInsets.all(
-              context.isMobile
-                  ? 12
-                  : (ResponsiveBuildContext(context).isTablet ? 16 : 20),
-            ),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceLight,
-              borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-              border: Border.all(color: AppTheme.borderLight),
-            ),
+          AppCard(
             child: recientes.isEmpty
                 ? Text(
                     'Sin actividad reciente. Registra conejos, montas o partos.',
@@ -872,8 +813,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           recientes[i].icono,
                           recientes[i].color,
                         ),
-                        if (i < recientes.length - 1)
-                          const Divider(height: 32),
+                        if (i < recientes.length - 1) const Divider(height: 32),
                       ],
                     ],
                   ),
@@ -928,10 +868,7 @@ class _MetaFormDialog extends StatefulWidget {
   final ReportesController controller;
   final MetaMensual? metaInicial;
 
-  const _MetaFormDialog({
-    required this.controller,
-    this.metaInicial,
-  });
+  const _MetaFormDialog({required this.controller, this.metaInicial});
 
   @override
   State<_MetaFormDialog> createState() => _MetaFormDialogState();
@@ -987,11 +924,11 @@ class _MetaFormDialogState extends State<_MetaFormDialog> {
   }
 
   String _unidadPara(String kpi) => switch (kpi) {
-        'prolificidad' => 'gazapos',
-        'fertilidad' || 'supervivencia' => '%',
-        'nacimientos' => 'unidades',
-        _ => 'unidades',
-      };
+    'prolificidad' => 'gazapos',
+    'fertilidad' || 'supervivencia' => '%',
+    'nacimientos' => 'unidades',
+    _ => 'unidades',
+  };
 
   void _onKpiChanged(String? value) {
     if (value == null) return;
@@ -1154,12 +1091,12 @@ class _MetaFormDialogState extends State<_MetaFormDialog> {
   }
 
   static String _labelKpi(String kpi) => switch (kpi) {
-        'prolificidad' => 'Prolificidad',
-        'fertilidad' => 'Fertilidad',
-        'supervivencia' => 'Supervivencia',
-        'nacimientos' => 'Nacimientos',
-        _ => kpi,
-      };
+    'prolificidad' => 'Prolificidad',
+    'fertilidad' => 'Fertilidad',
+    'supervivencia' => 'Supervivencia',
+    'nacimientos' => 'Nacimientos',
+    _ => kpi,
+  };
 
   static String _capitalize(String value) =>
       '${value[0].toUpperCase()}${value.substring(1)}';

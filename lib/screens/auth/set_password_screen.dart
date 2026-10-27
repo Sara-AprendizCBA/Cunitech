@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
+import '../../core/widgets/app_loading.dart';
 import '../../controllers/auth_controller.dart';
 
 /// Estados posibles de la pantalla.
@@ -114,10 +115,11 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
       // Todos los roles entran a /main (qué ve cada uno lo decide MainScreen).
       Navigator.of(context).pushNamedAndRemoveUntil('/main', (route) => false);
     } on AuthException catch (e) {
+      debugPrint('Error actualizando contraseña: ${e.message}');
       if (!mounted) return;
       setState(() {
         _saving = false;
-        _formError = e.message;
+        _formError = _friendlyAuthError(e.message);
       });
     } catch (_) {
       if (!mounted) return;
@@ -126,6 +128,17 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
         _formError = 'No se pudo crear la contraseña. Intenta de nuevo.';
       });
     }
+  }
+
+  String _friendlyAuthError(String message) {
+    final lower = message.toLowerCase();
+    if (lower.contains('weak') || lower.contains('at least')) {
+      return 'La contraseña debe tener al menos 6 caracteres.';
+    }
+    if (lower.contains('session') || lower.contains('expired')) {
+      return 'Tu sesión expiró. Vuelve a iniciar sesión.';
+    }
+    return 'No se pudo crear la contraseña. Intenta de nuevo.';
   }
 
   // ==================== BUILD ====================
@@ -160,7 +173,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
       case _Status.verifying:
         return const Padding(
           padding: EdgeInsets.symmetric(vertical: AppTheme.spacingXl),
-          child: Center(child: CircularProgressIndicator()),
+          child: AppLoadingIndicator(label: 'Verificando enlace…'),
         );
       case _Status.error:
         return _errorView(context);

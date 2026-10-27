@@ -948,8 +948,7 @@ class _AuthScreenState extends State<AuthScreen> {
     if (message.contains('invalid email')) {
       return 'Ingresa un correo electrónico válido.';
     }
-    return e.message.trim().isEmpty
-        ? 'No se pudo completar la operación.'
-        : e.message;
+    debugPrint('Error de autenticación: ${e.message}');
+    return 'No se pudo completar la operación. Intenta de nuevo.';
   }
 }

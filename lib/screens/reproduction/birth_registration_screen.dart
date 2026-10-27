@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../models/birth.dart';
 import '../../models/mating.dart';
 import '../../controllers/birth_controller.dart';
+import '../../core/utils/app_snackbar.dart';
 
 class BirthRegistrationScreen extends StatefulWidget {
   final Mating? mating; // Opcional: si viene desde una monta
@@ -56,7 +57,8 @@ class _BirthRegistrationScreenState extends State<BirthRegistrationScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Registro de Nacimientos"),
-        backgroundColor: const Color(0xFF1E40AF),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -179,9 +181,21 @@ class _BirthRegistrationScreenState extends State<BirthRegistrationScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                IconButton(onPressed: () => onChanged(value - 1), icon: const Icon(Icons.remove)),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  padding: EdgeInsets.zero,
+                  onPressed: value > 0 ? () => onChanged(value - 1) : null,
+                  icon: const Icon(Icons.remove),
+                ),
                 Text(value.toString(), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                IconButton(onPressed: () => onChanged(value + 1), icon: const Icon(Icons.add)),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  padding: EdgeInsets.zero,
+                  onPressed: () => onChanged(value + 1),
+                  icon: const Icon(Icons.add),
+                ),
               ],
             ),
           ],
@@ -196,20 +210,23 @@ class _BirthRegistrationScreenState extends State<BirthRegistrationScreen> {
       final averageWeight = double.tryParse(_avgWeightController.text);
 
       if (litterSize == null || litterSize <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('El total de crías debe ser mayor que cero')),
+        AppSnackbar.error(
+          context,
+          'El total de crías debe ser mayor que cero',
         );
         return;
       }
       if (averageWeight == null || averageWeight < 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ingresa un peso promedio válido')),
+        AppSnackbar.error(
+          context,
+          'Ingresa un peso promedio válido',
         );
         return;
       }
       if (_liveKits + _deadKits > litterSize) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Las crías vivas y muertas no pueden superar el total')),
+        AppSnackbar.error(
+          context,
+          'Las crías vivas y muertas no pueden superar el total',
         );
         return;
       }
