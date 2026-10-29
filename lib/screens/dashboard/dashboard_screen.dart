@@ -126,11 +126,15 @@ class _DashboardScreenState extends State<DashboardScreen>
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      // CORRECCIÓN: se usa mainAxisExtent (altura fija en píxeles) en lugar
+      // de childAspectRatio, para que la tarjeta nunca quede más baja que su
+      // contenido y no aparezca el aviso "BOTTOM OVERFLOWED BY 19 PIXELS".
+      // Si todavía se desborda, súbelo de 10 en 10 (por ejemplo 160 / 180).
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: isMobile ? 2 : 4,
         mainAxisSpacing: isMobile ? 12 : 20,
         crossAxisSpacing: isMobile ? 12 : 20,
-        childAspectRatio: isMobile ? 1.15 : 1.85,
+        mainAxisExtent: isMobile ? 150 : 170,
       ),
       itemCount: 4,
       itemBuilder: (_, i) {
