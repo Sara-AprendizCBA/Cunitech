@@ -99,7 +99,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: TabBar(
-        isScrollable: true,
+        isScrollable: context.isMobile,
         dividerColor: Colors.transparent,
         indicatorSize: TabBarIndicatorSize.tab,
         indicator: BoxDecoration(color: AppTheme.accent, borderRadius: BorderRadius.all(Radius.circular(10))),
@@ -143,42 +143,51 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           isMobile ? 16 : 24,
         ),
         children: [
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            crossAxisAlignment: WrapCrossAlignment.center,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _MatingStatCard(
-                label: 'Servidas',
-                count: reproController.servidas.length,
-                color: const Color(0xFFFEF3C7),
-                foreground: const Color(0xFF92400E),
-              ),
-              _MatingStatCard(
-                label: 'Gestantes',
-                count: reproController.gestantes.length,
-                color: const Color(0xFFDCFCE7),
-                foreground: const Color(0xFF166534),
-              ),
-              _MatingStatCard(
-                label: 'Fallidas',
-                count: reproController.fallidas.length,
-                color: const Color(0xFFFEE2E2),
-                foreground: const Color(0xFF991B1B),
-              ),
-              if (reproController.proximasPalpaciones.isNotEmpty)
-                _MatingStatCard(
-                  label: 'Palpaciones',
-                  count: reproController.proximasPalpaciones.length,
-                  color: const Color(0xFFFFEDD5),
-                  foreground: const Color(0xFF9A3412),
+              Expanded(
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    _MatingStatCard(
+                      label: 'Servidas',
+                      count: reproController.servidas.length,
+                      color: const Color(0xFFFEF3C7),
+                      foreground: const Color(0xFF92400E),
+                    ),
+                    _MatingStatCard(
+                      label: 'Gestantes',
+                      count: reproController.gestantes.length,
+                      color: const Color(0xFFDCFCE7),
+                      foreground: const Color(0xFF166534),
+                    ),
+                    _MatingStatCard(
+                      label: 'Fallidas',
+                      count: reproController.fallidas.length,
+                      color: const Color(0xFFFEE2E2),
+                      foreground: const Color(0xFF991B1B),
+                    ),
+                    if (reproController.proximasPalpaciones.isNotEmpty)
+                      _MatingStatCard(
+                        label: 'Palpaciones',
+                        count: reproController.proximasPalpaciones.length,
+                        color: const Color(0xFFFFEDD5),
+                        foreground: const Color(0xFF9A3412),
+                      ),
+                  ],
                 ),
-              if (!context.isMobile && !authController.isVeterinario)
+              ),
+              if (!context.isMobile && !authController.isVeterinario) ...[
+                const SizedBox(width: 12),
                 FilledButton.icon(
                   onPressed: () => _showMatingForm(),
                   icon: const Icon(Icons.add_rounded),
                   label: const Text('Registrar monta'),
                 ),
+              ],
             ],
           ),
           SizedBox(height: isMobile ? 16 : 24),
