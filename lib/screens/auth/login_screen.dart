@@ -13,6 +13,7 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
+  static const bool _registroPublicoHabilitado = false;
   bool isLogin = true;
 
   final _formKey = GlobalKey<FormState>();
@@ -334,36 +335,38 @@ class _AuthScreenState extends State<AuthScreen> {
                           ),
                         ),
 
-                        const SizedBox(height: 20),
-                        GestureDetector(
-                          onTap: () => setState(() {
-                            isLogin = !isLogin;
-                            _errorMessage = null;
-                          }),
-                          child: RichText(
-                            text: TextSpan(
-                              text: isLogin
-                                  ? "¿No tienes cuenta? "
-                                  : "¿Ya tienes cuenta? ",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: theme.colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w400,
-                              ),
-                              children: [
-                                TextSpan(
-                                  text: isLogin
-                                      ? "Regístrate"
-                                      : "Inicia sesión",
-                                  style: TextStyle(
-                                    color: const Color(0xFFe0e27c),
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                        if (_registroPublicoHabilitado) ...[
+                          const SizedBox(height: 20),
+                          GestureDetector(
+                            onTap: () => setState(() {
+                              isLogin = !isLogin;
+                              _errorMessage = null;
+                            }),
+                            child: RichText(
+                              text: TextSpan(
+                                text: isLogin
+                                    ? "¿No tienes cuenta? "
+                                    : "¿Ya tienes cuenta? ",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w400,
                                 ),
-                              ],
+                                children: [
+                                  TextSpan(
+                                    text: isLogin
+                                        ? "Regístrate"
+                                        : "Inicia sesión",
+                                    style: TextStyle(
+                                      color: const Color(0xFFe0e27c),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
@@ -554,18 +557,36 @@ class _AuthScreenState extends State<AuthScreen> {
       ),
       child: Row(
         children: [
-          _buildTabButton(context, "Iniciar Sesión", isLogin),
-          _buildTabButton(context, "Registrarse", !isLogin),
+          if (_registroPublicoHabilitado) ...[
+            _buildTabButton(
+              context,
+              "Iniciar Sesión",
+              isLogin,
+              onTap: () => setState(() => isLogin = true),
+            ),
+            _buildTabButton(
+              context,
+              "Registrarse",
+              !isLogin,
+              onTap: () => setState(() => isLogin = false),
+            ),
+          ] else
+            _buildTabButton(context, "Iniciar Sesión", true),
         ],
       ),
     );
   }
 
-  Widget _buildTabButton(BuildContext context, String text, bool selected) {
+  Widget _buildTabButton(
+    BuildContext context,
+    String text,
+    bool selected, {
+    VoidCallback? onTap,
+  }) {
     final theme = Theme.of(context);
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => isLogin = !isLogin),
+        onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           padding: EdgeInsets.symmetric(
