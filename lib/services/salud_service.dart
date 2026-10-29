@@ -1,6 +1,8 @@
 // lib/services/salud_service.dart
+import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../controllers/auth_controller.dart';
 import '../core/utils/logger.dart';
 import '../models/tratamiento.dart';
 
@@ -9,6 +11,11 @@ class SaludService {
   final _supabase = Supabase.instance.client;
 
   static const String _tableName = 'tratamientos';
+
+  bool get _puedeGestionar {
+    if (!Get.isRegistered<AuthController>()) return false;
+    return Get.find<AuthController>().isVeterinario;
+  }
 
   // Trae la fila + la chapeta del conejo vía la FK conejo_id -> conejo.id_conejo.
   static const String _select =
@@ -40,6 +47,10 @@ class SaludService {
 
   /// CREAR (solo veterinario por RLS).
   Future<bool> create(Tratamiento t) async {
+    if (!_puedeGestionar) {
+      logger.w('Intento de crear tratamiento sin rol veterinario');
+      return false;
+    }
     try {
       await _supabase.from(_tableName).insert(t.toJson());
       return true;
@@ -51,6 +62,10 @@ class SaludService {
 
   /// EDITAR (solo veterinario por RLS).
   Future<bool> update(Tratamiento t) async {
+    if (!_puedeGestionar) {
+      logger.w('Intento de editar tratamiento sin rol veterinario');
+      return false;
+    }
     try {
       await _supabase.from(_tableName).update(t.toJson()).eq('id', t.id);
       return true;
@@ -62,6 +77,10 @@ class SaludService {
 
   /// ELIMINAR (solo veterinario por RLS).
   Future<bool> delete(String id) async {
+    if (!_puedeGestionar) {
+      logger.w('Intento de eliminar tratamiento sin rol veterinario');
+      return false;
+    }
     try {
       await _supabase.from(_tableName).delete().eq('id', id);
       return true;

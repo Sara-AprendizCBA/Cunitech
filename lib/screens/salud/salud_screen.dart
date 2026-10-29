@@ -27,7 +27,7 @@ class _SaludScreenState extends State<SaludScreen> {
   bool _loading = true;
   String _filtro = 'todos';
 
-  bool get _puedeGestionar => _auth.isVeterinario || _auth.isAdmin;
+  bool get _puedeGestionar => _auth.isVeterinario;
 
   static const List<String> _meses = [
     'ene', 'feb', 'mar', 'abr', 'may', 'jun',
