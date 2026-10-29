@@ -73,7 +73,8 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     final isMobile = context.isMobile;
     final isTablet = context.isTablet;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final errorBackground = isDark
         ? AppTheme.dangerDark.withValues(alpha: 0.18)
         : const Color(0xFFFFF1F1);
@@ -88,7 +89,7 @@ class _AuthScreenState extends State<AuthScreen> {
         : const Color(0xFF9B3434);
 
     return Scaffold(
-      backgroundColor: AppTheme.bgLight,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Row(
         children: [
           // ========== HERO IMAGE - LEFT SIDE ==========
@@ -169,7 +170,7 @@ class _AuthScreenState extends State<AuthScreen> {
           Expanded(
             flex: isMobile ? 10 : (isTablet ? 6 : 5),
             child: Container(
-              color: AppTheme.bgLight,
+              color: theme.scaffoldBackgroundColor,
               child: Center(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.symmetric(
@@ -199,7 +200,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.textPrimary,
+                            color: theme.colorScheme.onSurface,
                             letterSpacing: -0.8,
                           ),
                         ),
@@ -210,7 +211,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               : "Registra tu granja y empieza ahora",
                           style: TextStyle(
                             fontSize: 16,
-                            color: AppTheme.textSecondary,
+                            color: theme.colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w400,
                             height: 1.5,
                           ),
@@ -346,7 +347,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   : "¿Ya tienes cuenta? ",
                               style: TextStyle(
                                 fontSize: 14,
-                                color: const Color(0xFF5A5A5A),
+                                color: theme.colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w400,
                               ),
                               children: [
@@ -544,10 +545,11 @@ class _AuthScreenState extends State<AuthScreen> {
 
   // ========== AUTH TABS ==========
   Widget _buildAuthTabs(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F3F0),
+        color: theme.colorScheme.secondaryContainer,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -560,6 +562,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Widget _buildTabButton(BuildContext context, String text, bool selected) {
+    final theme = Theme.of(context);
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => isLogin = !isLogin),
@@ -569,7 +572,7 @@ class _AuthScreenState extends State<AuthScreen> {
             vertical: context.isMobile ? 10 : (context.isTablet ? 12 : 14),
           ),
           decoration: BoxDecoration(
-            color: selected ? Colors.white : Colors.transparent,
+            color: selected ? theme.colorScheme.surface : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
             boxShadow: selected
                 ? [
@@ -587,7 +590,9 @@ class _AuthScreenState extends State<AuthScreen> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: selected ? AppTheme.accent : AppTheme.textSecondary,
+              color: selected
+                  ? AppTheme.accent
+                  : theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -604,15 +609,16 @@ class _AuthScreenState extends State<AuthScreen> {
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
   }) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF374151),
+            color: theme.colorScheme.onSurfaceVariant,
             letterSpacing: 0.2,
           ),
         ),
@@ -680,15 +686,16 @@ class _AuthScreenState extends State<AuthScreen> {
     required VoidCallback onToggle,
     String? Function(String?)? validator,
   }) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF374151),
+            color: theme.colorScheme.onSurfaceVariant,
             letterSpacing: 0.2,
           ),
         ),
