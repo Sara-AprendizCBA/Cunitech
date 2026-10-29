@@ -1703,9 +1703,13 @@ class _BirthFormDialogState extends State<_BirthFormDialog> {
                     trailing: const Icon(Icons.calendar_today_rounded),
                     onTap: _pickDate,
                   ),
+                  const SizedBox(height: 16),
                   _numberField(_liveController, 'N° vivos', required: true),
+                  const SizedBox(height: 16),
                   _numberField(_deadController, 'N° muertos'),
+                  const SizedBox(height: 16),
                   _numberField(_adoptedController, 'N° adoptados'),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: _weightController,
                     decoration: const InputDecoration(
@@ -1714,12 +1718,13 @@ class _BirthFormDialogState extends State<_BirthFormDialog> {
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
                   ),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: _notesController,
                     decoration: const InputDecoration(labelText: 'Notas'),
                     maxLines: 3,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   Text('Total de la camada: $_total gazapos'),
                 ],
               ),
