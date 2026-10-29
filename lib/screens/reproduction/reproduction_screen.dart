@@ -718,11 +718,12 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
 
   Widget _buildCriasTab() {
     return Obx(() {
-      if (reproController.isLoading.value && reproController.crias.isEmpty) {
+      final crias = reproController.criasVivas;
+      if (reproController.isLoading.value && crias.isEmpty) {
         return const Center(child: CircularProgressIndicator());
       }
-      if (reproController.crias.isEmpty) {
-        return const Center(child: Text('No hay crías registradas'));
+      if (crias.isEmpty) {
+        return const Center(child: Text('No hay crías vivas registradas'));
       }
       return ListView.builder(
         padding: EdgeInsets.fromLTRB(
@@ -731,8 +732,8 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           context.isMobile ? 16 : 24,
           context.isMobile ? 16 : 24,
         ),
-        itemCount: reproController.crias.length,
-        itemBuilder: (context, index) => _KitCard(kit: reproController.crias[index]),
+        itemCount: crias.length,
+        itemBuilder: (context, index) => _KitCard(kit: crias[index]),
       );
     });
   }

@@ -34,6 +34,12 @@ class ReproduccionController extends GetxController {
   List<Reproduccion> get fallidas =>
       reproducciones.where((r) => r.estado == 'Fallida').toList();
 
+  List<Map<String, dynamic>> get criasVivas => crias
+      .where((kit) =>
+          (kit['estado_nacimiento']?.toString() ?? 'Vivo').toLowerCase() ==
+          'vivo')
+      .toList();
+
   List<Reproduccion> get proximasPalpaciones =>
       servidas.where((r) => r.tocaPalpacion).toList();
 
