@@ -1,6 +1,12 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+
+import 'notification_stub.dart'
+    if (dart.library.html) 'notification_web.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -10,7 +16,11 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
+  final List<Timer> _webTimers = [];
+
   Future<void> init() async {
+    if (kIsWeb) return;
+
     tz.initializeTimeZones();
 
     const AndroidInitializationSettings androidSettings =
@@ -30,19 +40,27 @@ class NotificationService {
     await flutterLocalNotificationsPlugin.initialize(
       settings: initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse details) {
-        // Aquí puedes navegar a una pantalla específica al tocar la notificación
-        print("Notificación tocada: ${details.payload}");
+        debugPrint('Notificación tocada: ${details.payload}');
       },
     );
+
+    final androidPlugin = flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    await androidPlugin?.requestNotificationsPermission();
   }
 
-  // Mostrar notificación inmediata
   Future<void> showNotification({
     required int id,
     required String title,
     required String body,
     String? payload,
   }) async {
+    if (kIsWeb) {
+      showWebNotification(title, body);
+      return;
+    }
+
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'cunitech_channel',
       'CUNITECH Alertas',
@@ -66,21 +84,49 @@ class NotificationService {
     );
   }
 
-  // Programar notificación futura (Ej: parto en 3 días)
+  Future<void> programarNotificacion(
+    DateTime fecha,
+    String titulo,
+    String cuerpo,
+  ) async {
+    if (fecha.isBefore(DateTime.now())) return;
+
+    await scheduleNotification(
+      id: _notificationId(titulo, cuerpo),
+      title: titulo,
+      body: cuerpo,
+      scheduledDate: fecha,
+    );
+  }
+
   Future<void> scheduleNotification({
     required int id,
     required String title,
     required String body,
     required DateTime scheduledDate,
   }) async {
+    final delay = scheduledDate.difference(DateTime.now());
+    if (delay.isNegative) return;
+
+    if (kIsWeb) {
+      _webTimers.add(
+        Timer(delay, () => showWebNotification(title, body)),
+      );
+      return;
+    }
+
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'cunitech_channel',
       'CUNITECH Alertas',
       importance: Importance.high,
+      priority: Priority.high,
     );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails();
 
     const NotificationDetails details = NotificationDetails(
       android: androidDetails,
+      iOS: iosDetails,
     );
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
@@ -89,8 +135,27 @@ class NotificationService {
       body: body,
       scheduledDate: tz.TZDateTime.from(scheduledDate, tz.local),
       notificationDetails: details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.dateAndTime,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
     );
+  }
+
+  Future<void> cancelAll() async {
+    if (kIsWeb) {
+      for (final timer in _webTimers) {
+        timer.cancel();
+      }
+      _webTimers.clear();
+      return;
+    }
+
+    await flutterLocalNotificationsPlugin.cancelAll();
+  }
+
+  int _notificationId(String title, String body) {
+    var hash = 17;
+    for (final code in '$title|$body'.codeUnits) {
+      hash = (hash * 31 + code) & 0x7fffffff;
+    }
+    return hash;
   }
 }

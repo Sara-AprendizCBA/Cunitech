@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../models/mating.dart';
 import '../../controllers/reproduccion_controller.dart';
 import '../../models/reproduccion.dart';
-import '../../services/notification_service.dart';
 import '../../services/predictor_service.dart';
 import '../../controllers/auth_controller.dart';
 import '../../core/theme/app_theme.dart';
@@ -737,20 +735,6 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
         itemBuilder: (context, index) => _KitCard(kit: reproController.crias[index]),
       );
     });
-  }
-  /// Programa una notificación de alerta de parto
-  Future<void> scheduleBirthAlert(Mating mating) async {
-    if (mating.expectedBirthDate != null) {
-      final daysLeft = mating.expectedBirthDate!.difference(DateTime.now()).inDays;
-
-      if (daysLeft <= 7) {
-        await NotificationService().showNotification(
-          id: 1001,
-          title: "¡Alerta de Parto!",
-          body: "La coneja ${mating.doeId} tiene parto estimado en $daysLeft días",
-        );
-      }
-    }
   }
 }
 

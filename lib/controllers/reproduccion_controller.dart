@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/utils/logger.dart';
 import '../models/reproduccion.dart';
+import '../services/notification_service.dart';
 import '../services/reproduccion_service.dart';
 import 'reportes_controller.dart';
 
@@ -58,6 +60,7 @@ class ReproduccionController extends GetxController {
     try {
       reproducciones.assignAll(await _service.getAll());
       await Future.wait([loadNacimientos(), loadCrias()]);
+      await _programarAlertas();
     } catch (e) {
       logger.e('Error loading reproducciones', error: e);
     } finally {
@@ -125,6 +128,68 @@ class ReproduccionController extends GetxController {
       logger.e('Error loading conejos', error: e);
     }
   }
+
+  Future<void> _programarAlertas() async {
+    try {
+      final service = NotificationService();
+      await service.cancelAll();
+
+      for (final r in reproducciones) {
+        if (r.estado == 'Servida') {
+          final palpacion =
+              r.fechaPalpacion ?? r.fechaMonta.add(const Duration(days: 12));
+          await _programarAlerta(
+            service,
+            palpacion,
+            diasAntes: 1,
+            titulo: 'Palpación pendiente',
+            cuerpo:
+                'La coneja #${r.idConeja} requiere palpación el ${_fechaCorta(palpacion)}.',
+          );
+        }
+
+        if (r.estado == 'Gestante' && r.fechaProbableParto != null) {
+          await _programarAlerta(
+            service,
+            r.fechaProbableParto!,
+            diasAntes: 2,
+            titulo: 'Parto próximo',
+            cuerpo:
+                'La coneja #${r.idConeja} tiene parto probable el ${_fechaCorta(r.fechaProbableParto!)}.',
+          );
+        }
+      }
+    } catch (e) {
+      logger.e('Error programando alertas', error: e);
+    }
+  }
+
+  Future<void> _programarAlerta(
+    NotificationService service,
+    DateTime fechaEvento, {
+    required int diasAntes,
+    required String titulo,
+    required String cuerpo,
+  }) async {
+    final ahora = DateTime.now();
+    if (fechaEvento.isBefore(ahora)) return;
+
+    final alerta = DateTime(
+      fechaEvento.year,
+      fechaEvento.month,
+      fechaEvento.day,
+      9,
+    ).subtract(Duration(days: diasAntes));
+
+    final cuando = alerta.isBefore(ahora)
+        ? ahora.add(const Duration(minutes: 1))
+        : alerta;
+
+    await service.programarNotificacion(cuando, titulo, cuerpo);
+  }
+
+  String _fechaCorta(DateTime fecha) =>
+      DateFormat('dd/MM/yyyy').format(fecha);
 
   Future<bool> createMonta(Reproduccion r) async {
     final ok = await _service.create(r);
