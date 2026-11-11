@@ -129,7 +129,9 @@ class _SaludScreenState extends State<SaludScreen> {
             _buildFiltros(context),
             Expanded(
               child: _loading
-                  ? const AppLoadingList(itemCount: 3)
+                  ? const AppLoadingIndicator(
+                      label: 'Cargando tratamientos…',
+                    )
                   : _buildLista(context),
             ),
           ],

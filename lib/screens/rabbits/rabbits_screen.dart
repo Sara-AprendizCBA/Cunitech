@@ -133,7 +133,9 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
             child: Obx(() {
               if (rabbitController.isLoading.value &&
                   rabbitController.rabbits.isEmpty) {
-                return const AppLoadingList();
+                return const AppLoadingIndicator(
+                  label: 'Cargando conejos…',
+                );
               }
 
               final rabbits = _searchController.text.isEmpty

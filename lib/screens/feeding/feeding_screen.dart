@@ -65,7 +65,9 @@ class _FeedingScreenState extends State<FeedingScreen> {
           if (controller.isLoading.value &&
               controller.feedings.isEmpty &&
               controller.jaulasDelUsuario.isEmpty) {
-            return const AppLoadingList(shrinkWrap: true, itemCount: 3);
+            return const AppLoadingIndicator(
+              label: 'Cargando alimentación…',
+            );
           }
 
           final pendientes = controller.jaulasPendientesHoy;

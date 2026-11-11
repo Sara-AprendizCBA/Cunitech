@@ -754,14 +754,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       padding: EdgeInsets.symmetric(vertical: 16),
       child: Row(
         children: [
-          SizedBox(
-            width: 22,
-            height: 22,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.5,
-              color: AppTheme.accent,
-            ),
-          ),
+          AppLoadingIndicator(size: 32),
           SizedBox(width: 14),
           Expanded(
             child: Text(

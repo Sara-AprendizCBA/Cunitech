@@ -421,10 +421,9 @@ class _MainScreenState extends State<MainScreen>
                                   builder: (context, snapshot) {
                                     if (snapshot.connectionState ==
                                         ConnectionState.waiting) {
-                                      return const Center(
-                                        child: CircularProgressIndicator(
-                                          color: AppTheme.accentLight,
-                                        ),
+                                      return const AppLoadingIndicator(
+                                        size: 64,
+                                        label: 'Analizando recomendaciones…',
                                       );
                                     }
                                     if (snapshot.hasError ||

@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/app_loading.dart';
 import '../../models/meta_mensual.dart';
 import '../../services/pdf_service.dart';
 
@@ -67,6 +68,27 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return Obx(() {
+      final controller = reportesController;
+      final cargandoInicial = controller.isLoading.value &&
+          controller.poblacionPorDia.isEmpty &&
+          controller.metasMes.isEmpty &&
+          controller.nacimientosRecientes.isEmpty;
+
+      if (cargandoInicial) {
+        return Container(
+          color: AppTheme.bgLight,
+          child: const Center(
+            child: AppLoadingIndicator(label: 'Cargando reportes…'),
+          ),
+        );
+      }
+
+      return _buildContent(context);
+    });
+  }
+
+  Widget _buildContent(BuildContext context) {
     return Container(
       color: AppTheme.bgLight,
       child: RefreshIndicator(

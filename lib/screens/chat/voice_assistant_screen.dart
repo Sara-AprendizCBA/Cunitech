@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
+import '../../core/widgets/app_loading.dart';
 import '../../services/chat_service.dart';
 import '../../services/voice_service.dart';
 
@@ -172,13 +173,9 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
               const SizedBox(height: 32),
             ],
             if (_pensando) ...[
-              const CircularProgressIndicator(
-                color: AppTheme.accent,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Pensando...',
-                style: Theme.of(context).textTheme.titleMedium,
+              const AppLoadingIndicator(
+                size: 64,
+                label: 'Pensando...',
               ),
               const SizedBox(height: 32),
             ],

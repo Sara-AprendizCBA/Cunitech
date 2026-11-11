@@ -195,7 +195,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   Widget _buildList(BuildContext context) {
     return Obx(() {
       if (userController.isLoading.value && userController.users.isEmpty) {
-        return const AppLoadingList();
+        return const AppLoadingIndicator(
+          label: 'Cargando usuarios…',
+        );
       }
       final list = userController.filteredUsers;
       final hasFilters = userController.searchQuery.value.isNotEmpty ||

@@ -5,12 +5,13 @@ import 'loading_rabbit.dart';
 
 class AppLoadingIndicator extends StatelessWidget {
   final String? label;
+  final double size;
 
-  const AppLoadingIndicator({super.key, this.label});
+  const AppLoadingIndicator({super.key, this.label, this.size = 100});
 
   @override
   Widget build(BuildContext context) {
-    return LoadingRabbit(label: label);
+    return LoadingRabbit(size: size, label: label);
   }
 }
 
