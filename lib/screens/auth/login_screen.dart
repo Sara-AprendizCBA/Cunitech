@@ -508,91 +508,142 @@ class _AuthScreenState extends State<AuthScreen> {
 
     await showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: theme.dialogTheme.backgroundColor ?? theme.cardColor,
-        icon: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: AppTheme.accent,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.mail_outline_rounded,
-            color: Colors.white,
-            size: 28,
-          ),
-        ),
-        title: const Text(
-          'Solicitud de Acceso',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Las cuentas en CUNITECH son creadas únicamente por el administrador del criadero.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest
-                    .withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                'Para solicitar tu acceso, envía un correo electrónico con tus datos al administrador.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.5,
-                  fontSize: 13.5,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: theme.colorScheme.surface,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: CircleAvatar(
+                    radius: 30,
+                    backgroundColor: AppTheme.accent,
+                    child: const Icon(
+                      Icons.mark_email_read_outlined,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Solicitud de Acceso',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'El acceso al sistema CUNITECH es gestionado exclusivamente por el Administrador del criadero.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildBulletItem(context, 'El acceso es creado por el Administrador.'),
+                      const SizedBox(height: 10),
+                      _buildBulletItem(context, 'Envía un correo con tus datos personales para solicitarlo.'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        style: TextButton.styleFrom(
+                          foregroundColor: theme.colorScheme.onSurfaceVariant,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text('Cancelar'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () async {
+                          Navigator.of(ctx).pop();
+                          await _sendAccessRequestEmail(context);
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppTheme.accent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        icon: const Icon(Icons.send, size: 18),
+                        label: const Text('Enviar Correo'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-        actionsAlignment: MainAxisAlignment.spaceBetween,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.of(ctx).pop();
-              await _sendAccessRequestEmail(context);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppTheme.accent,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('Enviar Correo'),
-          ),
-        ],
       ),
     );
   }
 
+  Widget _buildBulletItem(BuildContext context, String text) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 6),
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color: AppTheme.accent,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface,
+              height: 1.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Future<void> _sendAccessRequestEmail(BuildContext context) async {
+    final subject =
+        'Solicitud formal de alta de usuario y registro de datos de contacto - CUNITECH';
+    final body =
+        'Estimado(a) Administrador(a) de CUNITECH,\n\nReciba un cordial saludo. Me pongo en contacto con usted con el propósito de solicitar formalmente la creación de una cuenta de acceso al sistema de gestión, con el fin de poder operar dentro de la plataforma del criadero.\n\nCon el objetivo de que el equipo administrativo pueda validar el perfil, coordinar la entrega de credenciales y establecer un canal de comunicación directo, a continuación detallo los datos personales y de contacto requeridos:\n\n- Nombre completo: [Ingresar nombre completo del usuario]\n- Rol o perfil solicitado: [Ingresar el rol correspondiente, ej. Veterinario]\n- Correo electrónico de contacto: [Ingresar correo electrónico]\n- Número de teléfono / Móvil: [Ingresar número de contacto]\n\nAgradezco de antemano su atención a la presente solicitud, así como el tiempo dedicado a la gestión de mis credenciales de acceso. Quedo a su entera disposición en caso de que requiera información adicional para completar el proceso de registro.\n\nAtentamente,\n\n[Nombre del usuario solicitante]\n[Rol o documento de identificación, si aplica]';
+
     final uri = Uri(
       scheme: 'mailto',
       path: 'soporte.cunitech@gmail.com',
-      query:
-          'subject=${Uri.encodeComponent('Solicitud de Acceso - Nuevo Usuario CUNITECH')}&'
-          'body=${Uri.encodeComponent('Estimado Administrador de CUNITECH,\n\nReciba un cordial saludo. Me pongo en contacto con usted para solicitar la creación de una cuenta de acceso al sistema de gestión de mi criadero.\n\nA continuación, detallo mis datos para su revisión:\n- Nombre completo: [Escribe tu nombre aquí]\n- Rol solicitado: [Ayudante / Veterinario / Administrador]\n- Número de contacto: [Escribe tu número de teléfono]\n\nQuedo a la espera de su respuesta para coordinar la entrega de mis credenciales.\n\nCordialmente,\n[Escribe tu nombre]')}',
+      queryParameters: {
+        'subject': subject,
+        'body': body,
+      },
     );
 
     try {
