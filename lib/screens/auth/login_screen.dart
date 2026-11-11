@@ -115,13 +115,27 @@ class _AuthScreenState extends State<AuthScreen> {
         const DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              stops: [0, 0.55, 1],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: [0, 0.45, 1],
               colors: [
-                Color(0xE61A1510),
-                Color(0xD9242E1F),
-                Color(0xF21A1510),
+                Color(0x1A1A1510),
+                Color(0x591A1510),
+                Color(0xB31A1510),
+              ],
+            ),
+          ),
+        ),
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              stops: [0, 0.45, 0.78],
+              colors: [
+                Color(0x8C1A1510),
+                Color(0x401A1510),
+                Colors.transparent,
               ],
             ),
           ),
@@ -162,6 +176,13 @@ class _AuthScreenState extends State<AuthScreen> {
                           color: Colors.white,
                           height: 1.08,
                           letterSpacing: -0.8,
+                          shadows: const [
+                            Shadow(
+                              color: Color(0x99000000),
+                              blurRadius: 18,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
                         ),
                         children: const [
                           TextSpan(text: 'GESTIÓN PROFESIONAL\nDE '),
@@ -185,8 +206,15 @@ class _AuthScreenState extends State<AuthScreen> {
                         'eficiencia operativa y tranquilidad profesional.',
                         style: TextStyle(
                           fontSize: 15,
-                          color: Colors.white.withValues(alpha: 0.76),
+                          color: Colors.white.withValues(alpha: 0.82),
                           height: 1.6,
+                          shadows: const [
+                            Shadow(
+                              color: Color(0x99000000),
+                              blurRadius: 10,
+                              offset: Offset(0, 1),
+                            ),
+                          ],
                         ),
                       ).animate().fadeIn(duration: 900.ms, delay: 120.ms),
                       const SizedBox(height: 56),
