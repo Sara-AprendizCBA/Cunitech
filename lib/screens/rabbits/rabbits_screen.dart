@@ -7,6 +7,7 @@ import '../../core/utils/app_snackbar.dart';
 import '../../core/widgets/animated_list_item.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_loading.dart';
+import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/pressable_scale.dart';
 import '../../models/rabbit.dart';
 import '../../controllers/rabbit_controller.dart';
@@ -417,50 +418,16 @@ class _EmptyRabbitsState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(AppTheme.spacingLg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 112,
-            height: 112,
-            decoration: BoxDecoration(
-              color: AppTheme.accent.withValues(alpha: 0.08),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isSearching
-                  ? Icons.search_off_rounded
-                  : Icons.cruelty_free_rounded,
-              size: 56,
-              color: AppTheme.accent.withValues(alpha: 0.35),
-            ),
-          ),
-          const SizedBox(height: AppTheme.spacingMd),
-          Text(
-            isSearching
-                ? 'No se encontraron resultados'
-                : 'Aún no hay conejos registrados',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          if (!isSearching) ...[
-            const SizedBox(height: AppTheme.spacingSm),
-            Text(
-              'Los conejos que registres aparecerán aquí.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.outline,
-              ),
-            ),
-          ],
-        ],
-      ),
+    return EmptyStateWidget(
+      icon: isSearching
+          ? Icons.search_off_rounded
+          : Icons.cruelty_free_rounded,
+      title: isSearching
+          ? 'No se encontraron resultados'
+          : 'Aún no hay conejos registrados',
+      subtitle: isSearching
+          ? 'Prueba con otro término de búsqueda.'
+          : 'Los conejos que registres aparecerán aquí.',
     );
   }
 }

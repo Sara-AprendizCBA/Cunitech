@@ -10,6 +10,7 @@ import '../core/theme/theme_controller.dart';
 import '../core/utils/app_snackbar.dart';
 import '../core/utils/responsive.dart';
 import '../core/widgets/app_loading.dart';
+import '../core/widgets/empty_state.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/notification_controller.dart';
 import '../models/insight_recomendacion.dart';
@@ -1097,15 +1098,13 @@ class _MainScreenState extends State<MainScreen>
                                                             ),
                                                             const Divider(height: 1),
                                                             Expanded(
-                                                              child: Center(
-                                                                child: Column(
-                                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                                  children: [
-                                                                    Icon(Icons.notifications_off_outlined, size: 48, color: Colors.grey.shade400),
-                                                                    const SizedBox(height: 12),
-                                                                    const Text('Sin notificaciones', style: TextStyle(color: Colors.grey)),
-                                                                  ],
-                                                                ),
+                                                              child: EmptyStateWidget(
+                                                                icon: Icons.notifications_off_outlined,
+                                                                iconSize: 32,
+                                                                maxWidth: 260,
+                                                                title: 'Sin notificaciones',
+                                                                subtitle:
+                                                                    'Los avisos de tu criadero aparecerán aquí.',
                                                               ),
                                                             ),
                                                           ],

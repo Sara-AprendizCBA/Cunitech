@@ -9,6 +9,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/widgets/animated_list_item.dart';
+import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/loading_rabbit.dart';
 import '../../core/widgets/pressable_scale.dart';
 
@@ -2058,51 +2059,17 @@ class _EmptyMatingsState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final filtered = hasAnyMatings;
-    return Padding(
-      padding: const EdgeInsets.all(AppTheme.spacingLg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 112,
-            height: 112,
-            decoration: BoxDecoration(
-              color: AppTheme.accent.withValues(alpha: 0.08),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              filtered
-                  ? Icons.filter_alt_off_rounded
-                  : Icons.favorite_border_rounded,
-              size: 56,
-              color: AppTheme.accent.withValues(alpha: 0.35),
-            ),
-          ),
-          const SizedBox(height: AppTheme.spacingMd),
-          Text(
-            filtered
-                ? 'No hay montas en este filtro'
-                : 'Aún no hay montas registradas',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          if (!filtered) ...[
-            const SizedBox(height: AppTheme.spacingSm),
-            Text(
-              'Registra la primera monta con el botón +.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.outline,
-              ),
-            ),
-          ],
-        ],
-      ),
+    return EmptyStateWidget(
+      icon: filtered
+          ? Icons.filter_alt_off_rounded
+          : Icons.favorite_border_rounded,
+      title: filtered
+          ? 'No hay montas en este filtro'
+          : 'Aún no hay montas registradas',
+      subtitle: filtered
+          ? 'Prueba con otro filtro para ver tus montas.'
+          : 'Registra la primera monta con el botón +.',
     );
   }
 }

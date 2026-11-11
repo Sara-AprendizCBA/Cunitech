@@ -9,6 +9,7 @@ import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/dialog_animations.dart';
 import '../../core/widgets/animated_list_item.dart';
 import '../../core/widgets/app_loading.dart';
+import '../../core/widgets/empty_state.dart';
 import '../../models/rabbit.dart';
 import '../../models/tratamiento.dart';
 import '../../services/salud_service.dart';
@@ -240,23 +241,11 @@ class _SaludScreenState extends State<SaludScreen> {
   }
 
   Widget _emptyState(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.health_and_safety_outlined,
-            size: 48,
-            color: theme.colorScheme.outline,
-          ),
-          const SizedBox(height: AppTheme.spacingMd),
-          Text(
-            'No hay tratamientos registrados',
-            style: theme.textTheme.bodyMedium,
-          ),
-        ],
-      ),
+    return const EmptyStateWidget(
+      icon: Icons.health_and_safety_outlined,
+      title: 'No hay tratamientos registrados',
+      subtitle:
+          'Los controles y tratamientos de tus conejos aparecerán aquí.',
     );
   }
 
