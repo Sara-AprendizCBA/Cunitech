@@ -8,6 +8,7 @@ class NotificationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final notifications = <_NotificationItem>[];
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -29,41 +30,112 @@ class NotificationsScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppTheme.spacingMd,
-                AppTheme.spacingSm,
-                AppTheme.spacingMd,
-                AppTheme.spacingLg,
-              ),
-              children: const [
-                _NotificationCard(
-                  icon: Icons.notifications_none_rounded,
-                  title: 'Sin notificaciones',
-                  subtitle: 'Los avisos de tu criadero aparecerán aquí.',
+        child: notifications.isEmpty
+            ? Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppTheme.spacingLg),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 72,
+                          height: 72,
+                          decoration: BoxDecoration(
+                            color: AppTheme.accent.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.notifications_none_rounded,
+                            size: 36,
+                            color: AppTheme.accent,
+                          ),
+                        ),
+                        const SizedBox(height: AppTheme.spacingMd),
+                        Text(
+                          'Sin notificaciones',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: AppTheme.spacingSm),
+                        Text(
+                          'Los avisos de tu criadero aparecerán aquí.',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
-            ),
-          ),
-        ),
+              )
+            : Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800, maxHeight: 500),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppTheme.spacingSm,
+                          AppTheme.spacingSm,
+                          AppTheme.spacingSm,
+                          AppTheme.spacingLg,
+                        ),
+                        itemCount: notifications.length,
+                        itemBuilder: (context, index) {
+                          final item = notifications[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
+                            child: _NotificationCard(
+                              icon: item.icon,
+                              title: item.title,
+                              subtitle: item.subtitle,
+                              time: item.time,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
       ),
     );
   }
+}
+
+class _NotificationItem {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String time;
+
+  const _NotificationItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.time,
+  });
+}
 }
 
 class _NotificationCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
+  final String? time;
 
   const _NotificationCard({
     required this.icon,
     required this.title,
     required this.subtitle,
+    this.time,
   });
 
   @override
@@ -71,36 +143,59 @@ class _NotificationCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.4)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(AppTheme.spacingMd),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: AppTheme.accent.withValues(alpha: 0.08),
+                color: AppTheme.accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppTheme.radiusMd),
               ),
-              child: Icon(icon, size: 20, color: AppTheme.accent),
+              child: Icon(icon, size: 22, color: AppTheme.accent),
             ),
             const SizedBox(width: AppTheme.spacingMd),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface,
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      if (time != null) ...[
+                        const SizedBox(width: AppTheme.spacingSm),
+                        Text(
+                          time!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     subtitle,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.outline,
+                      color: theme.colorScheme.onSurfaceVariant,
+                      height: 1.4,
                     ),
                   ),
                 ],
