@@ -40,11 +40,28 @@ const IDENTIFICACION_FALLBACK: IdentificacionRaza = {
   descripcion: 'La IA de Google no pudo procesar la imagen',
 }
 
+const RAZAS_PERMITIDAS = [
+  'Nueva Zelanda',
+  'California',
+  'Rex',
+  'Mariposa',
+  'Cabeza de León',
+  'Angora',
+  'Gigante de Flandes',
+  'Chinchilla',
+  'Otra',
+]
+
 const PROMPT =
-  'Eres un experto en cunicultura. Identifica la raza del conejo en la ' +
-  'imagen. Si la imagen no es clara, responde con raza "No identificada" y ' +
-  'confianza "baja". Devuelve un JSON con ' +
-  '{ "raza": "...", "confianza": "alta/media/baja", "descripcion": "..." }.'
+  'Eres un experto en cunicultura. Analiza la imagen y determina si el ' +
+  'animal es un conejo doméstico. Si NO es un conejo (por ejemplo un perro, ' +
+  'gato, ave u otro animal), responde OBLIGATORIAMENTE con raza ' +
+  '"No es un conejo" y confianza "baja". Si es un conejo, identifica su raza ' +
+  `usando únicamente una de estas opciones: ${RAZAS_PERMITIDAS.join(', ')}. ` +
+  'Si no coincide con ninguna raza conocida, usa "Otra". Si la imagen no es ' +
+  'clara, responde con raza "No identificada" y confianza "baja". Devuelve ' +
+  'un JSON con { "raza": "...", "confianza": "alta/media/baja", ' +
+  '"descripcion": "..." }.'
 
 const RESPONSE_SCHEMA = {
   type: 'OBJECT',

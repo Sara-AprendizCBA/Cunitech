@@ -27,7 +27,6 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
   final _formKey = GlobalKey<FormState>();
   final rabbitController = Get.find<RabbitController>();
 
-  late final TextEditingController _breedCtrl;
   late final TextEditingController _weightCtrl;
   late final TextEditingController _originCtrl;
   late final TextEditingController _registryNumberCtrl;
@@ -35,8 +34,21 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
   late final TextEditingController _chapetaCtrl;
   late final TextEditingController _lastWeightCtrl;
 
+  static const List<String> _razasPermitidas = [
+    'Nueva Zelanda',
+    'California',
+    'Rex',
+    'Mariposa',
+    'Cabeza de León',
+    'Angora',
+    'Gigante de Flandes',
+    'Chinchilla',
+    'Otra',
+  ];
+
   final List<String> _genders = ['Macho', 'Hembra'];
   final List<String> _states = ['Saludable', 'En Tratamiento', 'Enfermo'];
+  String? _raza;
   late String _gender;
   late String _state;
   DateTime? _birthDate;
@@ -68,7 +80,8 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
     final r = widget.rabbit;
     _currentPhotoUrl = r?.photoUrl;
 
-    _breedCtrl = TextEditingController(text: r?.breed ?? '');
+    final razaActual = (r?.breed ?? '').trim();
+    _raza = _razasPermitidas.contains(razaActual) ? razaActual : null;
     _weightCtrl = TextEditingController(
       text: (r != null && r.weightKg > 0) ? '${r.weightKg}' : '',
     );
@@ -93,8 +106,6 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
     _motherId = r?.motherId;
     _fatherId = r?.fatherId;
 
-    // Autogenerar la chapeta cuando cambie la raza y el campo esté vacío.
-    _breedCtrl.addListener(_onBreedChanged);
     // Si el usuario edita la chapeta manualmente, dejar de autogenerarla.
     _chapetaCtrl.addListener(_onChapetaChanged);
 
@@ -108,9 +119,7 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
 
   @override
   void dispose() {
-    _breedCtrl.removeListener(_onBreedChanged);
     _chapetaCtrl.removeListener(_onChapetaChanged);
-    _breedCtrl.dispose();
     _weightCtrl.dispose();
     _originCtrl.dispose();
     _registryNumberCtrl.dispose();
@@ -237,13 +246,28 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
       MaterialPageRoute(builder: (_) => const VisionScreen()),
     );
     if (result == null || !mounted) return;
+
+    final raza = _razasPermitidas.firstWhere(
+      (permitida) =>
+          permitida.toLowerCase() == result.raza.trim().toLowerCase(),
+      orElse: () => '',
+    );
+    if (raza.isEmpty) {
+      AppSnackbar.error(
+        context,
+        'La imagen no corresponde a un conejo. Por favor, sube una foto válida',
+      );
+      return;
+    }
+
     // Forzar la regeneración de la chapeta con la raza detectada por la IA.
     _chapetaAutoGenerada = true;
     setState(() {
       _aiPhotoBytes = result.imagenBytes;
       _pickedPhoto = null;
-      _breedCtrl.text = result.raza;
+      _raza = raza;
     });
+    await _sugerirChapeta(raza);
   }
 
   void _onChapetaChanged() {
@@ -253,14 +277,6 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
     if (_chapetaCtrl.text == _ultimaChapetaSugerida) return;
     // El usuario sobrescribió el valor sugerido.
     _chapetaAutoGenerada = false;
-  }
-
-  /// Sugiere la chapeta cuando el usuario escribe/elige una raza y el campo
-  /// de identificación todavía está vacío (o fue autogenerado antes).
-  void _onBreedChanged() {
-    if (_chapetaAutoGenerada || _chapetaCtrl.text.trim().isEmpty) {
-      _sugerirChapeta(_breedCtrl.text);
-    }
   }
 
   /// Prefijo de 2 letras a partir de la raza (ej. "Cabeza de León" -> "CL").
@@ -358,7 +374,7 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
       final rabbit = Rabbit(
         id: old?.id ?? '',
         name: null,
-        breed: _breedCtrl.text.trim(),
+        breed: _raza ?? '',
         gender: _gender,
         birthDate: _birthDate!,
         weightKg: weightText.isEmpty ? 0 : double.parse(weightText),
@@ -555,10 +571,30 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
                 const SizedBox(height: 12),
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final breedField = TextFormField(
-                      controller: _breedCtrl,
+                    final breedField = DropdownButtonFormField<String>(
+                      key: ValueKey(_raza),
+                      initialValue: _raza,
+                      isExpanded: true,
                       decoration: const InputDecoration(labelText: 'Raza *'),
-                      validator: _required,
+                      items: _razasPermitidas
+                          .map((raza) => DropdownMenuItem<String>(
+                                value: raza,
+                                child: Text(raza),
+                              ))
+                          .toList(),
+                      onChanged: _saving
+                          ? null
+                          : (value) {
+                              if (value == null) return;
+                              setState(() => _raza = value);
+                              if (_chapetaAutoGenerada ||
+                                  _chapetaCtrl.text.trim().isEmpty) {
+                                _sugerirChapeta(value);
+                              }
+                            },
+                      validator: (value) => value == null
+                          ? 'Selecciona una raza'
+                          : null,
                     );
                     if (!_canUseAI) return breedField;
 
