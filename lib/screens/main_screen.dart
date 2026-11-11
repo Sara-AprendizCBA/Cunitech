@@ -894,25 +894,25 @@ class _MainScreenState extends State<MainScreen>
                                   top: BorderSide(
                                       color: _borderColor(context), width: 1)),
                             ),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: FilledButton.icon(
-                                onPressed: _logout,
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: AppTheme.danger.withValues(alpha: 0.9),
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                icon: const Icon(Icons.logout_rounded, size: 20),
-                                label: const Text(
-                                  'Cerrar Sesión',
-                                  style: TextStyle(fontWeight: FontWeight.w600),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              onPressed: _logout,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF6F4E37),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
+                              icon: const Icon(Icons.logout_rounded, size: 20),
+                              label: const Text(
+                                'Cerrar Sesión',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
                             ),
+                          ),
                           ),
                         ],
                       ),
@@ -1103,28 +1103,28 @@ class _MainScreenState extends State<MainScreen>
                 border: Border(
                     top: BorderSide(color: _borderColor(context), width: 1)),
               ),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    _logout();
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppTheme.danger.withValues(alpha: 0.9),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  icon: const Icon(Icons.logout_rounded, size: 20),
-                  label: const Text(
-                    'Cerrar Sesión',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _logout();
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF6F4E37),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
+                icon: const Icon(Icons.logout_rounded, size: 20),
+                label: const Text(
+                  'Cerrar Sesión',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
               ),
+            ),
             ),
           ],
         ),
