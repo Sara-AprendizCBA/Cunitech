@@ -147,6 +147,100 @@ class _MainScreenState extends State<MainScreen>
       Theme.of(context).textTheme.bodyLarge?.color ??
       Theme.of(context).textTheme.titleMedium?.color;
 
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(6, 8, 6, 10),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 11,
+          letterSpacing: 1.2,
+          fontWeight: FontWeight.w700,
+          color: _secondaryTextColor(context)?.withValues(alpha: 0.7),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildGroupedNavItems(
+    List<Map<String, dynamic>> items,
+    int currentIndex,
+    BuildContext context,
+    ThemeData theme, {
+    required int startIndex,
+    required int count,
+  }) {
+    final widgets = <Widget>[];
+    for (int i = startIndex; i < startIndex + count && i < items.length; i++) {
+      final item = items[i];
+      final isSelected = currentIndex == i;
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => setState(() => _currentIndex = i),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppTheme.accent.withValues(alpha: 0.15)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      item['icon'] as IconData,
+                      color: isSelected
+                          ? AppTheme.accent
+                          : _secondaryTextColor(context),
+                      size: 22,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        item['label'] as String,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                          color: isSelected
+                              ? AppTheme.accent
+                              : _primaryTextColor(context),
+                        ),
+                      ),
+                    ),
+                    if (item['label'] == 'Alertas')
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: const BoxDecoration(
+                          color: AppTheme.danger,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Text(
+                          '3',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    return widgets;
+  }
+
   // ==================== CERRAR SESIÓN ====================
   Future<void> _logout() async {
     final confirmado = await showDialog<bool>(
@@ -643,18 +737,20 @@ class _MainScreenState extends State<MainScreen>
                   children: [
                     // Sidebar
                     Container(
-                      width: 240,
+                      width: 250,
                       decoration: BoxDecoration(
-                        color: _surfaceColor(context),
+                        color: theme.brightness == Brightness.dark
+                            ? const Color(0xFF151210)
+                            : const Color(0xFFFBF8F3),
                         border: Border(
                             right: BorderSide(
                                 color: _borderColor(context), width: 1)),
                       ),
                       child: Column(
                         children: [
-                          // Logo
+                          // PARTE SUPERIOR - PERFIL DEL USUARIO
                           Container(
-                            padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+                            padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
                             decoration: BoxDecoration(
                               border: Border(
                                   bottom: BorderSide(
@@ -662,140 +758,79 @@ class _MainScreenState extends State<MainScreen>
                             ),
                             child: Row(
                               children: [
-                                Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.accent,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(Icons.pets,
-                                      color: Colors.white, size: 20),
+                                CircleAvatar(
+                                  radius: 26,
+                                  backgroundColor:
+                                      AppTheme.accent.withValues(alpha: 0.15),
+                                  child: Text(initials,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 18,
+                                          color: AppTheme.accent)),
                                 ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  "CUNITECH",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: -0.4,
-                                      ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(nombre,
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 15,
+                                              color: _primaryTextColor(context))),
+                                      const SizedBox(height: 2),
+                                      Text(rol,
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: _secondaryTextColor(context))),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
                           ),
 
-                          const SizedBox(height: 16),
-
-                          // Menú de navegación
+                          // PARTE MEDIA - NAVEGACIÓN AGRUPADA
                           Expanded(
-                            child: ListView.builder(
+                            child: ListView(
                               padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              itemCount: items.length,
-                              itemBuilder: (context, i) {
-                                final item = items[i];
-                                final isSelected = index == i;
-
-                                return Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 4),
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(
-                                          AppTheme.radiusMd),
-                                      onTap: () =>
-                                          setState(() => _currentIndex = i),
-                                      child: AnimatedContainer(
-                                        duration: const Duration(milliseconds: 180),
-                                        curve: Curves.easeOutCubic,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20, vertical: 14),
-                                        decoration: BoxDecoration(
-                                          color: isSelected
-                                              ? theme.colorScheme.primary
-                                                  .withValues(alpha: 0.15)
-                                              : Colors.transparent,
-                                          borderRadius: BorderRadius.circular(
-                                              AppTheme.radiusMd),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              item['icon'] as IconData,
-                                              color: isSelected
-                                                  ? AppTheme.accent
-                                                  : _secondaryTextColor(context),
-                                              size: 22,
-                                            ),
-                                            const SizedBox(width: 16),
-                                            Text(
-                                              item['label'] as String,
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: isSelected
-                                                    ? FontWeight.w600
-                                                    : FontWeight.w500,
-                                                color: isSelected
-                                                    ? AppTheme.accent
-                                                    : _primaryTextColor(context),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
+                                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              children: [
+                                _buildSectionTitle(context, 'OPERACIONES'),
+                                ..._buildGroupedNavItems(items, index, context, theme, startIndex: 0, count: 5),
+                                const SizedBox(height: 16),
+                                _buildSectionTitle(context, 'ADMINISTRACIÓN'),
+                                ..._buildGroupedNavItems(items, index, context, theme, startIndex: 5, count: 2),
+                              ],
                             ),
                           ),
 
-                          // ==================== USER SECTION ====================
+                          // PARTE INFERIOR - BOTÓN CERRAR SESIÓN
                           Container(
-                            padding: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
                             decoration: BoxDecoration(
                               border: Border(
                                   top: BorderSide(
                                       color: _borderColor(context), width: 1)),
                             ),
-                            child: GestureDetector(
-                              key: _sidebarProfileKey,
-                              onTap: () => _showProfileMenu(_sidebarProfileKey),
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 20,
-                                    backgroundColor:
-                                        AppTheme.accent.withValues(alpha: 0.1),
-                                    child: Text(initials,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w600)),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: FilledButton.icon(
+                                onPressed: _logout,
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: AppTheme.danger.withValues(alpha: 0.9),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(nombre,
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 14)),
-                                        Text(rol,
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                color:
-                                                    _secondaryTextColor(context))),
-                                      ],
-                                    ),
-                                  ),
-                                  Icon(Icons.arrow_drop_down,
-                                      color: _secondaryTextColor(context)),
-                                ],
+                                ),
+                                icon: const Icon(Icons.logout_rounded, size: 20),
+                                label: const Text(
+                                  'Cerrar Sesión',
+                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                ),
                               ),
                             ),
                           ),
@@ -872,89 +907,169 @@ class _MainScreenState extends State<MainScreen>
     String initials,
   ) {
     final theme = Theme.of(context);
-    return SafeArea(
-      child: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(context.adaptivePadding),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: _borderColor(context)),
+    return Container(
+      width: 280,
+      color: theme.brightness == Brightness.dark
+          ? const Color(0xFF151210)
+          : const Color(0xFFFBF8F3),
+      child: SafeArea(
+        child: Column(
+          children: [
+            // PARTE SUPERIOR - PERFIL DEL USUARIO
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: _borderColor(context)),
+                ),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundColor: AppTheme.accent.withValues(alpha: 0.15),
+                    child: Text(initials,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 18,
+                            color: AppTheme.accent)),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(nombre,
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                color: _primaryTextColor(context))),
+                        const SizedBox(height: 2),
+                        Text(rol,
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: _secondaryTextColor(context))),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppTheme.accent,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.pets, color: Colors.white, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'CUNITECH',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-              ],
+            // PARTE MEDIA - NAVEGACIÓN AGRUPADA
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                children: [
+                  _buildSectionTitle(context, 'OPERACIONES'),
+                  ..._buildGroupedNavItemsDrawer(items, currentIndex, context, theme,
+                      startIndex: 0, count: 5),
+                  const SizedBox(height: 16),
+                  _buildSectionTitle(context, 'ADMINISTRACIÓN'),
+                  ..._buildGroupedNavItemsDrawer(items, currentIndex, context, theme,
+                      startIndex: 5, count: 2),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: items.length,
-              itemBuilder: (context, i) {
-                final item = items[i];
-                final selected = i == currentIndex;
-                return ListTile(
-                  leading: Icon(
-                    item['icon'] as IconData,
-                    color:
-                        selected ? AppTheme.accent : _secondaryTextColor(context),
-                  ),
-                  title: Text(item['label'] as String),
-                  selected: selected,
-                  selectedColor: AppTheme.accent,
-                  selectedTileColor:
-                      theme.colorScheme.primary.withValues(alpha: 0.15),
-                  onTap: () {
-                    setState(() => _currentIndex = i);
+            // PARTE INFERIOR - BOTÓN CERRAR SESIÓN
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+              decoration: BoxDecoration(
+                border: Border(
+                    top: BorderSide(color: _borderColor(context), width: 1)),
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () {
                     Navigator.of(context).pop();
+                    _logout();
                   },
-                );
-              },
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: _borderColor(context))),
-            ),
-            child: ListTile(
-              key: _drawerProfileKey,
-              leading: CircleAvatar(
-                backgroundColor: AppTheme.accent.withValues(alpha: 0.1),
-                child: Text(
-                  initials,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppTheme.danger.withValues(alpha: 0.9),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.logout_rounded, size: 20),
+                  label: const Text(
+                    'Cerrar Sesión',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
-              title: Text(
-                nombre,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              subtitle: Text(rol),
-              trailing: const Icon(Icons.arrow_drop_down),
-              onTap: () => _showProfileMenu(_drawerProfileKey),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  List<Widget> _buildGroupedNavItemsDrawer(
+    List<Map<String, dynamic>> items,
+    int currentIndex,
+    BuildContext context,
+    ThemeData theme, {
+    required int startIndex,
+    required int count,
+  }) {
+    final widgets = <Widget>[];
+    for (int i = startIndex; i < startIndex + count && i < items.length; i++) {
+      final item = items[i];
+      final isSelected = currentIndex == i;
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                setState(() => _currentIndex = i);
+                Navigator.of(context).pop();
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppTheme.accent.withValues(alpha: 0.15)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      item['icon'] as IconData,
+                      color: isSelected
+                          ? AppTheme.accent
+                          : _secondaryTextColor(context),
+                      size: 22,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        item['label'] as String,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                          color: isSelected
+                              ? AppTheme.accent
+                              : _primaryTextColor(context),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    return widgets;
   }
 
   Widget _buildMobileTopBar(
