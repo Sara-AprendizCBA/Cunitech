@@ -1,5 +1,6 @@
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/utils/logger.dart';
 import '../models/rabbit.dart';
 
 class RabbitService {
@@ -28,7 +29,7 @@ class RabbitService {
 
       return _supabase.storage.from('rabbit-photos').getPublicUrl(path);
     } catch (e) {
-      print('Error uploading photo: $e');
+      logger.e('Error subiendo foto', error: e);
       return null;
     }
   }
@@ -44,7 +45,7 @@ class RabbitService {
           .map((json) => Rabbit.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('Error fetching rabbits: $e');
+      logger.e('Error obteniendo conejos', error: e);
       rethrow;
     }
   }
@@ -57,9 +58,9 @@ class RabbitService {
           .select()
           .eq(_idColumn, _id(id))
           .single();
-      return Rabbit.fromJson(response as Map<String, dynamic>);
+      return Rabbit.fromJson(response);
     } catch (e) {
-      print('Error fetching rabbit: $e');
+      logger.e('Error obteniendo conejo', error: e);
       return null;
     }
   }
@@ -75,7 +76,7 @@ class RabbitService {
           .map((json) => Rabbit.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('Error fetching breeders: $e');
+      logger.e('Error obteniendo reproductoras', error: e);
       rethrow;
     }
   }
@@ -88,9 +89,9 @@ class RabbitService {
           .insert(rabbit.toInsertJson())
           .select()
           .single();
-      return Rabbit.fromJson(response as Map<String, dynamic>);
+      return Rabbit.fromJson(response);
     } catch (e) {
-      print('Error creating rabbit: $e');
+      logger.e('Error creando conejo', error: e);
       rethrow;
     }
   }
@@ -104,9 +105,9 @@ class RabbitService {
           .eq(_idColumn, _id(id))
           .select()
           .single();
-      return Rabbit.fromJson(response as Map<String, dynamic>);
+      return Rabbit.fromJson(response);
     } catch (e) {
-      print('Error updating rabbit: $e');
+      logger.e('Error actualizando conejo', error: e);
       rethrow;
     }
   }
@@ -119,7 +120,7 @@ class RabbitService {
           .delete()
           .eq(_idColumn, _id(id));
     } catch (e) {
-      print('Error deleting rabbit: $e');
+      logger.e('Error eliminando conejo', error: e);
       rethrow;
     }
   }
@@ -147,7 +148,7 @@ class RabbitService {
             : '0',
       };
     } catch (e) {
-      print('Error getting statistics: $e');
+      logger.e('Error obteniendo estadisticas', error: e);
       rethrow;
     }
   }

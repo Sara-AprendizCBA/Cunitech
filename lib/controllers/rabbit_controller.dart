@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/utils/logger.dart';
 import '../models/rabbit.dart';
 import '../services/rabbit_service.dart';
 
@@ -29,7 +30,7 @@ class RabbitController extends GetxController {
       rabbits.assignAll(data);
     } catch (e) {
       error('Error cargando conejos: $e');
-      print('Error: $e');
+      logger.e('Error en RabbitController', error: e);
     } finally {
       isLoading(false);
     }
@@ -44,7 +45,7 @@ class RabbitController extends GetxController {
       breeders.assignAll(data);
     } catch (e) {
       error('Error cargando reproductoras: $e');
-      print('Error: $e');
+      logger.e('Error en RabbitController', error: e);
     } finally {
       isLoading(false);
     }
@@ -56,7 +57,7 @@ class RabbitController extends GetxController {
       final data = await _rabbitService.getStatistics();
       stats.assignAll(data);
     } catch (e) {
-      print('Error loading stats: $e');
+      logger.e('Error cargando estadísticas', error: e);
     }
   }
 
@@ -70,7 +71,7 @@ class RabbitController extends GetxController {
       return true;
     } catch (e) {
       error('Error creando conejo: $e');
-      print('Error: $e');
+      logger.e('Error en RabbitController', error: e);
       return false;
     } finally {
       isLoading(false);
@@ -90,7 +91,7 @@ class RabbitController extends GetxController {
       return true;
     } catch (e) {
       error('Error actualizando conejo: $e');
-      print('Error: $e');
+      logger.e('Error en RabbitController', error: e);
       return false;
     } finally {
       isLoading(false);
@@ -109,11 +110,11 @@ class RabbitController extends GetxController {
       // 23503 = tiene registros relacionados (lactancia, reproducción,
       // tratamiento, o es madre/padre de otro conejo)
       error('Error eliminando conejo: ${e.message}');
-      print('Error: $e');
+      logger.e('Error en RabbitController', error: e);
       return false;
     } catch (e) {
       error('Error eliminando conejo: $e');
-      print('Error: $e');
+      logger.e('Error en RabbitController', error: e);
       return false;
     } finally {
       isLoading(false);

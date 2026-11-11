@@ -47,7 +47,7 @@ class KitService {
           .select()
           .eq('id', id)
           .single();
-      return Kit.fromJson(response as Map<String, dynamic>);
+      return Kit.fromJson(response);
     } catch (e) {
       logger.e('Error fetching kit', error: e);
       return null;
@@ -62,7 +62,7 @@ class KitService {
           .insert({...kit.toJson(), 'user_id': _userId})
           .select()
           .single();
-      return Kit.fromJson(response as Map<String, dynamic>);
+      return Kit.fromJson(response);
     } catch (e) {
       logger.e('Error creating kit', error: e);
       rethrow;
@@ -80,7 +80,7 @@ class KitService {
           .eq('id', id)
           .select()
           .single();
-      return Kit.fromJson(response as Map<String, dynamic>);
+      return Kit.fromJson(response);
     } catch (e) {
       logger.e('Error updating kit', error: e);
       rethrow;

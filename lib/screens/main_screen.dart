@@ -1115,6 +1115,7 @@ class _MainScreenState extends State<MainScreen>
                                           _showNotificationsPanel(context,
                                               anchor: box);
                                         },
+                                      );
                                     },
                                   ),
                                 ],

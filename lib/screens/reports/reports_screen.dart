@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:get/get.dart';
 import '../../controllers/reportes_controller.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/logger.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/widgets/app_card.dart';
@@ -195,7 +196,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         const SizedBox(width: AppTheme.spacingMd),
         if (!context.isMobile)
           ElevatedButton.icon(
-            onPressed: _exportando ? null : () => _exportarReporte(context),
+            onPressed: _exportando ? null : () => _exportarReporte(),
             icon: _exportando
                 ? const SizedBox(
                     width: 16,
@@ -211,7 +212,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         else
           IconButton(
             tooltip: 'Exportar reporte',
-            onPressed: _exportando ? null : () => _exportarReporte(context),
+            onPressed: _exportando ? null : () => _exportarReporte(),
             style: IconButton.styleFrom(
               backgroundColor: AppTheme.surfaceLight,
               foregroundColor: AppTheme.accent,
@@ -232,7 +233,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  Future<void> _exportarReporte(BuildContext context) async {
+  Future<void> _exportarReporte() async {
     if (_exportando) return;
     setState(() => _exportando = true);
 
@@ -246,8 +247,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
       if (!mounted) return;
       AppSnackbar.success(context, 'Reporte descargado');
     } catch (e) {
-      debugPrint('Error exportar reporte: $e');
-      if (mounted) AppSnackbar.error(context, 'Error al exportar: $e');
+      logger.e('Error exportando reporte', error: e);
+      if (!mounted) return;
+      AppSnackbar.error(context, 'Error al exportar: $e');
     } finally {
       if (mounted) setState(() => _exportando = false);
     }

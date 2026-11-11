@@ -47,7 +47,7 @@ class BirthService {
           .select()
           .eq('id', id)
           .single();
-      return Birth.fromJson(response as Map<String, dynamic>);
+      return Birth.fromJson(response);
     } catch (e) {
       logger.e('Error fetching birth', error: e);
       return null;
@@ -62,7 +62,7 @@ class BirthService {
           .insert({...birth.toJson(), 'user_id': _userId})
           .select()
           .single();
-      return Birth.fromJson(response as Map<String, dynamic>);
+      return Birth.fromJson(response);
     } catch (e) {
       logger.e('Error creating birth', error: e);
       rethrow;
@@ -80,7 +80,7 @@ class BirthService {
           .eq('id', id)
           .select()
           .single();
-      return Birth.fromJson(response as Map<String, dynamic>);
+      return Birth.fromJson(response);
     } catch (e) {
       logger.e('Error updating birth', error: e);
       rethrow;

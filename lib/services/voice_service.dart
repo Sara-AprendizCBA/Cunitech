@@ -50,13 +50,15 @@ class VoiceService {
 
     String textoReconocido = '';
     await _speechToText.listen(
-      localeId: 'es_ES',
       onResult: (resultado) {
         textoReconocido = resultado.recognizedWords;
       },
-      listenFor: const Duration(seconds: 30),
-      pauseFor: const Duration(seconds: 3),
-      partialResults: false,
+      listenOptions: stt.SpeechListenOptions(
+        localeId: 'es_ES',
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 3),
+        partialResults: false,
+      ),
     );
 
     await Future.delayed(const Duration(seconds: 4));

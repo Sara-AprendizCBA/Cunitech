@@ -527,11 +527,11 @@ class _AuthScreenState extends State<AuthScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Center(
+                const Center(
                   child: CircleAvatar(
                     radius: 30,
                     backgroundColor: AppTheme.accent,
-                    child: const Icon(
+                    child: Icon(
                       Icons.mark_email_read_outlined,
                       color: Colors.white,
                       size: 30,
@@ -587,7 +587,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       child: FilledButton.icon(
                         onPressed: () async {
                           Navigator.of(ctx).pop();
-                          await _sendAccessRequestEmail(context);
+                          await _sendAccessRequestEmail();
                         },
                         style: FilledButton.styleFrom(
                           backgroundColor: AppTheme.accent,
@@ -620,7 +620,7 @@ class _AuthScreenState extends State<AuthScreen> {
           margin: const EdgeInsets.only(top: 6),
           width: 6,
           height: 6,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: AppTheme.accent,
             shape: BoxShape.circle,
           ),
@@ -639,7 +639,7 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Future<void> _sendAccessRequestEmail(BuildContext context) async {
+  Future<void> _sendAccessRequestEmail() async {
     const String email = 'soporte.cunitech@gmail.com';
     const String subject =
         'Solicitud formal de alta de usuario y registro de datos de contacto - CUNITECH';

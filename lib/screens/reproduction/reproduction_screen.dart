@@ -292,7 +292,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
         badgeColor = const Color(0xFFDCFCE7);
         badgeForeground = const Color(0xFF166534);
         final due = r.fechaProbableParto;
-        final daysLeft = due == null ? null : due.difference(DateTime.now()).inDays;
+        final daysLeft = due?.difference(DateTime.now()).inDays;
         badgeText = daysLeft == null
             ? 'Gestante'
             : 'Gestante · Parto en $daysLeft días';

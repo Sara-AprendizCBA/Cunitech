@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'controllers/auth_controller.dart';
+import 'core/utils/logger.dart';
 import 'controllers/notification_controller.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
@@ -19,7 +20,7 @@ void main() async {
   // ==================== SUPABASE INITIALIZATION ====================
   await Supabase.initialize(
     url: 'https://aswhtehpmmeetplnskmz.supabase.co',
-    anonKey: 'sb_publishable_hP_Ad03CQHCSgpyaw1p4mw_GapuC8RJ',
+    publishableKey: 'sb_publishable_hP_Ad03CQHCSgpyaw1p4mw_GapuC8RJ',
   );
   // ============================================================
 
@@ -61,7 +62,7 @@ class _CunitechAppState extends State<CunitechApp> {
     supabase.auth.onAuthStateChange.listen((data) {
       final event = data.event;
 
-      print('🔐 Auth Event: $event'); // Para debugging
+      logger.d('Auth event: $event');
 
       if (!mounted) return;
 
@@ -77,7 +78,7 @@ class _CunitechAppState extends State<CunitechApp> {
             case AuthChangeEvent.signedOut:
               if (Get.currentRoute != '/') {
                 navigatorKey.currentState?.pushReplacementNamed('/');
-                print('✅ Navegando a login');
+                logger.d('Navegando a login');
               }
               break;
 
@@ -85,7 +86,7 @@ class _CunitechAppState extends State<CunitechApp> {
               break;
           }
         } catch (e) {
-          print('❌ Navigation error: $e');
+          logger.e('Error de navegacion', error: e);
         }
       });
     });
