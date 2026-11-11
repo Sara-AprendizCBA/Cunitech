@@ -47,7 +47,7 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
     'Otra',
   ];
 
-  final TextEditingController _razaCtrl = TextEditingController();
+  late TextEditingController _razaCtrl;
 
   final List<String> _genders = ['Macho', 'Hembra'];
   final List<String> _states = ['Saludable', 'En Tratamiento', 'Enfermo'];

@@ -37,8 +37,6 @@ class _MainScreenState extends State<MainScreen>
     with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  final _sidebarProfileKey = GlobalKey();
-  final _drawerProfileKey = GlobalKey();
   final _mobileProfileKey = GlobalKey();
   final AuthController authController = Get.find<AuthController>();
   late final AnimationController _pulseController;

@@ -116,7 +116,6 @@ class _NotificationItem {
     required this.time,
   });
 }
-}
 
 class _NotificationCard extends StatelessWidget {
   final IconData icon;
