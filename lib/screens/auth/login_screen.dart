@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/responsive.dart';
@@ -502,6 +503,98 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
+  Future<void> _showContactAdminDialog(BuildContext context) async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: theme.dialogTheme.backgroundColor ?? theme.cardColor,
+        icon: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: AppTheme.accent.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.mark_email_read_outlined,
+            color: AppTheme.accent,
+            size: 26,
+          ),
+        ),
+        title: const Text(
+          'Solicitud de Acceso',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'Las cuentas en CUNITECH son creadas únicamente por el administrador del criadero. '
+          'Para solicitar tu acceso, envía un correo indicando tu nombre y el rol que desempeñarás.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: theme.colorScheme.onSurfaceVariant,
+            height: 1.5,
+          ),
+        ),
+        actionsAlignment: MainAxisAlignment.spaceBetween,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton.icon(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await _sendAccessRequestEmail(context);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: AppTheme.accent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            icon: const Icon(Icons.send_rounded, size: 18),
+            label: const Text('Enviar Correo'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _sendAccessRequestEmail(BuildContext context) async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: 'soporte@cunitech.com',
+      query: 'subject=${Uri.encodeComponent('Solicitud de Acceso - CUNITECH')}&'
+          'body=${Uri.encodeComponent('Hola administrador,\n\nnecesito acceso al sistema.\n\nMi nombre es: \nMi rol es: ')}',
+    );
+
+    try {
+      final canLaunch = await canLaunchUrl(uri);
+      if (!canLaunch) {
+        if (mounted) {
+          AppSnackbar.info(
+            context,
+            'No se pudo abrir el correo. Contacta a soporte@cunitech.com',
+          );
+        }
+        return;
+      }
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (mounted) {
+        AppSnackbar.info(
+          context,
+          'No se pudo abrir el correo. Contacta a soporte@cunitech.com',
+        );
+      }
+    }
+  }
+
   Widget _buildContactFooter(BuildContext context) {
     final theme = Theme.of(context);
     return Wrap(
@@ -516,10 +609,7 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         ),
         TextButton(
-          onPressed: () => AppSnackbar.info(
-            context,
-            'Solicita acceso al administrador de tu criadero.',
-          ),
+          onPressed: () => _showContactAdminDialog(context),
           style: TextButton.styleFrom(
             foregroundColor: AppTheme.accent,
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
