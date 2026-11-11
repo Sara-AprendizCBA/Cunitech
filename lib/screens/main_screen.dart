@@ -241,6 +241,50 @@ class _MainScreenState extends State<MainScreen>
     return widgets;
   }
 
+  Widget _buildAccountNavItem(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  color: _secondaryTextColor(context),
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: _primaryTextColor(context),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   // ==================== CERRAR SESIÓN ====================
   Future<void> _logout() async {
     final confirmado = await showDialog<bool>(
@@ -749,45 +793,61 @@ class _MainScreenState extends State<MainScreen>
                       child: Column(
                         children: [
                           // PARTE SUPERIOR - PERFIL DEL USUARIO
-                          Container(
-                            padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
-                            decoration: BoxDecoration(
-                              border: Border(
-                                  bottom: BorderSide(
-                                      color: _borderColor(context), width: 1)),
-                            ),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 26,
-                                  backgroundColor:
-                                      AppTheme.accent.withValues(alpha: 0.15),
-                                  child: Text(initials,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 18,
-                                          color: AppTheme.accent)),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(14, 20, 14, 12),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(14),
+                                onTap: _goToProfile,
+                                child: Container(
+                                  padding: const EdgeInsets.fromLTRB(16, 16, 14, 16),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: _borderColor(context),
+                                    ),
+                                  ),
+                                  child: Row(
                                     children: [
-                                      Text(nombre,
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 15,
-                                              color: _primaryTextColor(context))),
-                                      const SizedBox(height: 2),
-                                      Text(rol,
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              color: _secondaryTextColor(context))),
+                                      CircleAvatar(
+                                        radius: 24,
+                                        backgroundColor:
+                                            AppTheme.accent.withValues(alpha: 0.15),
+                                        child: Text(initials,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 16,
+                                                color: AppTheme.accent)),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(nombre,
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 14,
+                                                    color: _primaryTextColor(context))),
+                                            const SizedBox(height: 2),
+                                            Text(rol,
+                                                style: TextStyle(
+                                                    fontSize: 11,
+                                                    color: _secondaryTextColor(context))),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.settings_outlined,
+                                        size: 20,
+                                        color: _secondaryTextColor(context),
+                                      ),
                                     ],
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
                           ),
 
@@ -795,13 +855,33 @@ class _MainScreenState extends State<MainScreen>
                           Expanded(
                             child: ListView(
                               padding:
-                                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                               children: [
                                 _buildSectionTitle(context, 'OPERACIONES'),
                                 ..._buildGroupedNavItems(items, index, context, theme, startIndex: 0, count: 5),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 14),
                                 _buildSectionTitle(context, 'ADMINISTRACIÓN'),
                                 ..._buildGroupedNavItems(items, index, context, theme, startIndex: 5, count: 2),
+                                const SizedBox(height: 14),
+                                _buildSectionTitle(context, 'CUENTA'),
+                                _buildAccountNavItem(
+                                  context,
+                                  icon: Icons.person_outline,
+                                  label: 'Mi Perfil',
+                                  onTap: _goToProfile,
+                                ),
+                                _buildAccountNavItem(
+                                  context,
+                                  icon: Icons.settings_outlined,
+                                  label: 'Configuración',
+                                  onTap: _goToSettings,
+                                ),
+                                _buildAccountNavItem(
+                                  context,
+                                  icon: Icons.lock_reset_outlined,
+                                  label: 'Cambiar Contraseña',
+                                  onTap: () => AppSnackbar.info(context, 'Función próximamente'),
+                                ),
                               ],
                             ),
                           ),
@@ -916,57 +996,103 @@ class _MainScreenState extends State<MainScreen>
         child: Column(
           children: [
             // PARTE SUPERIOR - PERFIL DEL USUARIO
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: _borderColor(context)),
-                ),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 26,
-                    backgroundColor: AppTheme.accent.withValues(alpha: 0.15),
-                    child: Text(initials,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 18,
-                            color: AppTheme.accent)),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 16, 14, 10),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _goToProfile();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: _borderColor(context)),
+                    ),
+                    child: Row(
                       children: [
-                        Text(nombre,
-                            style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                                color: _primaryTextColor(context))),
-                        const SizedBox(height: 2),
-                        Text(rol,
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: _secondaryTextColor(context))),
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: AppTheme.accent.withValues(alpha: 0.15),
+                          child: Text(initials,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                  color: AppTheme.accent)),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(nombre,
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                      color: _primaryTextColor(context))),
+                              const SizedBox(height: 2),
+                              Text(rol,
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: _secondaryTextColor(context))),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.settings_outlined,
+                          size: 20,
+                          color: _secondaryTextColor(context),
+                        ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
             // PARTE MEDIA - NAVEGACIÓN AGRUPADA
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                 children: [
                   _buildSectionTitle(context, 'OPERACIONES'),
                   ..._buildGroupedNavItemsDrawer(items, currentIndex, context, theme,
                       startIndex: 0, count: 5),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   _buildSectionTitle(context, 'ADMINISTRACIÓN'),
                   ..._buildGroupedNavItemsDrawer(items, currentIndex, context, theme,
                       startIndex: 5, count: 2),
+                  const SizedBox(height: 14),
+                  _buildSectionTitle(context, 'CUENTA'),
+                  _buildAccountNavItemDrawer(
+                    context,
+                    icon: Icons.person_outline,
+                    label: 'Mi Perfil',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _goToProfile();
+                    },
+                  ),
+                  _buildAccountNavItemDrawer(
+                    context,
+                    icon: Icons.settings_outlined,
+                    label: 'Configuración',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _goToSettings();
+                    },
+                  ),
+                  _buildAccountNavItemDrawer(
+                    context,
+                    icon: Icons.lock_reset_outlined,
+                    label: 'Cambiar Contraseña',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      AppSnackbar.info(context, 'Función próximamente');
+                    },
+                  ),
                 ],
               ),
             ),
@@ -1070,6 +1196,50 @@ class _MainScreenState extends State<MainScreen>
       );
     }
     return widgets;
+  }
+
+  Widget _buildAccountNavItemDrawer(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  color: _secondaryTextColor(context),
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: _primaryTextColor(context),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildMobileTopBar(
