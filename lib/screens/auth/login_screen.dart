@@ -568,7 +568,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _sendAccessRequestEmail(BuildContext context) async {
     final uri = Uri(
       scheme: 'mailto',
-      path: 'soporte@cunitech.com',
+      path: 'soporte.cunitech@gmail.com',
       query: 'subject=${Uri.encodeComponent('Solicitud de Acceso - CUNITECH')}&'
           'body=${Uri.encodeComponent('Hola administrador,\n\nnecesito acceso al sistema.\n\nMi nombre es: \nMi rol es: ')}',
     );
@@ -579,7 +579,7 @@ class _AuthScreenState extends State<AuthScreen> {
         if (mounted) {
           AppSnackbar.info(
             context,
-            'No se pudo abrir el correo. Contacta a soporte@cunitech.com',
+            'No se pudo abrir el correo. Contacta a soporte.cunitech@gmail.com',
           );
         }
         return;
@@ -589,7 +589,7 @@ class _AuthScreenState extends State<AuthScreen> {
       if (mounted) {
         AppSnackbar.info(
           context,
-          'No se pudo abrir el correo. Contacta a soporte@cunitech.com',
+          'No se pudo abrir el correo. Contacta a soporte.cunitech@gmail.com',
         );
       }
     }
