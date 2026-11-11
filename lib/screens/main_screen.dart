@@ -1028,86 +1028,95 @@ class _MainScreenState extends State<MainScreen>
                                         .headlineMedium,
                                   ),
                                   const Spacer(),
-                                  IconButton(
-                                    icon: Stack(
-                                      clipBehavior: Clip.none,
-                                      children: [
-                                        const Icon(Icons.notifications_outlined),
-                                        Obx(() {
-                                          final count = Get.find<NotificationController>().unreadCount.value;
-                                          if (count == 0) return const SizedBox.shrink();
-                                          return Positioned(
-                                            right: -4,
-                                            top: -4,
-                                            child: Container(
-                                              padding: const EdgeInsets.all(4),
-                                              decoration: const BoxDecoration(
-                                                color: AppTheme.danger,
-                                                shape: BoxShape.circle,
-                                              ),
-                                              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                                              child: Text(
-                                                count > 9 ? '9+' : '$count',
-                                                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                          );
-                                        }),
-                                      ],
-                                    ),
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        barrierColor: Colors.transparent,
-                                        builder: (context) {
-                                          return Stack(
-                                            children: [
-                                              Positioned(
-                                                top: 70,
-                                                right: 20,
-                                                child: Material(
-                                                  elevation: 10,
-                                                  borderRadius: BorderRadius.circular(16),
-                                                  clipBehavior: Clip.antiAlias,
-                                                  color: Theme.of(context).scaffoldBackgroundColor,
-                                                  child: SizedBox(
-                                                    width: 350,
-                                                    height: 400,
-                                                    child: Column(
-                                                      children: [
-                                                        Padding(
-                                                          padding: const EdgeInsets.all(16.0),
-                                                          child: Row(
-                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                            children: [
-                                                              const Text('Notificaciones', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                                                              IconButton(
-                                                                icon: const Icon(Icons.close, size: 20),
-                                                                onPressed: () => Navigator.pop(context),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                        const Divider(height: 1),
-                                                        Expanded(
-                                                          child: Center(
-                                                            child: Column(
-                                                              mainAxisAlignment: MainAxisAlignment.center,
-                                                              children: [
-                                                                Icon(Icons.notifications_off_outlined, size: 48, color: Colors.grey.shade400),
-                                                                const SizedBox(height: 12),
-                                                                const Text('Sin notificaciones', style: TextStyle(color: Colors.grey)),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
+                                  Builder(
+                                    builder: (buttonContext) {
+                                      return IconButton(
+                                        icon: Stack(
+                                          clipBehavior: Clip.none,
+                                          children: [
+                                            const Icon(Icons.notifications_outlined),
+                                            Obx(() {
+                                              final count = Get.find<NotificationController>().unreadCount.value;
+                                              if (count == 0) return const SizedBox.shrink();
+                                              return Positioned(
+                                                right: -4,
+                                                top: -4,
+                                                child: Container(
+                                                  padding: const EdgeInsets.all(4),
+                                                  decoration: const BoxDecoration(
+                                                    color: AppTheme.danger,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                                  child: Text(
+                                                    count > 9 ? '9+' : '$count',
+                                                    style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700),
+                                                    textAlign: TextAlign.center,
                                                   ),
                                                 ),
-                                              ),
-                                            ],
+                                              );
+                                            }),
+                                          ],
+                                        ),
+                                        onPressed: () {
+                                          final RenderBox box = buttonContext.findRenderObject() as RenderBox;
+                                          final Offset offset = box.localToGlobal(Offset.zero);
+                                          final Size size = box.size;
+                                          showDialog(
+                                            context: context,
+                                            barrierColor: Colors.transparent,
+                                            useSafeArea: false,
+                                            builder: (context) {
+                                              final theme = Theme.of(context);
+                                              return Stack(
+                                                children: [
+                                                  Positioned(
+                                                    top: offset.dy + size.height + 8,
+                                                    right: MediaQuery.of(context).size.width - offset.dx - size.width - 8,
+                                                    child: Material(
+                                                      elevation: 12,
+                                                      borderRadius: BorderRadius.circular(16),
+                                                      clipBehavior: Clip.antiAlias,
+                                                      color: theme.cardColor,
+                                                      child: SizedBox(
+                                                        width: 350,
+                                                        height: 400,
+                                                        child: Column(
+                                                          children: [
+                                                            Padding(
+                                                              padding: const EdgeInsets.all(16.0),
+                                                              child: Row(
+                                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                children: [
+                                                                  const Text('Notificaciones', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                                                  IconButton(
+                                                                    icon: const Icon(Icons.close, size: 20),
+                                                                    onPressed: () => Navigator.pop(context),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                            const Divider(height: 1),
+                                                            Expanded(
+                                                              child: Center(
+                                                                child: Column(
+                                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                                  children: [
+                                                                    Icon(Icons.notifications_off_outlined, size: 48, color: Colors.grey.shade400),
+                                                                    const SizedBox(height: 12),
+                                                                    const Text('Sin notificaciones', style: TextStyle(color: Colors.grey)),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            },
                                           );
                                         },
                                       );
