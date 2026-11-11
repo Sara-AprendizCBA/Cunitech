@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import 'loading_rabbit.dart';
+
 class AppLoadingIndicator extends StatelessWidget {
   final String? label;
 
@@ -8,42 +10,7 @@ class AppLoadingIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 44,
-            height: 44,
-            child: CircularProgressIndicator(
-              strokeWidth: 3,
-              color: theme.colorScheme.primary,
-              backgroundColor:
-                  theme.colorScheme.primary.withValues(alpha: 0.12),
-            ),
-          )
-              .animate(onPlay: (controller) {
-                controller.repeat(reverse: true);
-              })
-              .scale(
-                begin: const Offset(0.92, 0.92),
-                end: const Offset(1, 1),
-                duration: 900.ms,
-                curve: Curves.easeInOut,
-              ),
-          if (label != null) ...[
-            const SizedBox(height: 14),
-            Text(
-              label!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
+    return LoadingRabbit(label: label);
   }
 }
 

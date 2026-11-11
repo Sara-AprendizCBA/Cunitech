@@ -9,6 +9,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/widgets/animated_list_item.dart';
+import '../../core/widgets/loading_rabbit.dart';
 import '../../core/widgets/pressable_scale.dart';
 
 class ReproductionScreen extends StatefulWidget {
@@ -146,7 +147,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
     return Obx(() {
       if (reproController.isLoading.value &&
           reproController.reproducciones.isEmpty) {
-        return const Center(child: CircularProgressIndicator());
+        return const LoadingRabbit();
       }
 
       final List<Reproduccion> filtered;
@@ -743,7 +744,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
   Widget _buildBirthsTab() {
     return Obx(() {
       if (reproController.isLoading.value && reproController.nacimientos.isEmpty) {
-        return const Center(child: CircularProgressIndicator());
+        return const LoadingRabbit();
       }
       if (reproController.nacimientos.isEmpty) {
         return const Center(child: Text('No hay nacimientos registrados'));
@@ -771,7 +772,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
     return Obx(() {
       final crias = reproController.criasVivas;
       if (reproController.isLoading.value && crias.isEmpty) {
-        return const Center(child: CircularProgressIndicator());
+        return const LoadingRabbit();
       }
       if (crias.isEmpty) {
         return const Center(child: Text('No hay crías vivas registradas'));

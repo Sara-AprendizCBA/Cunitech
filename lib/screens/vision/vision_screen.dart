@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../controllers/auth_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
+import '../../core/widgets/loading_rabbit.dart';
 import '../../services/vision_service.dart';
 
 /// Resultado devuelto por [VisionScreen]: la raza identificada y los bytes
@@ -229,7 +230,7 @@ class _VisionScreenState extends State<VisionScreen> {
             _buildFotoPreview(),
             const SizedBox(height: 16),
             if (_analizando) ...[
-              const Center(child: CircularProgressIndicator()),
+              const LoadingRabbit(size: 72),
               const SizedBox(height: 8),
               Center(
                 child: Text(
