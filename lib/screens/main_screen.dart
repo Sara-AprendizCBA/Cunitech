@@ -1,4 +1,4 @@
-// lib/screens/main_screen.dart
+﻿// lib/screens/main_screen.dart
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -77,13 +77,13 @@ class _MainScreenState extends State<MainScreen>
     },
     {
       'icon': Icons.restaurant_outlined,
-      'label': 'Alimentación',
+      'label': 'AlimentaciÃ³n',
       'screen': const FeedingScreen(),
       'roles': const ['admin', 'veterinario', 'ayudante', 'usuario'],
     },
     {
       'icon': Icons.favorite_border,
-      'label': 'Reproducción',
+      'label': 'ReproducciÃ³n',
       'screen': const ReproductionScreen(),
       'roles': const ['admin', 'veterinario', 'ayudante'],
     },
@@ -149,7 +149,7 @@ class _MainScreenState extends State<MainScreen>
 
   Widget _buildSectionTitle(BuildContext context, String title) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(6, 6, 6, 10),
+      padding: const EdgeInsets.fromLTRB(6, 4, 6, 8),
       child: Text(
         title,
         style: TextStyle(
@@ -188,7 +188,7 @@ class _MainScreenState extends State<MainScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppTheme.accent.withValues(alpha: 0.15)
+                      ? AppTheme.accent.withValues(alpha: 0.12)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -285,14 +285,14 @@ class _MainScreenState extends State<MainScreen>
     );
   }
 
-  // ==================== CERRAR SESIÓN ====================
+  // ==================== CERRAR SESIÃ“N ====================
   Future<void> _logout() async {
     final confirmado = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cerrar sesión'),
+        title: const Text('Cerrar sesiÃ³n'),
         content: const Text(
-          '¿Estás seguro de que deseas cerrar sesión?',
+          'Â¿EstÃ¡s seguro de que deseas cerrar sesiÃ³n?',
         ),
         actions: [
           TextButton(
@@ -301,7 +301,7 @@ class _MainScreenState extends State<MainScreen>
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Cerrar sesión'),
+            child: const Text('Cerrar sesiÃ³n'),
           ),
         ],
       ),
@@ -312,7 +312,7 @@ class _MainScreenState extends State<MainScreen>
       await Supabase.instance.client.auth.signOut();
     } catch (e) {
       if (mounted) {
-        AppSnackbar.error(context, 'Error al cerrar sesión: $e');
+        AppSnackbar.error(context, 'Error al cerrar sesiÃ³n: $e');
       }
       return;
     }
@@ -341,7 +341,7 @@ class _MainScreenState extends State<MainScreen>
     );
   }
 
-  // Ir a Configuración
+  // Ir a ConfiguraciÃ³n
   void _goToSettings() {
     Get.to(
       () => const SettingsScreen(),
@@ -350,7 +350,7 @@ class _MainScreenState extends State<MainScreen>
     );
   }
 
-  // ==================== MENÚ DESPLEGABLE DE PERFIL ====================
+  // ==================== MENÃš DESPLEGABLE DE PERFIL ====================
   void _showProfileMenu(GlobalKey anchorKey) {
     final auth = Get.find<AuthController>();
     final nombre = auth.currentUser.value?['nombre'] as String? ?? 'Usuario';
@@ -399,14 +399,14 @@ class _MainScreenState extends State<MainScreen>
           value: 'settings',
           child: ListTile(
             leading: Icon(Icons.settings_outlined),
-            title: Text("Configuración"),
+            title: Text("ConfiguraciÃ³n"),
           ),
         ),
         const PopupMenuItem<String>(
           value: 'password',
           child: ListTile(
             leading: Icon(Icons.lock_outline),
-            title: Text("Cambiar Contraseña"),
+            title: Text("Cambiar ContraseÃ±a"),
           ),
         ),
         const PopupMenuDivider(),
@@ -415,7 +415,7 @@ class _MainScreenState extends State<MainScreen>
           child: ListTile(
             leading: Icon(Icons.logout_rounded, color: AppTheme.danger),
             title: Text(
-              "Cerrar Sesión",
+              "Cerrar SesiÃ³n",
               style: TextStyle(color: AppTheme.danger),
             ),
           ),
@@ -433,13 +433,13 @@ class _MainScreenState extends State<MainScreen>
           _goToSettings();
           break;
         case 'password':
-          AppSnackbar.info(context, "Función próximamente");
+          AppSnackbar.info(context, "FunciÃ³n prÃ³ximamente");
           break;
         case 'logout':
           _logout();
           break;
       }
-      // showMenu ya cerró el menú: NO hacer Navigator.pop aquí.
+      // showMenu ya cerrÃ³ el menÃº: NO hacer Navigator.pop aquÃ­.
     });
   }
 
@@ -561,7 +561,7 @@ class _MainScreenState extends State<MainScreen>
                                         ConnectionState.waiting) {
                                       return const AppLoadingIndicator(
                                         size: 64,
-                                        label: 'Analizando recomendaciones…',
+                                        label: 'Analizando recomendacionesâ€¦',
                                       );
                                     }
                                     if (snapshot.hasError ||
@@ -737,7 +737,7 @@ class _MainScreenState extends State<MainScreen>
           body: Center(
             child: authController.isLoading.value
                 ? const AppLoadingIndicator()
-                : const Text('No tienes acceso a ningún módulo'),
+                : const Text('No tienes acceso a ningÃºn mÃ³dulo'),
           ),
         );
       }
@@ -846,44 +846,41 @@ class _MainScreenState extends State<MainScreen>
                             ),
                           ),
 
-                          // PARTE MEDIA - NAVEGACIÓN AGRUPADA
+                          // PARTE MEDIA - NAVEGACIÃ“N AGRUPADA
                           Expanded(
-                            child: ListView(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                              children: [
-                                _buildSectionTitle(context, 'OPERACIONES'),
-                                ..._buildGroupedNavItems(items, index, context, theme, startIndex: 0, count: 5),
-                                if (Get.find<AuthController>().currentRol.value == 'admin') ...[
-                                  const SizedBox(height: 14),
-                                  _buildSectionTitle(context, 'ADMINISTRACIÓN'),
-                                  ..._buildGroupedNavItems(items, index, context, theme, startIndex: 5, count: 2),
+                            child: ScrollConfiguration(
+                              behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+                              child: ListView(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                                children: [
+                                  _buildSectionTitle(context, 'OPERACIONES'),
+                                  ..._buildGroupedNavItems(items, index, context, theme, startIndex: 0, count: 5),
+                                  if (Get.find<AuthController>().currentRol.value == 'admin') ...[
+                                    const SizedBox(height: 10),
+                                    _buildSectionTitle(context, 'ADMINISTRACIÃ“N'),
+                                    ..._buildGroupedNavItems(items, index, context, theme, startIndex: 5, count: 2),
+                                  ],
+                                  const SizedBox(height: 10),
+                                  _buildSectionTitle(context, 'CUENTA'),
+                                  _buildAccountNavItem(
+                                    context,
+                                    icon: Icons.settings_outlined,
+                                    label: 'ConfiguraciÃ³n',
+                                    onTap: _goToSettings,
+                                  ),
+                                  _buildAccountNavItem(
+                                    context,
+                                    icon: Icons.lock_reset_outlined,
+                                    label: 'Cambiar ContraseÃ±a',
+                                    onTap: () => AppSnackbar.info(context, 'FunciÃ³n prÃ³ximamente'),
+                                  ),
                                 ],
-                                const SizedBox(height: 14),
-                                _buildSectionTitle(context, 'CUENTA'),
-                                _buildAccountNavItem(
-                                  context,
-                                  icon: Icons.person_outline,
-                                  label: 'Mi Perfil',
-                                  onTap: _goToProfile,
-                                ),
-                                _buildAccountNavItem(
-                                  context,
-                                  icon: Icons.settings_outlined,
-                                  label: 'Configuración',
-                                  onTap: _goToSettings,
-                                ),
-                                _buildAccountNavItem(
-                                  context,
-                                  icon: Icons.lock_reset_outlined,
-                                  label: 'Cambiar Contraseña',
-                                  onTap: () => AppSnackbar.info(context, 'Función próximamente'),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
 
-                          // PARTE INFERIOR - BOTÓN CERRAR SESIÓN
+                          // PARTE INFERIOR - BOTÃ“N CERRAR SESIÃ“N
                           Container(
                             padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
                             decoration: BoxDecoration(
@@ -907,7 +904,7 @@ class _MainScreenState extends State<MainScreen>
                                 ),
                                 icon: const Icon(Icons.logout_rounded, size: 20),
                                 label: const Text(
-                                  'Cerrar Sesión',
+                                  'Cerrar SesiÃ³n',
                                   style: TextStyle(fontWeight: FontWeight.w600),
                                 ),
                               ),
@@ -1049,7 +1046,7 @@ class _MainScreenState extends State<MainScreen>
                 ),
               ),
             ),
-            // PARTE MEDIA - NAVEGACIÓN AGRUPADA
+            // PARTE MEDIA - NAVEGACIÃ“N AGRUPADA
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
@@ -1059,7 +1056,7 @@ class _MainScreenState extends State<MainScreen>
                       startIndex: 0, count: 5),
                                 if (Get.find<AuthController>().currentRol.value == 'admin') ...[
                                   const SizedBox(height: 14),
-                                  _buildSectionTitle(context, 'ADMINISTRACIÓN'),
+                                  _buildSectionTitle(context, 'ADMINISTRACIÃ“N'),
                                   ..._buildGroupedNavItemsDrawer(items, currentIndex, context, theme,
                                       startIndex: 5, count: 2),
                                 ],
@@ -1077,7 +1074,7 @@ class _MainScreenState extends State<MainScreen>
                   _buildAccountNavItemDrawer(
                     context,
                     icon: Icons.settings_outlined,
-                    label: 'Configuración',
+                    label: 'ConfiguraciÃ³n',
                     onTap: () {
                       Navigator.of(context).pop();
                       _goToSettings();
@@ -1086,16 +1083,16 @@ class _MainScreenState extends State<MainScreen>
                   _buildAccountNavItemDrawer(
                     context,
                     icon: Icons.lock_reset_outlined,
-                    label: 'Cambiar Contraseña',
+                    label: 'Cambiar ContraseÃ±a',
                     onTap: () {
                       Navigator.of(context).pop();
-                      AppSnackbar.info(context, 'Función próximamente');
+                      AppSnackbar.info(context, 'FunciÃ³n prÃ³ximamente');
                     },
                   ),
                 ],
               ),
             ),
-            // PARTE INFERIOR - BOTÓN CERRAR SESIÓN
+            // PARTE INFERIOR - BOTÃ“N CERRAR SESIÃ“N
             Container(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
               decoration: BoxDecoration(
@@ -1121,7 +1118,7 @@ class _MainScreenState extends State<MainScreen>
                 ),
                 icon: const Icon(Icons.logout_rounded, size: 20),
                 label: const Text(
-                  'Cerrar Sesión',
+                  'Cerrar SesiÃ³n',
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
@@ -1163,7 +1160,7 @@ class _MainScreenState extends State<MainScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppTheme.accent.withValues(alpha: 0.15)
+                      ? AppTheme.accent.withValues(alpha: 0.12)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1260,7 +1257,7 @@ class _MainScreenState extends State<MainScreen>
       child: Row(
         children: [
           IconButton(
-            tooltip: 'Abrir navegación',
+            tooltip: 'Abrir navegaciÃ³n',
             icon: const Icon(Icons.menu_rounded),
             onPressed: () => _scaffoldKey.currentState?.openDrawer(),
           ),
