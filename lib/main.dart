@@ -25,6 +25,7 @@ void main() async {
 
   // Controlador global de autenticación (rol del usuario actual)
   Get.put(AuthController(), permanent: true);
+  Get.put(NotificationController(), permanent: true);
 
   runApp(const CunitechApp());
 

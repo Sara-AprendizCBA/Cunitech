@@ -3,9 +3,6 @@ import 'dart:async';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../models/rabbit.dart';
-import 'rabbit_controller.dart';
-
 class AppNotification {
   final String id;
   final String title;
@@ -30,7 +27,6 @@ class NotificationController extends GetxController {
   final SupabaseClient _supabase = Supabase.instance.client;
   final RxList<AppNotification> notifications = <AppNotification>[].obs;
   final RxInt unreadCount = 0.obs;
-  final RabbitController _rabbitController = Get.find<RabbitController>();
 
   StreamSubscription<List<Map<String, dynamic>>>? _rabbitSub;
   StreamSubscription<List<Map<String, dynamic>>>? _reproSub;
@@ -64,21 +60,35 @@ class NotificationController extends GetxController {
     } catch (_) {}
   }
 
-  void _loadNotifications() {
+  Future<void> _loadNotifications() async {
     final list = <AppNotification>[];
-    final rabbits = _rabbitController.rabbits;
 
-    for (final r in rabbits) {
-      if ((r.healthStatus).toLowerCase() == 'enfermo') {
+    try {
+      final rows = await _supabase
+          .from('conejo')
+          .select('id_conejo, chapeta, estado, fecha_nacimiento')
+          .neq('estado', 'Saludable')
+          .limit(50);
+
+      for (final row in rows) {
+        final estado = (row['estado'] as String? ?? '').trim();
+        final chapeta = (row['chapeta'] as String? ?? '').trim();
+        if (estado.isEmpty) continue;
+        final id = row['id_conejo']?.toString() ?? '';
         list.add(AppNotification(
-          id: 'health_${r.id}',
-          title: 'Conejo enfermo',
-          subtitle: '${r.displayId} requiere atención',
+          id: 'health_$id',
+          title: 'Estado: $estado',
+          subtitle:
+              chapeta.isEmpty ? 'Un conejo requiere atencion' : '$chapeta requiere atencion',
           time: _formatTime(DateTime.now()),
-          type: IconDataType.health,
-          rabbitId: r.id,
+          type: estado.toLowerCase().contains('enfermo')
+              ? IconDataType.warning
+              : IconDataType.health,
+          rabbitId: id,
         ));
       }
+    } catch (_) {
+      // Sin datos: se mantiene la lista vacia.
     }
 
     notifications.value = list.take(20).toList();
