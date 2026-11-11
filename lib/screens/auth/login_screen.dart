@@ -632,22 +632,18 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _sendAccessRequestEmail(BuildContext context) async {
-    final subject =
+    const String email = 'soporte.cunitech@gmail.com';
+    const String subject =
         'Solicitud formal de alta de usuario y registro de datos de contacto - CUNITECH';
-    final body =
+    const String body =
         'Estimado(a) Administrador(a) de CUNITECH,\n\nReciba un cordial saludo. Me pongo en contacto con usted con el propósito de solicitar formalmente la creación de una cuenta de acceso al sistema de gestión, con el fin de poder operar dentro de la plataforma del criadero.\n\nCon el objetivo de que el equipo administrativo pueda validar el perfil, coordinar la entrega de credenciales y establecer un canal de comunicación directo, a continuación detallo los datos personales y de contacto requeridos:\n\n- Nombre completo: [Ingresar nombre completo del usuario]\n- Rol o perfil solicitado: [Ingresar el rol correspondiente, ej. Veterinario]\n- Correo electrónico de contacto: [Ingresar correo electrónico]\n- Número de teléfono / Móvil: [Ingresar número de contacto]\n\nAgradezco de antemano su atención a la presente solicitud, así como el tiempo dedicado a la gestión de mis credenciales de acceso. Quedo a su entera disposición en caso de que requiera información adicional para completar el proceso de registro.\n\nAtentamente,\n\n[Nombre del usuario solicitante]\n[Rol o documento de identificación, si aplica]';
 
-    final uri = Uri(
-      scheme: 'mailto',
-      path: 'soporte.cunitech@gmail.com',
-      queryParameters: {
-        'subject': subject,
-        'body': body,
-      },
+    final Uri emailLaunchUri = Uri.parse(
+      'mailto:$email?subject=${Uri.encodeComponent(subject)}&body=${Uri.encodeComponent(body)}',
     );
 
     try {
-      final canLaunch = await canLaunchUrl(uri);
+      final canLaunch = await canLaunchUrl(emailLaunchUri);
       if (!canLaunch) {
         if (mounted) {
           AppSnackbar.info(
@@ -657,7 +653,7 @@ class _AuthScreenState extends State<AuthScreen> {
         }
         return;
       }
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      await launchUrl(emailLaunchUri, mode: LaunchMode.externalApplication);
     } catch (e) {
       if (mounted) {
         AppSnackbar.info(
