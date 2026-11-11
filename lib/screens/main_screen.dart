@@ -1029,7 +1029,6 @@ class _MainScreenState extends State<MainScreen>
                                   ),
                                   const Spacer(),
                                   IconButton(
-                                    tooltip: 'Notificaciones',
                                     icon: Stack(
                                       clipBehavior: Clip.none,
                                       children: [
@@ -1057,7 +1056,62 @@ class _MainScreenState extends State<MainScreen>
                                         }),
                                       ],
                                     ),
-                                    onPressed: () => _showNotificationsPanel(context),
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        barrierColor: Colors.transparent,
+                                        builder: (context) {
+                                          return Stack(
+                                            children: [
+                                              Positioned(
+                                                top: 70,
+                                                right: 20,
+                                                child: Material(
+                                                  elevation: 10,
+                                                  borderRadius: BorderRadius.circular(16),
+                                                  clipBehavior: Clip.antiAlias,
+                                                  color: Theme.of(context).scaffoldBackgroundColor,
+                                                  child: SizedBox(
+                                                    width: 350,
+                                                    height: 400,
+                                                    child: Column(
+                                                      children: [
+                                                        Padding(
+                                                          padding: const EdgeInsets.all(16.0),
+                                                          child: Row(
+                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                            children: [
+                                                              const Text('Notificaciones', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                                              IconButton(
+                                                                icon: const Icon(Icons.close, size: 20),
+                                                                onPressed: () => Navigator.pop(context),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        const Divider(height: 1),
+                                                        Expanded(
+                                                          child: Center(
+                                                            child: Column(
+                                                              mainAxisAlignment: MainAxisAlignment.center,
+                                                              children: [
+                                                                Icon(Icons.notifications_off_outlined, size: 48, color: Colors.grey.shade400),
+                                                                const SizedBox(height: 12),
+                                                                const Text('Sin notificaciones', style: TextStyle(color: Colors.grey)),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    },
                                   ),
                                 ],
                               ),
