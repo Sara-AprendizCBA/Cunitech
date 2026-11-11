@@ -324,132 +324,95 @@ class _MainScreenState extends State<MainScreen>
 
   void _showNotificationsPanel(BuildContext context) {
     final notifCtrl = Get.find<NotificationController>();
-    showDialog<void>(
+    showDialog(
       context: context,
       barrierColor: Colors.transparent,
-      builder: (dialogContext) {
+      builder: (context) {
         final theme = Theme.of(context);
-        return Stack(
-          children: [
-            Positioned(
-              top: 80,
-              right: 24,
-              child: Material(
-                color: Colors.transparent,
-                child: Container(
-                  width: 350,
-                  constraints: const BoxConstraints(maxHeight: 450),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 24,
-                        offset: const Offset(0, 12),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 14, 8, 10),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Notificaciones',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const Spacer(),
-                            IconButton(
-                              icon: const Icon(Icons.close, size: 18),
-                              onPressed: () => Navigator.of(dialogContext).pop(),
-                            ),
-                          ],
+        return Align(
+          alignment: Alignment.topRight,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 70, right: 20),
+            child: Material(
+              elevation: 8,
+              borderRadius: BorderRadius.circular(16),
+              color: theme.cardColor,
+              child: Container(
+                width: 350,
+                height: 400,
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Notificaciones',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
-                      ),
-                      const Divider(height: 1),
-                      Obx(() {
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    Expanded(
+                      child: Obx(() {
                         final notifications = notifCtrl.notifications;
-                        if (notifications.isEmpty)
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 32),
+                        if (notifications.isEmpty) {
+                          return Center(
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
                                   Icons.notifications_none_rounded,
-                                  size: 28,
+                                  size: 32,
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
-                                const SizedBox(height: 10),
+                                const SizedBox(height: 12),
                                 Text(
                                   'Sin notificaciones',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                  style: TextStyle(
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
                             ),
                           );
-                        return Flexible(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Scrollbar(
-                              thumbVisibility: true,
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                physics: const ClampingScrollPhysics(),
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                itemCount: notifications.length > 5 ? 5 : notifications.length,
-                                itemBuilder: (context, index) {
-                                  final item = notifications[index];
-                                  final icon = switch (item.type) {
-                                    IconDataType.health => Icons.health_and_safety_outlined,
-                                    IconDataType.reproduction => Icons.favorite_border,
-                                    IconDataType.warning => Icons.warning_amber_rounded,
-                                    IconDataType.bell => Icons.notifications_outlined,
-                                  };
-                                  return ListTile(
-                                    dense: true,
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                                    leading: Container(
-                                      width: 32,
-                                      height: 32,
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.accent.withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Icon(icon, size: 18, color: AppTheme.accent),
-                                    ),
-                                    title: Text(
-                                      item.title,
-                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                                    ),
-                                    subtitle: Text(
-                                      item.subtitle,
-                                      style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
-                                    ),
-                                    trailing: Text(
-                                      item.time,
-                                      style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
-                                    ),
-                                  );
-                                },
+                        }
+                        return ListView.builder(
+                          itemCount: notifications.length > 5 ? 5 : notifications.length,
+                          itemBuilder: (context, index) {
+                            final item = notifications[index];
+                            final icon = switch (item.type) {
+                              IconDataType.health => Icons.health_and_safety_outlined,
+                              IconDataType.reproduction => Icons.favorite_border,
+                              IconDataType.warning => Icons.warning_amber_rounded,
+                              IconDataType.bell => Icons.notifications_active,
+                            };
+                            return ListTile(
+                              leading: Icon(icon),
+                              title: Text(item.title),
+                              subtitle: Text(item.subtitle),
+                              trailing: Text(
+                                item.time,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         );
                       }),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
+          ),
         );
       },
     );
