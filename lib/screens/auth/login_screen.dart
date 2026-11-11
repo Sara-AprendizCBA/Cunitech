@@ -108,35 +108,50 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Widget _buildHero({required bool isDesktop}) {
+    final theme = Theme.of(context);
     return Stack(
       fit: StackFit.expand,
       children: [
         Image.asset('assets/images/Conejos.jpg', fit: BoxFit.cover),
-        const DecoratedBox(
+        DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              stops: [0, 0.45, 1],
-              colors: [
-                Color(0x1A1A1510),
-                Color(0x591A1510),
-                Color(0xB31A1510),
-              ],
+              stops: const [0, 0.45, 1],
+              colors: isDesktop
+                  ? const [
+                      Color(0x0F1A1510),
+                      Color(0x401A1510),
+                      Color(0x991A1510),
+                    ]
+                  : const [
+                      Color(0x1A1A1510),
+                      Color(0x591A1510),
+                      Color(0xB31A1510),
+                    ],
             ),
           ),
         ),
-        const DecoratedBox(
+        DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
-              stops: [0, 0.45, 0.78],
-              colors: [
-                Color(0x8C1A1510),
-                Color(0x401A1510),
-                Colors.transparent,
-              ],
+              stops: isDesktop
+                  ? const [0, 0.45, 0.82]
+                  : const [0, 0.45, 0.78],
+              colors: isDesktop
+                  ? const [
+                      Color(0x661A1510),
+                      Color(0x261A1510),
+                      Colors.transparent,
+                    ]
+                  : const [
+                      Color(0x8C1A1510),
+                      Color(0x401A1510),
+                      Colors.transparent,
+                    ],
             ),
           ),
         ),
@@ -152,6 +167,20 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
           ),
         ),
+        if (isDesktop)
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                stops: const [0.72, 1],
+                colors: [
+                  Colors.transparent,
+                  theme.scaffoldBackgroundColor,
+                ],
+              ),
+            ),
+          ),
         SafeArea(
           child: Padding(
             padding: EdgeInsets.all(isDesktop ? 56 : 20),
@@ -178,8 +207,8 @@ class _AuthScreenState extends State<AuthScreen> {
                           letterSpacing: -0.8,
                           shadows: const [
                             Shadow(
-                              color: Color(0x99000000),
-                              blurRadius: 18,
+                              color: Color(0xCC000000),
+                              blurRadius: 20,
                               offset: Offset(0, 2),
                             ),
                           ],
@@ -277,7 +306,7 @@ class _AuthScreenState extends State<AuthScreen> {
         Text(
           isLogin ? 'Bienvenido de nuevo' : 'Crear nueva cuenta',
           style: TextStyle(
-            fontSize: compact ? 30 : 36,
+            fontSize: compact ? 30 : 32,
             fontWeight: FontWeight.w800,
             color: theme.colorScheme.onSurface,
             letterSpacing: -1.0,
@@ -335,6 +364,7 @@ class _AuthScreenState extends State<AuthScreen> {
               if (!isLogin) ...[
                 _buildTextField(
                   controller: _nameController,
+                  compact: compact,
                   label: "Nombre de la Granja",
                   hint: "Granja Los Conejos",
                   icon: Icons.business_rounded,
@@ -349,6 +379,7 @@ class _AuthScreenState extends State<AuthScreen> {
               ],
               _buildTextField(
                 controller: _emailController,
+                compact: compact,
                 label: "Correo electrónico",
                 hint: "Correo electrónico",
                 icon: Icons.email_rounded,
@@ -367,6 +398,7 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 20),
               _buildPasswordField(
                 controller: _passwordController,
+                compact: compact,
                 label: "Contraseña",
                 obscure: _obscurePassword,
                 onToggle: () => setState(
@@ -386,6 +418,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 const SizedBox(height: 20),
                 _buildPasswordField(
                   controller: _confirmPasswordController,
+                  compact: compact,
                   label: "Confirmar Contraseña",
                   obscure: _obscureConfirmPassword,
                   onToggle: () => setState(
@@ -413,16 +446,30 @@ class _AuthScreenState extends State<AuthScreen> {
       ],
     );
 
+    final animatedForm = formContent
+        .animate()
+        .fadeIn(duration: 700.ms)
+        .scale(
+          begin: const Offset(0.98, 0.98),
+          end: const Offset(1, 1),
+          curve: Curves.easeOutCubic,
+        );
+
     return Container(
+      width: double.infinity,
+      height: double.infinity,
       decoration: BoxDecoration(
-        gradient: RadialGradient(
-          center: const Alignment(1.1, -1.1),
-          radius: 1.6,
-          colors: [
-            AppTheme.accent.withValues(alpha: isDark ? 0.16 : 0.10),
-            theme.scaffoldBackgroundColor,
-          ],
-        ),
+        color: compact ? null : theme.scaffoldBackgroundColor,
+        gradient: compact
+            ? RadialGradient(
+                center: const Alignment(1.1, -1.1),
+                radius: 1.6,
+                colors: [
+                  AppTheme.accent.withValues(alpha: isDark ? 0.16 : 0.10),
+                  theme.scaffoldBackgroundColor,
+                ],
+              )
+            : null,
         borderRadius: compact
             ? const BorderRadius.vertical(top: Radius.circular(28))
             : null,
@@ -441,41 +488,11 @@ class _AuthScreenState extends State<AuthScreen> {
                 minHeight: minHeight < 0 ? 0 : minHeight,
               ),
               child: Center(
-                child: SizedBox(
-                  width: 430,
-                  child: Container(
-                    padding: compact
-                        ? EdgeInsets.zero
-                        : const EdgeInsets.all(36),
-                    decoration: compact
-                        ? null
-                        : BoxDecoration(
-                            color: theme.colorScheme.surface
-                                .withValues(alpha: 0.55),
-                            borderRadius: BorderRadius.circular(28),
-                            border: Border.all(
-                              color: theme.colorScheme.outline
-                                  .withValues(alpha: 0.35),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(
-                                  alpha: isDark ? 0.30 : 0.08,
-                                ),
-                                blurRadius: 40,
-                                offset: const Offset(0, 20),
-                              ),
-                            ],
-                          ),
-                    child: formContent
-                        .animate()
-                        .fadeIn(duration: 700.ms)
-                        .scale(
-                          begin: const Offset(0.98, 0.98),
-                          end: const Offset(1, 1),
-                          curve: Curves.easeOutCubic,
-                        ),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: compact ? 430 : 480,
                   ),
+                  child: animatedForm,
                 ),
               ),
             ),
@@ -733,6 +750,7 @@ class _AuthScreenState extends State<AuthScreen> {
     required String label,
     required String hint,
     required IconData icon,
+    required bool compact,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
   }) {
@@ -796,9 +814,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   width: 1.6,
                 ),
               ),
-              contentPadding: const EdgeInsets.symmetric(
+              contentPadding: EdgeInsets.symmetric(
                 horizontal: 16,
-                vertical: 18,
+                vertical: compact ? 18 : 20,
               ),
               hintStyle: TextStyle(
                 color: theme.colorScheme.onSurfaceVariant.withValues(
@@ -823,6 +841,7 @@ class _AuthScreenState extends State<AuthScreen> {
     required String label,
     required bool obscure,
     required VoidCallback onToggle,
+    required bool compact,
     String? Function(String?)? validator,
   }) {
     final theme = Theme.of(context);
@@ -897,9 +916,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   width: 1.6,
                 ),
               ),
-              contentPadding: const EdgeInsets.symmetric(
+              contentPadding: EdgeInsets.symmetric(
                 horizontal: 16,
-                vertical: 18,
+                vertical: compact ? 18 : 20,
               ),
               hintStyle: TextStyle(
                 color: theme.colorScheme.onSurfaceVariant.withValues(
