@@ -483,8 +483,10 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
                       child: _buildPhotoPreview(),
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 12,
+                      runSpacing: 8,
                       children: [
                         OutlinedButton.icon(
                           onPressed: _saving
@@ -493,7 +495,6 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
                           icon: const Icon(Icons.camera_alt_rounded, size: 18),
                           label: const Text('Cámara'),
                         ),
-                        const SizedBox(width: 12),
                         OutlinedButton.icon(
                           onPressed: _saving
                               ? null
@@ -540,36 +541,52 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
                   },
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _breedCtrl,
-                        decoration: const InputDecoration(labelText: 'Raza *'),
-                        validator: _required,
-                      ),
-                    ),
-                    if (_canUseAI) ...[
-                      const SizedBox(width: 8),
-                      OutlinedButton(
-                        onPressed: _saving ? null : _identifyBreedWithAI,
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 16,
-                          ),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.auto_awesome_rounded, size: 16),
-                            SizedBox(width: 6),
-                            Text('Identificar con IA'),
-                          ],
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final breedField = TextFormField(
+                      controller: _breedCtrl,
+                      decoration: const InputDecoration(labelText: 'Raza *'),
+                      validator: _required,
+                    );
+                    if (!_canUseAI) return breedField;
+
+                    final aiButton = OutlinedButton(
+                      onPressed: _saving ? null : _identifyBreedWithAI,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 16,
                         ),
                       ),
-                    ],
-                  ],
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.auto_awesome_rounded, size: 16),
+                          SizedBox(width: 6),
+                          Text('Identificar con IA'),
+                        ],
+                      ),
+                    );
+
+                    if (constraints.maxWidth < 380) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          breedField,
+                          const SizedBox(height: 8),
+                          aiButton,
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(child: breedField),
+                        const SizedBox(width: 8),
+                        aiButton,
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
                 TextFormField(

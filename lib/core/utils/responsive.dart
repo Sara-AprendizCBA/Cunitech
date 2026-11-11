@@ -2,7 +2,10 @@ import 'package:flutter/widgets.dart';
 
 /// Breakpoints compartidos para los layouts responsive de la aplicación.
 abstract final class ResponsiveBreakpoints {
-  static const double mobile = 700;
+  /// Teléfonos en vertical y pantallas angostas.
+  static const double mobile = 600;
+
+  /// Tablets y ventanas medianas.
   static const double desktop = 1100;
 }
 

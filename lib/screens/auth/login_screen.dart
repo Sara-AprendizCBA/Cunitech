@@ -198,8 +198,9 @@ class _AuthScreenState extends State<AuthScreen> {
                           isLogin
                               ? "Bienvenido de nuevo"
                               : "Crear nueva cuenta",
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 32,
+                            fontSize: isMobile ? 26 : 32,
                             fontWeight: FontWeight.w700,
                             color: theme.colorScheme.onSurface,
                             letterSpacing: -0.8,
@@ -210,6 +211,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           isLogin
                               ? "Accede a tu sistema integral de gestión"
                               : "Registra tu granja y empieza ahora",
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 16,
                             color: theme.colorScheme.onSurfaceVariant,

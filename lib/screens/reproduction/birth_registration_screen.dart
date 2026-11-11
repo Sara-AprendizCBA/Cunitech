@@ -110,39 +110,75 @@ class _BirthRegistrationScreenState extends State<BirthRegistrationScreen> {
               ),
 
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _litterSizeController,
-                      decoration: const InputDecoration(labelText: "Total Crías"),
-                      keyboardType: TextInputType.number,
-                      validator: (value) => value!.isEmpty ? "Obligatorio" : null,
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final totalField = TextFormField(
+                    controller: _litterSizeController,
+                    decoration:
+                        const InputDecoration(labelText: "Total Crías"),
+                    keyboardType: TextInputType.number,
+                    validator: (value) =>
+                        value!.isEmpty ? "Obligatorio" : null,
+                  );
+                  final weightField = TextFormField(
+                    controller: _avgWeightController,
+                    decoration: const InputDecoration(
+                      labelText: "Peso Promedio (g)",
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _avgWeightController,
-                      decoration: const InputDecoration(labelText: "Peso Promedio (g)"),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
                     ),
-                  ),
-                ],
+                  );
+                  if (constraints.maxWidth < 420) {
+                    return Column(
+                      children: [
+                        totalField,
+                        const SizedBox(height: 12),
+                        weightField,
+                      ],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(child: totalField),
+                      const SizedBox(width: 12),
+                      Expanded(child: weightField),
+                    ],
+                  );
+                },
               ),
 
               const SizedBox(height: 20),
               const Text("Estado de las Crías", style: TextStyle(fontWeight: FontWeight.bold)),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildCounter("Vivas", _liveKits, (value) => setState(() => _liveKits = value)),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildCounter("Muertas", _deadKits, (value) => setState(() => _deadKits = value)),
-                  ),
-                ],
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final liveCounter = _buildCounter(
+                    "Vivas",
+                    _liveKits,
+                    (value) => setState(() => _liveKits = value),
+                  );
+                  final deadCounter = _buildCounter(
+                    "Muertas",
+                    _deadKits,
+                    (value) => setState(() => _deadKits = value),
+                  );
+                  if (constraints.maxWidth < 420) {
+                    return Column(
+                      children: [
+                        liveCounter,
+                        const SizedBox(height: 12),
+                        deadCounter,
+                      ],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(child: liveCounter),
+                      const SizedBox(width: 16),
+                      Expanded(child: deadCounter),
+                    ],
+                  );
+                },
               ),
 
               const SizedBox(height: 20),

@@ -121,30 +121,36 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildMetricsGrid(BuildContext context) {
-    final isMobile = context.isMobile;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final crossAxisCount = width < 600 ? 1 : (width < 900 ? 2 : 4);
+        final gap = width < 600 ? 12.0 : 20.0;
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      // CORRECCIÓN: se usa mainAxisExtent (altura fija en píxeles) en lugar
-      // de childAspectRatio, para que la tarjeta nunca quede más baja que su
-      // contenido y no aparezca el aviso "BOTTOM OVERFLOWED BY 19 PIXELS".
-      // Si todavía se desborda, súbelo de 10 en 10 (por ejemplo 160 / 180).
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: isMobile ? 2 : 4,
-        mainAxisSpacing: isMobile ? 12 : 20,
-        crossAxisSpacing: isMobile ? 12 : 20,
-        mainAxisExtent: isMobile ? 150 : 170,
-      ),
-      itemCount: 4,
-      itemBuilder: (_, i) {
-        return Obx(
-          () => _MetricCard(
-            label: _getMetricLabel(i),
-            value: _getMetricValue(i),
-            trend: _getMetricTrend(i),
-            positive: _getMetricPositive(i),
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          // mainAxisExtent (altura fija en píxeles) evita que la tarjeta
+          // quede más baja que su contenido y produzca overflow.
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: gap,
+            crossAxisSpacing: gap,
+            mainAxisExtent: crossAxisCount == 1
+                ? 140
+                : (crossAxisCount == 2 ? 150 : 170),
           ),
+          itemCount: 4,
+          itemBuilder: (_, i) {
+            return Obx(
+              () => _MetricCard(
+                label: _getMetricLabel(i),
+                value: _getMetricValue(i),
+                trend: _getMetricTrend(i),
+                positive: _getMetricPositive(i),
+              ),
+            );
+          },
         );
       },
     );
@@ -998,12 +1004,16 @@ class _MetricCard extends StatelessWidget {
             children: [
               Icon(trendIcon, size: 16, color: trendColor),
               const SizedBox(width: 6),
-              Text(
-                trend,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: trendColor,
+              Expanded(
+                child: Text(
+                  trend,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: trendColor,
+                  ),
                 ),
               ),
             ],
