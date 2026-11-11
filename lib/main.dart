@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -23,10 +25,11 @@ void main() async {
   // Controlador global de autenticación (rol del usuario actual)
   Get.put(AuthController(), permanent: true);
 
-  // Inicializar servicios globales
-  await NotificationService().init();
-
   runApp(const CunitechApp());
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(NotificationService().init());
+  });
 }
 
 // Cliente global de Supabase
