@@ -505,39 +505,61 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _showContactAdminDialog(BuildContext context) async {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: theme.dialogTheme.backgroundColor ?? theme.cardColor,
         icon: Container(
-          width: 48,
-          height: 48,
+          width: 56,
+          height: 56,
           decoration: BoxDecoration(
-            color: AppTheme.accent.withValues(alpha: 0.12),
+            color: AppTheme.accent,
             shape: BoxShape.circle,
           ),
           child: const Icon(
-            Icons.mark_email_read_outlined,
-            color: AppTheme.accent,
-            size: 26,
+            Icons.mail_outline_rounded,
+            color: Colors.white,
+            size: 28,
           ),
         ),
         title: const Text(
           'Solicitud de Acceso',
           textAlign: TextAlign.center,
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
         ),
-        content: Text(
-          'Las cuentas en CUNITECH son creadas únicamente por el administrador del criadero. '
-          'Para solicitar tu acceso, envía un correo indicando tu nombre y el rol que desempeñarás.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: theme.colorScheme.onSurfaceVariant,
-            height: 1.5,
-          ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Las cuentas en CUNITECH son creadas únicamente por el administrador del criadero.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'Para solicitar tu acceso, envía un correo electrónico con tus datos al administrador.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.5,
+                  fontSize: 13.5,
+                ),
+              ),
+            ),
+          ],
         ),
         actionsAlignment: MainAxisAlignment.spaceBetween,
         actions: [
@@ -545,7 +567,7 @@ class _AuthScreenState extends State<AuthScreen> {
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('Cancelar'),
           ),
-          FilledButton.icon(
+          FilledButton(
             onPressed: () async {
               Navigator.of(ctx).pop();
               await _sendAccessRequestEmail(context);
@@ -557,8 +579,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            icon: const Icon(Icons.send_rounded, size: 18),
-            label: const Text('Enviar Correo'),
+            child: const Text('Enviar Correo'),
           ),
         ],
       ),
@@ -569,8 +590,9 @@ class _AuthScreenState extends State<AuthScreen> {
     final uri = Uri(
       scheme: 'mailto',
       path: 'soporte.cunitech@gmail.com',
-      query: 'subject=${Uri.encodeComponent('Solicitud de Acceso - CUNITECH')}&'
-          'body=${Uri.encodeComponent('Hola administrador,\n\nnecesito acceso al sistema.\n\nMi nombre es: \nMi rol es: ')}',
+      query:
+          'subject=${Uri.encodeComponent('Solicitud de Acceso - Nuevo Usuario CUNITECH')}&'
+          'body=${Uri.encodeComponent('Estimado Administrador de CUNITECH,\n\nReciba un cordial saludo. Me pongo en contacto con usted para solicitar la creación de una cuenta de acceso al sistema de gestión de mi criadero.\n\nA continuación, detallo mis datos para su revisión:\n- Nombre completo: [Escribe tu nombre aquí]\n- Rol solicitado: [Ayudante / Veterinario / Administrador]\n- Número de contacto: [Escribe tu número de teléfono]\n\nQuedo a la espera de su respuesta para coordinar la entrega de mis credenciales.\n\nCordialmente,\n[Escribe tu nombre]')}',
     );
 
     try {
