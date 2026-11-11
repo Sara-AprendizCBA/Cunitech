@@ -149,14 +149,14 @@ class _MainScreenState extends State<MainScreen>
 
   Widget _buildSectionTitle(BuildContext context, String title) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(6, 8, 6, 10),
+      padding: const EdgeInsets.fromLTRB(6, 6, 6, 10),
       child: Text(
         title,
         style: TextStyle(
-          fontSize: 11,
+          fontSize: 12,
           letterSpacing: 1.2,
           fontWeight: FontWeight.w700,
-          color: _secondaryTextColor(context)?.withValues(alpha: 0.7),
+          color: _secondaryTextColor(context)?.withValues(alpha: 0.6),
         ),
       ),
     );
@@ -798,22 +798,22 @@ class _MainScreenState extends State<MainScreen>
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(16),
                                 onTap: _goToProfile,
-                                child: Container(
-                                  padding: const EdgeInsets.fromLTRB(16, 16, 14, 16),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  curve: Curves.easeOutCubic,
+                                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(
-                                      color: _borderColor(context),
-                                    ),
+                                    color: AppTheme.accent.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: Row(
                                     children: [
                                       CircleAvatar(
                                         radius: 24,
                                         backgroundColor:
-                                            AppTheme.accent.withValues(alpha: 0.15),
+                                            AppTheme.accent.withValues(alpha: 0.18),
                                         child: Text(initials,
                                             style: const TextStyle(
                                                 fontWeight: FontWeight.w700,
@@ -839,11 +839,6 @@ class _MainScreenState extends State<MainScreen>
                                           ],
                                         ),
                                       ),
-                                      Icon(
-                                        Icons.settings_outlined,
-                                        size: 20,
-                                        color: _secondaryTextColor(context),
-                                      ),
                                     ],
                                   ),
                                 ),
@@ -859,9 +854,11 @@ class _MainScreenState extends State<MainScreen>
                               children: [
                                 _buildSectionTitle(context, 'OPERACIONES'),
                                 ..._buildGroupedNavItems(items, index, context, theme, startIndex: 0, count: 5),
-                                const SizedBox(height: 14),
-                                _buildSectionTitle(context, 'ADMINISTRACIÓN'),
-                                ..._buildGroupedNavItems(items, index, context, theme, startIndex: 5, count: 2),
+                                if (Get.find<AuthController>().currentRol.value == 'admin') ...[
+                                  const SizedBox(height: 14),
+                                  _buildSectionTitle(context, 'ADMINISTRACIÓN'),
+                                  ..._buildGroupedNavItems(items, index, context, theme, startIndex: 5, count: 2),
+                                ],
                                 const SizedBox(height: 14),
                                 _buildSectionTitle(context, 'CUENTA'),
                                 _buildAccountNavItem(
@@ -894,22 +891,25 @@ class _MainScreenState extends State<MainScreen>
                                   top: BorderSide(
                                       color: _borderColor(context), width: 1)),
                             ),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: FilledButton.icon(
-                              onPressed: _logout,
-                              style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFF6F4E37),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: FilledButton.icon(
+                                onPressed: _logout,
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFF6F4E37),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
-                              ),
-                              icon: const Icon(Icons.logout_rounded, size: 20),
-                              label: const Text(
-                                'Cerrar Sesión',
-                                style: TextStyle(fontWeight: FontWeight.w600),
+                                icon: const Icon(Icons.logout_rounded, size: 20),
+                                label: const Text(
+                                  'Cerrar Sesión',
+                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                ),
                               ),
                             ),
                           ),
@@ -1001,22 +1001,24 @@ class _MainScreenState extends State<MainScreen>
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(16),
                   onTap: () {
                     Navigator.of(context).pop();
                     _goToProfile();
                   },
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOutCubic,
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: _borderColor(context)),
+                      color: AppTheme.accent.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
                       children: [
                         CircleAvatar(
                           radius: 24,
-                          backgroundColor: AppTheme.accent.withValues(alpha: 0.15),
+                          backgroundColor: AppTheme.accent.withValues(alpha: 0.18),
                           child: Text(initials,
                               style: const TextStyle(
                                   fontWeight: FontWeight.w700,
@@ -1041,11 +1043,6 @@ class _MainScreenState extends State<MainScreen>
                             ],
                           ),
                         ),
-                        Icon(
-                          Icons.settings_outlined,
-                          size: 20,
-                          color: _secondaryTextColor(context),
-                        ),
                       ],
                     ),
                   ),
@@ -1060,10 +1057,12 @@ class _MainScreenState extends State<MainScreen>
                   _buildSectionTitle(context, 'OPERACIONES'),
                   ..._buildGroupedNavItemsDrawer(items, currentIndex, context, theme,
                       startIndex: 0, count: 5),
-                  const SizedBox(height: 14),
-                  _buildSectionTitle(context, 'ADMINISTRACIÓN'),
-                  ..._buildGroupedNavItemsDrawer(items, currentIndex, context, theme,
-                      startIndex: 5, count: 2),
+                                if (Get.find<AuthController>().currentRol.value == 'admin') ...[
+                                  const SizedBox(height: 14),
+                                  _buildSectionTitle(context, 'ADMINISTRACIÓN'),
+                                  ..._buildGroupedNavItemsDrawer(items, currentIndex, context, theme,
+                                      startIndex: 5, count: 2),
+                                ],
                   const SizedBox(height: 14),
                   _buildSectionTitle(context, 'CUENTA'),
                   _buildAccountNavItemDrawer(
@@ -1103,6 +1102,8 @@ class _MainScreenState extends State<MainScreen>
                 border: Border(
                     top: BorderSide(color: _borderColor(context), width: 1)),
               ),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 4),
             child: SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
@@ -1125,6 +1126,7 @@ class _MainScreenState extends State<MainScreen>
                 ),
               ),
             ),
+          ),
             ),
           ],
         ),
