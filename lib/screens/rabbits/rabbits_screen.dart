@@ -7,6 +7,7 @@ import '../../core/utils/app_snackbar.dart';
 import '../../core/widgets/animated_list_item.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_loading.dart';
+import '../../core/widgets/pressable_scale.dart';
 import '../../models/rabbit.dart';
 import '../../controllers/rabbit_controller.dart';
 import '../../controllers/auth_controller.dart';
@@ -118,10 +119,12 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
                       ),
                       if (authController.isAdmin) ...[
                         const SizedBox(width: 12),
-                        FilledButton.icon(
-                          onPressed: () => _showRabbitForm(),
-                          icon: const Icon(Icons.add_rounded),
-                          label: const Text('Nuevo Conejo'),
+                        PressableScale(
+                          child: FilledButton.icon(
+                            onPressed: () => _showRabbitForm(),
+                            icon: const Icon(Icons.add_rounded),
+                            label: const Text('Nuevo Conejo'),
+                          ),
                         ),
                       ],
                     ],

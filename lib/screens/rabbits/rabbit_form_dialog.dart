@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
+import '../../core/widgets/loading_rabbit.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../controllers/dashboard_controller.dart';
 import '../../../controllers/rabbit_controller.dart';
@@ -202,7 +203,9 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
         future: _pickedPhoto!.readAsBytes(),
         builder: (_, snapshot) {
           if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: LoadingRabbit(size: 64, label: 'Cargando imagen…'),
+            );
           }
           return Image.memory(
             snapshot.data!,

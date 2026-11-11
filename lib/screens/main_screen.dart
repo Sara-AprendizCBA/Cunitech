@@ -180,6 +180,8 @@ class _MainScreenState extends State<MainScreen>
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
+              hoverColor: AppTheme.accent.withValues(alpha: 0.07),
+              splashColor: AppTheme.accent.withValues(alpha: 0.10),
               onTap: () => setState(() => _currentIndex = i),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
@@ -213,22 +215,6 @@ class _MainScreenState extends State<MainScreen>
                         ),
                       ),
                     ),
-                    if (item['label'] == 'Alertas')
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: const BoxDecoration(
-                          color: AppTheme.danger,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Text(
-                          '3',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               ),
@@ -252,6 +238,8 @@ class _MainScreenState extends State<MainScreen>
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
+          hoverColor: AppTheme.accent.withValues(alpha: 0.07),
+          splashColor: AppTheme.accent.withValues(alpha: 0.10),
           onTap: onTap,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -983,6 +971,7 @@ class _MainScreenState extends State<MainScreen>
                                 style: FilledButton.styleFrom(
                                   backgroundColor: const Color(0xFF6F4E37),
                                   foregroundColor: Colors.white,
+                                  overlayColor: Colors.white.withValues(alpha: 0.12),
                                   padding: const EdgeInsets.symmetric(vertical: 14),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -1182,6 +1171,8 @@ class _MainScreenState extends State<MainScreen>
                 color: Colors.transparent,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(16),
+                  hoverColor: AppTheme.accent.withValues(alpha: 0.10),
+                  splashColor: AppTheme.accent.withValues(alpha: 0.12),
                   onTap: () {
                     Navigator.of(context).pop();
                     _goToProfile();
@@ -1294,6 +1285,7 @@ class _MainScreenState extends State<MainScreen>
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFF6F4E37),
                   foregroundColor: Colors.white,
+                  overlayColor: Colors.white.withValues(alpha: 0.12),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -1333,6 +1325,8 @@ class _MainScreenState extends State<MainScreen>
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
+              hoverColor: AppTheme.accent.withValues(alpha: 0.07),
+              splashColor: AppTheme.accent.withValues(alpha: 0.10),
               onTap: () {
                 setState(() => _currentIndex = i);
                 Navigator.of(context).pop();
@@ -1392,6 +1386,8 @@ class _MainScreenState extends State<MainScreen>
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
+          hoverColor: AppTheme.accent.withValues(alpha: 0.07),
+          splashColor: AppTheme.accent.withValues(alpha: 0.10),
           onTap: onTap,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

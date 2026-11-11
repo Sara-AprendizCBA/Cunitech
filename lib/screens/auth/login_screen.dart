@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/responsive.dart';
+import '../../core/widgets/pressable_scale.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -1114,61 +1115,65 @@ class _AuthScreenState extends State<AuthScreen> {
   // ========== AUTH BUTTON ==========
   Widget _buildAuthButton() {
     final enabled = !_isLoading;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOut,
-      height: 54,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: enabled
-              ? const [
-                  AppTheme.accentLight,
-                  AppTheme.accent,
-                  Color(0xFF6B4E36),
-                ]
-              : [
-                  AppTheme.accent.withValues(alpha: 0.5),
-                  AppTheme.accent.withValues(alpha: 0.4),
-                ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: enabled
-            ? [
-                BoxShadow(
-                  color: AppTheme.accent.withValues(alpha: 0.32),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ]
-            : const [],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: enabled ? _authenticate : null,
+    return PressableScale(
+      enabled: enabled,
+      pressedScale: 0.96,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+        height: 54,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: enabled
+                ? const [
+                    AppTheme.accentLight,
+                    AppTheme.accent,
+                    Color(0xFF6B4E36),
+                  ]
+                : [
+                    AppTheme.accent.withValues(alpha: 0.5),
+                    AppTheme.accent.withValues(alpha: 0.4),
+                  ],
+          ),
           borderRadius: BorderRadius.circular(14),
-          child: Center(
-            child: _isLoading
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(
-                    isLogin ? 'INICIAR SESIÓN' : 'CREAR CUENTA',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: 1.2,
-                    ),
+          boxShadow: enabled
+              ? [
+                  BoxShadow(
+                    color: AppTheme.accent.withValues(alpha: 0.32),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
                   ),
+                ]
+              : const [],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: enabled ? _authenticate : null,
+            borderRadius: BorderRadius.circular(14),
+            child: Center(
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Text(
+                      isLogin ? 'INICIAR SESIÓN' : 'CREAR CUENTA',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+            ),
           ),
         ),
       ),
