@@ -283,7 +283,7 @@ class _MainScreenState extends State<MainScreen>
     );
   }
 
-  // ==================== CERRAR SESIÃ“N ====================
+  // ==================== CERRAR SESIóN ====================
   Future<void> _logout() async {
     final confirmado = await showDialog<bool>(
       context: context,
@@ -404,7 +404,7 @@ class _MainScreenState extends State<MainScreen>
           value: 'password',
           child: ListTile(
             leading: Icon(Icons.lock_outline),
-            title: Text("Cambiar ContraseÃ±a"),
+            title: Text("Cambiar Contraseña"),
           ),
         ),
         const PopupMenuDivider(),
@@ -844,7 +844,7 @@ class _MainScreenState extends State<MainScreen>
                             ),
                           ),
 
-                          // PARTE MEDIA - NAVEGACIÃ“N AGRUPADA
+                          // PARTE MEDIA - NAVEGACIóN AGRUPADA
                           Expanded(
                             child: ScrollConfiguration(
                               behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
@@ -856,7 +856,7 @@ class _MainScreenState extends State<MainScreen>
                                   ..._buildGroupedNavItems(items, index, context, theme, startIndex: 0, count: 5),
                                   if (Get.find<AuthController>().currentRol.value == 'admin') ...[
                                     const SizedBox(height: 10),
-                                    _buildSectionTitle(context, 'ADMINISTRACIÃ“N'),
+                                    _buildSectionTitle(context, 'ADMINISTRACIóN'),
                                     ..._buildGroupedNavItems(items, index, context, theme, startIndex: 5, count: 2),
                                   ],
                                   const SizedBox(height: 10),
@@ -870,7 +870,7 @@ class _MainScreenState extends State<MainScreen>
                                   _buildAccountNavItem(
                                     context,
                                     icon: Icons.lock_reset_outlined,
-                                    label: 'Cambiar ContraseÃ±a',
+                                    label: 'Cambiar Contraseña',
                                     onTap: () => AppSnackbar.info(context, 'FunciÃ³n prÃ³ximamente'),
                                   ),
                                 ],
@@ -878,7 +878,7 @@ class _MainScreenState extends State<MainScreen>
                             ),
                           ),
 
-                          // PARTE INFERIOR - BOTÃ“N CERRAR SESIÃ“N
+                          // PARTE INFERIOR - BOTóN CERRAR SESIóN
                           Container(
                             padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
                             decoration: BoxDecoration(
@@ -1044,7 +1044,7 @@ class _MainScreenState extends State<MainScreen>
                 ),
               ),
             ),
-            // PARTE MEDIA - NAVEGACIÃ“N AGRUPADA
+            // PARTE MEDIA - NAVEGACIóN AGRUPADA
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
@@ -1054,7 +1054,7 @@ class _MainScreenState extends State<MainScreen>
                       startIndex: 0, count: 5),
                                 if (Get.find<AuthController>().currentRol.value == 'admin') ...[
                                   const SizedBox(height: 14),
-                                  _buildSectionTitle(context, 'ADMINISTRACIÃ“N'),
+                                  _buildSectionTitle(context, 'ADMINISTRACIóN'),
                                   ..._buildGroupedNavItemsDrawer(items, currentIndex, context, theme,
                                       startIndex: 5, count: 2),
                                 ],
@@ -1081,7 +1081,7 @@ class _MainScreenState extends State<MainScreen>
                   _buildAccountNavItemDrawer(
                     context,
                     icon: Icons.lock_reset_outlined,
-                    label: 'Cambiar ContraseÃ±a',
+                    label: 'Cambiar Contraseña',
                     onTap: () {
                       Navigator.of(context).pop();
                       AppSnackbar.info(context, 'FunciÃ³n prÃ³ximamente');
@@ -1090,7 +1090,7 @@ class _MainScreenState extends State<MainScreen>
                 ],
               ),
             ),
-            // PARTE INFERIOR - BOTÃ“N CERRAR SESIÃ“N
+            // PARTE INFERIOR - BOTóN CERRAR SESIóN
             Container(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
               decoration: BoxDecoration(
