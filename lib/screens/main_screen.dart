@@ -455,7 +455,7 @@ class _MainScreenState extends State<MainScreen>
     );
   }
 
-  // Ir a Configuracion
+  // Ir a Configuracion 
   void _goToSettings() {
     Get.to(
       () => const SettingsScreen(),

@@ -385,6 +385,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 hint: "Correo electrónico",
                 icon: Icons.email_rounded,
                 keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
                 validator: (value) {
                   final email = value?.trim() ?? '';
                   if (email.isEmpty) {
@@ -402,6 +403,12 @@ class _AuthScreenState extends State<AuthScreen> {
                 compact: compact,
                 label: "Contraseña",
                 obscure: _obscurePassword,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) {
+                  if (!_isLoading) {
+                    _authenticate();
+                  }
+                },
                 onToggle: () => setState(
                   () => _obscurePassword = !_obscurePassword,
                 ),
@@ -911,6 +918,8 @@ class _AuthScreenState extends State<AuthScreen> {
     required IconData icon,
     required bool compact,
     TextInputType keyboardType = TextInputType.text,
+    TextInputAction? textInputAction,
+    ValueChanged<String>? onFieldSubmitted,
     String? Function(String?)? validator,
   }) {
     final theme = Theme.of(context);
@@ -941,6 +950,8 @@ class _AuthScreenState extends State<AuthScreen> {
           child: TextFormField(
             controller: controller,
             keyboardType: keyboardType,
+            textInputAction: textInputAction,
+            onFieldSubmitted: onFieldSubmitted,
             validator: validator,
             cursorColor: AppTheme.accent,
             decoration: InputDecoration(
@@ -1001,6 +1012,8 @@ class _AuthScreenState extends State<AuthScreen> {
     required bool obscure,
     required VoidCallback onToggle,
     required bool compact,
+    TextInputAction? textInputAction,
+    ValueChanged<String>? onFieldSubmitted,
     String? Function(String?)? validator,
   }) {
     final theme = Theme.of(context);
@@ -1031,6 +1044,8 @@ class _AuthScreenState extends State<AuthScreen> {
           child: TextFormField(
             controller: controller,
             obscureText: obscure,
+            textInputAction: textInputAction,
+            onFieldSubmitted: onFieldSubmitted,
             validator: validator,
             cursorColor: AppTheme.accent,
             decoration: InputDecoration(

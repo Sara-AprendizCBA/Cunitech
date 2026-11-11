@@ -538,6 +538,7 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _chapetaCtrl,
+                  textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(
                     labelText: 'N° de identificación *',
                     helperText: 'Ej: C-045, A-12 (visible en el conejo)',
@@ -662,6 +663,7 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _weightCtrl,
+                  textInputAction: TextInputAction.next,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
@@ -813,11 +815,16 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _originCtrl,
+                  textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(labelText: 'Origen'),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _registryNumberCtrl,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) {
+                    if (!_saving) _save();
+                  },
                   decoration: const InputDecoration(
                     labelText: 'Número de registro',
                   ),
