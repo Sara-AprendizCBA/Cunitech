@@ -7,26 +7,40 @@ class AppNotification {
   final String id;
   final String title;
   final String subtitle;
-  final String time;
-  final IconDataType type;
-  final String? rabbitId;
+  final DateTime timestamp;
+  final AppNotificationType type;
+  final String? entityId;
 
   const AppNotification({
     required this.id,
     required this.title,
     required this.subtitle,
-    required this.time,
+    required this.timestamp,
     required this.type,
-    this.rabbitId,
+    this.entityId,
   });
 }
 
-enum IconDataType { bell, health, reproduction, warning }
+enum AppNotificationType { health, reproduction, feeding, general }
 
+/// Tipo de alerta generado por [NotificationController].
+extension AppNotificationTypeX on AppNotificationType {
+  String get label => switch (this) {
+        AppNotificationType.health => 'Salud',
+        AppNotificationType.reproduction => 'Reproducción',
+        AppNotificationType.feeding => 'Alimentación',
+        AppNotificationType.general => 'General',
+      };
+}
+
+/// Gestiona las alertas del criadero y las mantiene sincronizadas con
+/// Supabase Realtime (tablas `conejo` y `reproduccion`).
 class NotificationController extends GetxController {
   final SupabaseClient _supabase = Supabase.instance.client;
+
   final RxList<AppNotification> notifications = <AppNotification>[].obs;
   final RxInt unreadCount = 0.obs;
+  final RxBool isLoading = false.obs;
 
   StreamSubscription<List<Map<String, dynamic>>>? _rabbitSub;
   StreamSubscription<List<Map<String, dynamic>>>? _reproSub;
@@ -34,7 +48,7 @@ class NotificationController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadNotifications();
+    refreshNotifications();
     _subscribeRealtime();
   }
 
@@ -50,56 +64,97 @@ class NotificationController extends GetxController {
       _rabbitSub = _supabase
           .from('conejo')
           .stream(primaryKey: ['id_conejo'])
-          .listen((_) => _loadNotifications());
+          .listen((_) => refreshNotifications());
     } catch (_) {}
     try {
       _reproSub = _supabase
           .from('reproduccion')
           .stream(primaryKey: ['id_reproduccion'])
-          .listen((_) => _loadNotifications());
+          .listen((_) => refreshNotifications());
     } catch (_) {}
   }
 
-  Future<void> _loadNotifications() async {
+  Future<void> refreshNotifications() async {
+    isLoading.value = true;
     final list = <AppNotification>[];
+    final now = DateTime.now();
 
+    await _collectHealthAlerts(list, now);
+    await _collectReproductionAlerts(list, now);
+
+    list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    notifications.value = list.take(20).toList();
+    unreadCount.value = notifications.length;
+    isLoading.value = false;
+  }
+
+  Future<void> _collectHealthAlerts(
+    List<AppNotification> list,
+    DateTime now,
+  ) async {
     try {
       final rows = await _supabase
           .from('conejo')
-          .select('id_conejo, chapeta, estado, fecha_nacimiento')
+          .select('id_conejo, chapeta, estado')
           .neq('estado', 'Saludable')
-          .limit(50);
+          .limit(30);
 
       for (final row in rows) {
         final estado = (row['estado'] as String? ?? '').trim();
-        final chapeta = (row['chapeta'] as String? ?? '').trim();
         if (estado.isEmpty) continue;
         final id = row['id_conejo']?.toString() ?? '';
+        final chapeta = (row['chapeta'] as String? ?? '').trim();
         list.add(AppNotification(
           id: 'health_$id',
           title: 'Estado: $estado',
-          subtitle:
-              chapeta.isEmpty ? 'Un conejo requiere atencion' : '$chapeta requiere atencion',
-          time: _formatTime(DateTime.now()),
+          subtitle: chapeta.isEmpty
+              ? 'Un conejo requiere atención'
+              : '$chapeta requiere atención',
+          timestamp: now,
           type: estado.toLowerCase().contains('enfermo')
-              ? IconDataType.warning
-              : IconDataType.health,
-          rabbitId: id,
+              ? AppNotificationType.health
+              : AppNotificationType.general,
+          entityId: id,
         ));
       }
     } catch (_) {
-      // Sin datos: se mantiene la lista vacia.
+      // Si la consulta falla se conserva lo ya recolectado.
     }
-
-    notifications.value = list.take(20).toList();
-    unreadCount.value = notifications.length;
   }
 
-  String _formatTime(DateTime dt) {
-    final now = DateTime.now();
-    final diff = now.difference(dt);
-    if (diff.inMinutes < 60) return 'Hace ${diff.inMinutes} min';
-    if (diff.inHours < 24) return 'Hace ${diff.inHours} h';
-    return '${dt.day}/${dt.month}/${dt.year}';
+  Future<void> _collectReproductionAlerts(
+    List<AppNotification> list,
+    DateTime now,
+  ) async {
+    try {
+      final rows = await _supabase
+          .from('reproduccion')
+          .select('id_reproduccion, estado, fecha_probable_parto, fecha_monta')
+          .eq('estado', 'Gestante')
+          .limit(30);
+
+      for (final row in rows) {
+        final id = row['id_reproduccion']?.toString() ?? '';
+        final fecha = DateTime.tryParse(
+            (row['fecha_probable_parto'] ?? row['fecha_monta'] ?? '').toString());
+        if (fecha == null) continue;
+
+        final dias = fecha.difference(now).inDays;
+        if (dias > 7 || dias < -3) continue;
+
+        list.add(AppNotification(
+          id: 'repro_$id',
+          title: dias >= 0 ? 'Parto próximo' : 'Parto atrasado',
+          subtitle: dias >= 0
+              ? 'Parto estimado en $dias día${dias == 1 ? '' : 's'}'
+              : 'Parto estimado hace ${-dias} día${dias == -1 ? '' : 's'}',
+          timestamp: fecha,
+          type: AppNotificationType.reproduction,
+          entityId: id,
+        ));
+      }
+    } catch (_) {
+      // Si la consulta falla se conserva lo ya recolectado.
+    }
   }
 }
