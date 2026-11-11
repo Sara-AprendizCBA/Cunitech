@@ -419,7 +419,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               Get.back();
               Get.to(
                 () => RabbitDetailScreen(rabbit: rabbit),
-                transition: Transition.rightToLeft,
+                transition: Transition.zoom,
                 duration: const Duration(milliseconds: 300),
               );
             },
@@ -502,7 +502,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
           onTap: () => Get.to(
             () => RabbitDetailScreen(rabbit: rabbit),
-            transition: Transition.rightToLeft,
+            transition: Transition.zoom,
             duration: const Duration(milliseconds: 300),
           ),
           child: Padding(

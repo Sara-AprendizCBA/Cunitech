@@ -187,25 +187,28 @@ class _MainScreenState extends State<MainScreen>
 
   // Ir a Notificaciones
   void _goToNotifications() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+    Get.to(
+      () => const NotificationsScreen(),
+      transition: Transition.zoom,
+      duration: const Duration(milliseconds: 300),
     );
   }
 
   // Ir a Perfil
   void _goToProfile() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+    Get.to(
+      () => const ProfileScreen(),
+      transition: Transition.zoom,
+      duration: const Duration(milliseconds: 300),
     );
   }
 
   // Ir a Configuración
   void _goToSettings() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const SettingsScreen()),
+    Get.to(
+      () => const SettingsScreen(),
+      transition: Transition.zoom,
+      duration: const Duration(milliseconds: 300),
     );
   }
 

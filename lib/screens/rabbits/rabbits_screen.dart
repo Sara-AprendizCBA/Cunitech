@@ -176,11 +176,10 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
                       index: index,
                       child: _RabbitCard(
                         rabbit: rabbit,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => RabbitDetailScreen(rabbit: rabbit),
-                          ),
+                        onTap: () => Get.to(
+                          () => RabbitDetailScreen(rabbit: rabbit),
+                          transition: Transition.zoom,
+                          duration: const Duration(milliseconds: 300),
                         ),
                         onEdit: () => _showRabbitForm(rabbit: rabbit),
                         onDelete: () => _showDeleteDialog(rabbit),

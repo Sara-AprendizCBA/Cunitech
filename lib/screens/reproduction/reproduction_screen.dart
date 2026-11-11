@@ -8,6 +8,8 @@ import '../../controllers/auth_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/responsive.dart';
+import '../../core/widgets/animated_list_item.dart';
+import '../../core/widgets/pressable_scale.dart';
 
 class ReproductionScreen extends StatefulWidget {
   const ReproductionScreen({super.key});
@@ -43,12 +45,14 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
               floatingActionButton: innerContext.isMobile &&
                       tabController.index == 0 &&
                       !authController.isVeterinario
-                  ? FloatingActionButton(
-                      onPressed: () => _showMatingForm(),
-                      tooltip: 'Nueva monta',
-                      backgroundColor: AppTheme.accent,
-                      foregroundColor: Colors.white,
-                      child: const Icon(Icons.add_rounded),
+                  ? PressableScale(
+                      child: FloatingActionButton(
+                        onPressed: () => _showMatingForm(),
+                        tooltip: 'Nueva monta',
+                        backgroundColor: AppTheme.accent,
+                        foregroundColor: Colors.white,
+                        child: const Icon(Icons.add_rounded),
+                      ),
                     )
                   : null,
               body: Column(
@@ -69,14 +73,37 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
 
             SizedBox(height: isMobile ? 16 : 20),
 
-            // Tab Content
+            // Tab Content con transición suave (fade + slide)
             Expanded(
-              child: TabBarView(
-                children: [
-                  _buildMatingsTab(),
-                  _buildBirthsTab(),
-                  _buildCriasTab(),
-                ],
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) {
+                  final curved = CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                    reverseCurve: Curves.easeInCubic,
+                  );
+                  return FadeTransition(
+                    opacity: curved,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0.04, 0),
+                        end: Offset.zero,
+                      ).animate(curved),
+                      child: child,
+                    ),
+                  );
+                },
+                child: KeyedSubtree(
+                  key: ValueKey(tabController.index),
+                  child: switch (tabController.index) {
+                    0 => _buildMatingsTab(),
+                    1 => _buildBirthsTab(),
+                    _ => _buildCriasTab(),
+                  },
+                ),
               ),
             ),
                 ],
@@ -180,10 +207,12 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
               ),
               if (!context.isMobile && !authController.isVeterinario) ...[
                 const SizedBox(width: 12),
-                FilledButton.icon(
-                  onPressed: () => _showMatingForm(),
-                  icon: const Icon(Icons.add_rounded),
-                  label: const Text('Registrar monta'),
+                PressableScale(
+                  child: FilledButton.icon(
+                    onPressed: () => _showMatingForm(),
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text('Registrar monta'),
+                  ),
                 ),
               ],
             ],
@@ -213,7 +242,12 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
               hasAnyMatings: reproController.reproducciones.isNotEmpty,
             )
           else
-            ...filtered.map(_buildMatingCard),
+            ...filtered.asMap().entries.map(
+                  (entry) => AnimatedListItem(
+                    index: entry.key,
+                    child: _buildMatingCard(entry.value),
+                  ),
+                ),
         ],
       );
     });
@@ -708,9 +742,12 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           context.isMobile ? 16 : 24,
         ),
         itemCount: reproController.nacimientos.length,
-        itemBuilder: (context, index) => _BirthCard(
-          birth: reproController.nacimientos[index],
-          conejas: reproController.conejas,
+        itemBuilder: (context, index) => AnimatedListItem(
+          index: index,
+          child: _BirthCard(
+            birth: reproController.nacimientos[index],
+            conejas: reproController.conejas,
+          ),
         ),
       );
     });
@@ -733,7 +770,10 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           context.isMobile ? 16 : 24,
         ),
         itemCount: crias.length,
-        itemBuilder: (context, index) => _KitCard(kit: crias[index]),
+        itemBuilder: (context, index) => AnimatedListItem(
+          index: index,
+          child: _KitCard(kit: crias[index]),
+        ),
       );
     });
   }
