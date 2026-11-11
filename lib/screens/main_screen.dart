@@ -23,7 +23,7 @@ import 'reports/reports_screen.dart';
 import 'admin/user_management_screen.dart';
 import 'auth/profile_screen.dart';
 import 'auth/settings_screen.dart';
-import 'notifications/notifications_screen.dart';
+
 
 class MainScreen extends StatefulWidget {
   final ThemeController themeController;
@@ -75,13 +75,13 @@ class _MainScreenState extends State<MainScreen>
     },
     {
       'icon': Icons.restaurant_outlined,
-      'label': 'AlimentaciÃ³n',
+      'label': 'Alimentacion',
       'screen': const FeedingScreen(),
       'roles': const ['admin', 'veterinario', 'ayudante', 'usuario'],
     },
     {
       'icon': Icons.favorite_border,
-      'label': 'ReproducciÃ³n',
+      'label': 'Reproduccion',
       'screen': const ReproductionScreen(),
       'roles': const ['admin', 'veterinario', 'ayudante'],
     },
@@ -288,9 +288,9 @@ class _MainScreenState extends State<MainScreen>
     final confirmado = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cerrar sesiÃ³n'),
+        title: const Text('Cerrar sesion'),
         content: const Text(
-          'Â¿EstÃ¡s seguro de que deseas cerrar sesiÃ³n?',
+          'Â¿EstÃ¡s seguro de que deseas cerrar sesion?',
         ),
         actions: [
           TextButton(
@@ -299,7 +299,7 @@ class _MainScreenState extends State<MainScreen>
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Cerrar sesiÃ³n'),
+            child: const Text('Cerrar sesion'),
           ),
         ],
       ),
@@ -310,7 +310,7 @@ class _MainScreenState extends State<MainScreen>
       await Supabase.instance.client.auth.signOut();
     } catch (e) {
       if (mounted) {
-        AppSnackbar.error(context, 'Error al cerrar sesiÃ³n: $e');
+        AppSnackbar.error(context, 'Error al cerrar sesion: $e');
       }
       return;
     }
@@ -321,12 +321,128 @@ class _MainScreenState extends State<MainScreen>
     Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
   }
 
-  // Ir a Notificaciones
-  void _goToNotifications() {
-    Get.to(
-      () => const NotificationsScreen(),
-      transition: Transition.zoom,
-      duration: const Duration(milliseconds: 300),
+  void _showNotificationsPanel(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.transparent,
+      builder: (dialogContext) {
+        final theme = Theme.of(context);
+        final notifications = <_NotificationItem>[];
+        return Stack(
+          children: [
+            Positioned(
+              top: 80,
+              right: 24,
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: 350,
+                  constraints: const BoxConstraints(maxHeight: 450),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 24,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 14, 8, 10),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Notificaciones',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const Spacer(),
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 18),
+                              onPressed: () => Navigator.of(dialogContext).pop(),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      if (notifications.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 32),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.notifications_none_rounded,
+                                size: 28,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                'Sin notificaciones',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        Flexible(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Scrollbar(
+                              thumbVisibility: true,
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                physics: const ClampingScrollPhysics(),
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                itemCount: notifications.length > 5 ? 5 : notifications.length,
+                                itemBuilder: (context, index) {
+                                  final item = notifications[index];
+                                  return ListTile(
+                                    dense: true,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                                    leading: Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.accent.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Icon(item.icon, size: 18, color: AppTheme.accent),
+                                    ),
+                                    title: Text(
+                                      item.title,
+                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                    ),
+                                    subtitle: Text(
+                                      item.subtitle,
+                                      style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+                                    ),
+                                    trailing: Text(
+                                      item.time,
+                                      style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -339,7 +455,7 @@ class _MainScreenState extends State<MainScreen>
     );
   }
 
-  // Ir a ConfiguraciÃ³n
+  // Ir a Configuracion
   void _goToSettings() {
     Get.to(
       () => const SettingsScreen(),
@@ -397,7 +513,7 @@ class _MainScreenState extends State<MainScreen>
           value: 'settings',
           child: ListTile(
             leading: Icon(Icons.settings_outlined),
-            title: Text("ConfiguraciÃ³n"),
+            title: Text("Configuración"),
           ),
         ),
         const PopupMenuItem<String>(
@@ -413,7 +529,7 @@ class _MainScreenState extends State<MainScreen>
           child: ListTile(
             leading: Icon(Icons.logout_rounded, color: AppTheme.danger),
             title: Text(
-              "Cerrar SesiÃ³n",
+              "Cerrar Sesion",
               style: TextStyle(color: AppTheme.danger),
             ),
           ),
@@ -431,13 +547,13 @@ class _MainScreenState extends State<MainScreen>
           _goToSettings();
           break;
         case 'password':
-          AppSnackbar.info(context, "FunciÃ³n prÃ³ximamente");
+          AppSnackbar.info(context, "Funcion proximamente");
           break;
         case 'logout':
           _logout();
           break;
       }
-      // showMenu ya cerrÃ³ el menÃº: NO hacer Navigator.pop aquÃ­.
+      // showMenu ya cerró el menú: NO hacer Navigator.pop aquí.
     });
   }
 
@@ -735,7 +851,7 @@ class _MainScreenState extends State<MainScreen>
           body: Center(
             child: authController.isLoading.value
                 ? const AppLoadingIndicator()
-                : const Text('No tienes acceso a ningÃºn mÃ³dulo'),
+                : const Text('No tienes acceso a ningun  módulo'),
           ),
         );
       }
@@ -864,14 +980,14 @@ class _MainScreenState extends State<MainScreen>
                                   _buildAccountNavItem(
                                     context,
                                     icon: Icons.settings_outlined,
-                                    label: 'ConfiguraciÃ³n',
+                                    label: 'Configuracion',
                                     onTap: _goToSettings,
                                   ),
                                   _buildAccountNavItem(
                                     context,
                                     icon: Icons.lock_reset_outlined,
                                     label: 'Cambiar Contraseña',
-                                    onTap: () => AppSnackbar.info(context, 'FunciÃ³n prÃ³ximamente'),
+                                    onTap: () => AppSnackbar.info(context, 'Funcion proximamente'),
                                   ),
                                 ],
                               ),
@@ -902,7 +1018,7 @@ class _MainScreenState extends State<MainScreen>
                                 ),
                                 icon: const Icon(Icons.logout_rounded, size: 20),
                                 label: const Text(
-                                  'Cerrar SesiÃ³n',
+                                  'Cerrar Sesion',
                                   style: TextStyle(fontWeight: FontWeight.w600),
                                 ),
                               ),
@@ -945,7 +1061,7 @@ class _MainScreenState extends State<MainScreen>
                                     icon: const Icon(
                                       Icons.notifications_outlined,
                                     ),
-                                    onPressed: _goToNotifications,
+                                    onPressed: () => _showNotificationsPanel(context),
                                   ),
                                 ],
                               ),
@@ -1072,7 +1188,7 @@ class _MainScreenState extends State<MainScreen>
                   _buildAccountNavItemDrawer(
                     context,
                     icon: Icons.settings_outlined,
-                    label: 'ConfiguraciÃ³n',
+                    label: 'Configuracion',
                     onTap: () {
                       Navigator.of(context).pop();
                       _goToSettings();
@@ -1084,7 +1200,7 @@ class _MainScreenState extends State<MainScreen>
                     label: 'Cambiar Contraseña',
                     onTap: () {
                       Navigator.of(context).pop();
-                      AppSnackbar.info(context, 'FunciÃ³n prÃ³ximamente');
+                      AppSnackbar.info(context, 'Funcipn proximamente');
                     },
                   ),
                 ],
@@ -1116,7 +1232,7 @@ class _MainScreenState extends State<MainScreen>
                 ),
                 icon: const Icon(Icons.logout_rounded, size: 20),
                 label: const Text(
-                  'Cerrar SesiÃ³n',
+                  'Cerrar Sesion',
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
@@ -1255,7 +1371,7 @@ class _MainScreenState extends State<MainScreen>
       child: Row(
         children: [
           IconButton(
-            tooltip: 'Abrir navegaciÃ³n',
+            tooltip: 'Abrir navegacion',
             icon: const Icon(Icons.menu_rounded),
             onPressed: () => _scaffoldKey.currentState?.openDrawer(),
           ),
@@ -1269,7 +1385,7 @@ class _MainScreenState extends State<MainScreen>
           IconButton(
             tooltip: 'Notificaciones',
             icon: const Icon(Icons.notifications_outlined),
-            onPressed: _goToNotifications,
+            onPressed: () => _showNotificationsPanel(context),
           ),
           IconButton(
             key: _mobileProfileKey,
