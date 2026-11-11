@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../controllers/auth_controller.dart';
 import '../core/utils/logger.dart';
+import '../models/rabbit.dart';
 import '../models/tratamiento.dart';
 
 /// Acceso a la tabla `tratamientos` (módulo Salud).
@@ -11,6 +12,11 @@ class SaludService {
   final _supabase = Supabase.instance.client;
 
   static const String _tableName = 'tratamientos';
+  static const String _rabbitTable = 'conejo';
+  static const List<String> _estadosPendientes = [
+    'En Tratamiento',
+    'Enfermo',
+  ];
 
   bool get _puedeGestionar {
     if (!Get.isRegistered<AuthController>()) return false;
@@ -87,6 +93,23 @@ class SaludService {
     } catch (e) {
       logger.e('Error delete tratamiento', error: e);
       return false;
+    }
+  }
+
+  /// Conejos que requieren atención veterinaria (`En Tratamiento` o `Enfermo`).
+  Future<List<Rabbit>> getPacientesPendientes() async {
+    try {
+      final data = await _supabase
+          .from(_rabbitTable)
+          .select()
+          .inFilter('estado', _estadosPendientes)
+          .order('chapeta', ascending: true);
+      return (data as List)
+          .map((e) => Rabbit.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      logger.e('Error getPacientesPendientes', error: e);
+      return [];
     }
   }
 

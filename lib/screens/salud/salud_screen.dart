@@ -9,6 +9,7 @@ import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/dialog_animations.dart';
 import '../../core/widgets/animated_list_item.dart';
 import '../../core/widgets/app_loading.dart';
+import '../../models/rabbit.dart';
 import '../../models/tratamiento.dart';
 import '../../services/salud_service.dart';
 
@@ -24,6 +25,7 @@ class _SaludScreenState extends State<SaludScreen> {
   final AuthController _auth = Get.find<AuthController>();
 
   List<Tratamiento> _items = [];
+  List<Rabbit> _pacientes = [];
   bool _loading = true;
   String _filtro = 'todos';
 
@@ -43,9 +45,11 @@ class _SaludScreenState extends State<SaludScreen> {
   Future<void> _cargar() async {
     if (mounted) setState(() => _loading = true);
     final data = await _service.getAll();
+    final pacientes = await _service.getPacientesPendientes();
     if (!mounted) return;
     setState(() {
       _items = data;
+      _pacientes = pacientes;
       _loading = false;
     });
   }
@@ -83,13 +87,17 @@ class _SaludScreenState extends State<SaludScreen> {
       };
 
   // ==================== ACCIONES ====================
-  Future<void> _abrirFormulario({Tratamiento? existing}) async {
+  Future<void> _abrirFormulario({
+    Tratamiento? existing,
+    Rabbit? paciente,
+  }) async {
     if (!_puedeGestionar) return;
     final guardado = await showScaleDialog<bool>(
       context: context,
       builder: (_) => _TratamientoFormDialog(
         service: _service,
         existing: existing,
+        conejoInicial: paciente,
       ),
     );
     if (guardado == true) {
@@ -116,6 +124,8 @@ class _SaludScreenState extends State<SaludScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            if (_puedeGestionar && _pacientes.isNotEmpty)
+              _buildPacientesPendientes(context),
             _buildFiltros(context),
             Expanded(
               child: _loading
@@ -124,6 +134,63 @@ class _SaludScreenState extends State<SaludScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPacientesPendientes(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 0, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                size: 18,
+                color: AppTheme.warning,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Atención Requerida',
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppTheme.warning.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '${_pacientes.length}',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: AppTheme.warning,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 100,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(right: 16),
+              itemCount: _pacientes.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, i) => _PacienteCard(
+                rabbit: _pacientes[i],
+                onTap: () => _abrirFormulario(paciente: _pacientes[i]),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -251,12 +318,118 @@ class _ChipProxima extends StatelessWidget {
   }
 }
 
+// ==================== TARJETA DE PACIENTE PENDIENTE ====================
+class _PacienteCard extends StatelessWidget {
+  final Rabbit rabbit;
+  final VoidCallback onTap;
+
+  const _PacienteCard({required this.rabbit, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = rabbit.healthStatus.contains('Tratamiento')
+        ? AppTheme.warning
+        : AppTheme.danger;
+    final photo = rabbit.photoUrl;
+    final detalle = [
+      if (rabbit.breed.isNotEmpty) rabbit.breed,
+      if ((rabbit.cageNumber ?? '').isNotEmpty) 'Jaula ${rabbit.cageNumber}',
+    ].join(' · ');
+
+    return SizedBox(
+      width: 240,
+      child: Card(
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+          side: BorderSide(color: color.withValues(alpha: 0.35)),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: color.withValues(alpha: 0.12),
+                  backgroundImage:
+                      photo != null && photo.isNotEmpty ? NetworkImage(photo) : null,
+                  child: photo == null || photo.isEmpty
+                      ? Icon(Icons.pets_rounded, color: color)
+                      : null,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        rabbit.displayId,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          rabbit.healthStatus,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: color,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      if (detalle.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          detalle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: theme.colorScheme.outline,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ==================== DIÁLOGO AGREGAR/EDITAR ====================
 class _TratamientoFormDialog extends StatefulWidget {
   final SaludService service;
   final Tratamiento? existing;
+  final Rabbit? conejoInicial;
 
-  const _TratamientoFormDialog({required this.service, this.existing});
+  const _TratamientoFormDialog({
+    required this.service,
+    this.existing,
+    this.conejoInicial,
+  });
 
   @override
   State<_TratamientoFormDialog> createState() =>
@@ -294,8 +467,10 @@ class _TratamientoFormDialogState extends State<_TratamientoFormDialog> {
   void initState() {
     super.initState();
     final t = widget.existing;
-    _conejoId = t?.conejoId;
-    _tipo = t?.tipo ?? 'vacuna';
+    _conejoId =
+        t?.conejoId ?? int.tryParse(widget.conejoInicial?.id ?? '');
+    _tipo = t?.tipo ??
+        (widget.conejoInicial != null ? 'tratamiento' : 'vacuna');
     _via = t?.via;
     _fechaAplicacion = t?.fechaAplicacion ?? DateTime.now();
     _fechaProxima = t?.fechaProxima;
@@ -411,7 +586,11 @@ class _TratamientoFormDialogState extends State<_TratamientoFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final rabbits = _rabbits.rabbits;
+    final rabbits = <Rabbit>[..._rabbits.rabbits];
+    final inicial = widget.conejoInicial;
+    if (inicial != null && !rabbits.any((r) => r.id == inicial.id)) {
+      rabbits.add(inicial);
+    }
     final ids = rabbits.map((r) => int.tryParse(r.id)).toSet();
     final dialogWidth =
         MediaQuery.of(context).size.width < 500 ? double.infinity : 440.0;
@@ -428,7 +607,11 @@ class _TratamientoFormDialogState extends State<_TratamientoFormDialog> {
           const SizedBox(width: 12),
           Flexible(
             child: Text(
-              _isEditing ? 'Editar tratamiento' : 'Nuevo tratamiento',
+              _isEditing
+                  ? 'Editar tratamiento'
+                  : widget.conejoInicial != null
+                      ? 'Registrar tratamiento'
+                      : 'Nuevo tratamiento',
             ),
           ),
         ],
