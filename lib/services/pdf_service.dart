@@ -72,7 +72,7 @@ class PdfService {
         build: (context) => [
           _buildHeader(logo: logo, nombreCriadero: nombreCriadero),
           pw.SizedBox(height: 12),
-          _buildTitleBanner(),
+          _buildTitleBanner(fecha: fecha, hora: hora, periodo: periodo),
           pw.SizedBox(height: 12),
           _buildDatosGenerales(
             fecha: '$fecha · $hora',
@@ -91,6 +91,10 @@ class PdfService {
           _buildSection('METAS DEL MES'),
           pw.SizedBox(height: 10),
           _buildMetas(controller),
+          pw.SizedBox(height: 24),
+          _buildSection('INVENTARIO GENERAL DE CONEJOS'),
+          pw.SizedBox(height: 10),
+          _buildInventario(datos),
           pw.SizedBox(height: 24),
           _buildSection('ANÁLISIS Y RECOMENDACIONES'),
           pw.SizedBox(height: 10),
@@ -155,6 +159,13 @@ class PdfService {
         .from('conejo')
         .select('id_conejo')
         .inFilter('estado', ['En tratamiento', 'Enfermo']);
+    final inventarioRows = await _supabase
+        .from('conejo')
+        .select(
+          'id_conejo, chapeta, raza, genero, estado, peso, reproductive_status',
+        )
+        .order('chapeta')
+        .limit(60);
 
     var vivos = 0;
     var muertos = 0;
@@ -176,6 +187,23 @@ class PdfService {
         : vivos / (vivos + muertos) * 100;
     final prolificidad = listaPartos.isEmpty ? 0.0 : vivos / listaPartos.length;
 
+    final inventario = <_ConejoInventario>[];
+    for (final row in inventarioRows) {
+      final mapa = (row as Map).cast<String, dynamic>();
+      final estado = (mapa['estado'] as String? ?? 'Saludable').trim();
+      final peso = (mapa['peso'] as num?)?.toDouble();
+      inventario.add(_ConejoInventario(
+        id: (mapa['chapeta'] as String? ?? 'Sin ID').trim(),
+        raza: (mapa['raza'] as String? ?? '-').trim(),
+        sexo: (mapa['genero'] as String? ?? '-').trim(),
+        estado: estado,
+        reproductivo:
+            (mapa['reproductive_status'] as String? ?? '-').trim(),
+        peso: peso == null || peso <= 0 ? '-' : '${peso.toStringAsFixed(1)} kg',
+        enAlerta: estado.toLowerCase() != 'saludable',
+      ));
+    }
+
     return _DatosReporte(
       totalConejos: controller.totalConejos.value,
       reproductorasEnCiclo: (reproductoras as List).length,
@@ -190,6 +218,53 @@ class PdfService {
       fertilidad: fertilidad,
       supervivencia: supervivencia,
       prolificidad: prolificidad,
+      inventario: inventario,
+    );
+  }
+
+  pw.Widget _buildInventario(_DatosReporte data) {
+    if (data.inventario.isEmpty) {
+      return _simpleMessage('No hay conejos registrados en el criadero.');
+    }
+
+    return pw.Table(
+      border: pw.TableBorder.all(color: _grisBorde, width: 0.5),
+      columnWidths: const {
+        0: pw.FlexColumnWidth(1.1),
+        1: pw.FlexColumnWidth(1.6),
+        2: pw.FlexColumnWidth(0.9),
+        3: pw.FlexColumnWidth(1.1),
+        4: pw.FlexColumnWidth(1.2),
+        5: pw.FlexColumnWidth(1),
+      },
+      children: [
+        pw.TableRow(
+          decoration: const pw.BoxDecoration(color: _grisEncabezado),
+          children: [
+            _cell('ID', header: true),
+            _cell('RAZA', header: true),
+            _cell('SEXO', header: true),
+            _cell('ESTADO', header: true),
+            _cell('REPROD.', header: true),
+            _cell('PESO', header: true),
+          ],
+        ),
+        for (final conejo in data.inventario)
+          pw.TableRow(
+            children: [
+              _cell(conejo.id),
+              _cell(conejo.raza),
+              _cell(conejo.sexo),
+              _cell(
+                conejo.estado,
+                color: conejo.enAlerta ? _rojo : null,
+                bold: conejo.enAlerta,
+              ),
+              _cell(conejo.reproductivo),
+              _cell(conejo.peso),
+            ],
+          ),
+      ],
     );
   }
 
@@ -209,82 +284,123 @@ class PdfService {
     required pw.MemoryImage? logo,
     required String nombreCriadero,
   }) {
-    return pw.Table(
-      border: pw.TableBorder.all(color: _grisBorde, width: 0.7),
-      columnWidths: const {
-        0: pw.FlexColumnWidth(3),
-        1: pw.FlexColumnWidth(1),
-      },
-      children: [
-        pw.TableRow(
-          children: [
-            pw.Container(
-              height: 90,
-              padding: const pw.EdgeInsets.all(10),
-              alignment: pw.Alignment.centerLeft,
-              child: pw.Column(
-                mainAxisAlignment: pw.MainAxisAlignment.center,
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Text(
-                    nombreCriadero.toUpperCase(),
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+      decoration: pw.BoxDecoration(
+        color: const PdfColor.fromInt(0xFFFBF8F3),
+        border: pw.Border.all(color: _marron, width: 1),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(12)),
+      ),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          pw.Container(
+            width: 64,
+            height: 64,
+            padding: const pw.EdgeInsets.all(6),
+            alignment: pw.Alignment.center,
+            decoration: pw.BoxDecoration(
+              color: PdfColors.white,
+              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(10)),
+              border: pw.Border.all(color: _grisBorde, width: 0.6),
+            ),
+            child: logo == null
+                ? pw.Text(
+                    'CT',
+                    textAlign: pw.TextAlign.center,
                     style: pw.TextStyle(
-                      fontSize: 15,
+                      fontSize: 22,
                       fontWeight: pw.FontWeight.bold,
                       color: _marron,
                     ),
+                  )
+                : pw.Image(
+                    logo,
+                    width: 52,
+                    height: 52,
+                    fit: pw.BoxFit.contain,
                   ),
-                  pw.SizedBox(height: 5),
-                  pw.Text(
-                    'Sistema de gestión de criadero',
-                    style: const pw.TextStyle(
-                      fontSize: 9,
-                      color: PdfColors.grey600,
-                    ),
+          ),
+          pw.SizedBox(width: 14),
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'CUNITECH',
+                  style: pw.TextStyle(
+                    fontSize: 20,
+                    fontWeight: pw.FontWeight.bold,
+                    color: _marron,
+                    letterSpacing: 2.4,
                   ),
-                ],
-              ),
+                ),
+                pw.SizedBox(height: 3),
+                pw.Text(
+                  nombreCriadero.toUpperCase(),
+                  style: pw.TextStyle(
+                    fontSize: 11,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.grey800,
+                  ),
+                ),
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  'Gestión profesional de criaderos · Sistema de gestión cunícola',
+                  style: const pw.TextStyle(
+                    fontSize: 8.5,
+                    color: PdfColors.grey600,
+                  ),
+                ),
+              ],
             ),
-            pw.Container(
-              height: 90,
-              padding: const pw.EdgeInsets.all(8),
-              alignment: pw.Alignment.center,
-              child: logo == null
-                  ? pw.Text(
-                      'CUNITECH',
-                      textAlign: pw.TextAlign.center,
-                      style: pw.TextStyle(
-                        fontSize: 13,
-                        fontWeight: pw.FontWeight.bold,
-                        color: _marron,
-                      ),
-                    )
-                  : pw.Image(
-                      logo,
-                      width: 50,
-                      height: 50,
-                      fit: pw.BoxFit.contain,
-                    ),
-            ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
-  pw.Widget _buildTitleBanner() => pw.Container(
+  pw.Widget _buildTitleBanner({
+    required String fecha,
+    required String hora,
+    required String periodo,
+  }) =>
+      pw.Container(
         width: double.infinity,
-        padding: const pw.EdgeInsets.all(20),
-        color: _marron,
-        alignment: pw.Alignment.center,
-        child: pw.Text(
-          'REPORTE DE ACTIVIDADES CUNÍCOLAS',
-          textAlign: pw.TextAlign.center,
-          style: pw.TextStyle(
-            fontSize: 22,
-            fontWeight: pw.FontWeight.bold,
-            color: PdfColors.white,
-          ),
+        margin: const pw.EdgeInsets.only(top: 6),
+        padding: const pw.EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        decoration: const pw.BoxDecoration(
+          color: _marron,
+          borderRadius: pw.BorderRadius.all(pw.Radius.circular(12)),
+        ),
+        child: pw.Column(
+          children: [
+            pw.Text(
+              'Reporte General del Criadero',
+              textAlign: pw.TextAlign.center,
+              style: pw.TextStyle(
+                fontSize: 21,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.white,
+              ),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Container(
+              padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: const pw.BoxDecoration(
+                color: PdfColor.fromInt(0x28FFFFFF),
+                borderRadius: pw.BorderRadius.all(pw.Radius.circular(20)),
+              ),
+              child: pw.Text(
+                'Generado el $fecha a las $hora · Periodo: $periodo',
+                textAlign: pw.TextAlign.center,
+                style: const pw.TextStyle(
+                  fontSize: 9.5,
+                  color: PdfColors.white,
+                ),
+              ),
+            ),
+          ],
         ),
       );
 
@@ -749,6 +865,7 @@ class _DatosReporte {
   final double fertilidad;
   final double supervivencia;
   final double prolificidad;
+  final List<_ConejoInventario> inventario;
 
   const _DatosReporte({
     required this.totalConejos,
@@ -764,6 +881,27 @@ class _DatosReporte {
     required this.fertilidad,
     required this.supervivencia,
     required this.prolificidad,
+    required this.inventario,
+  });
+}
+
+class _ConejoInventario {
+  final String id;
+  final String raza;
+  final String sexo;
+  final String estado;
+  final String reproductivo;
+  final String peso;
+  final bool enAlerta;
+
+  const _ConejoInventario({
+    required this.id,
+    required this.raza,
+    required this.sexo,
+    required this.estado,
+    required this.reproductivo,
+    required this.peso,
+    required this.enAlerta,
   });
 }
 
