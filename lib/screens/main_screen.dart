@@ -11,6 +11,7 @@ import '../core/utils/app_snackbar.dart';
 import '../core/utils/responsive.dart';
 import '../core/widgets/app_loading.dart';
 import '../controllers/auth_controller.dart';
+import '../controllers/notification_controller.dart';
 import '../models/insight_recomendacion.dart';
 import '../services/insight_service.dart';
 
@@ -322,12 +323,12 @@ class _MainScreenState extends State<MainScreen>
   }
 
   void _showNotificationsPanel(BuildContext context) {
+    final notifCtrl = Get.find<NotificationController>();
     showDialog<void>(
       context: context,
       barrierColor: Colors.transparent,
       builder: (dialogContext) {
         final theme = Theme.of(context);
-        final notifications = <_NotificationItem>[];
         return Stack(
           children: [
             Positioned(
@@ -371,29 +372,30 @@ class _MainScreenState extends State<MainScreen>
                         ),
                       ),
                       const Divider(height: 1),
-                      if (notifications.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 32),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.notifications_none_rounded,
-                                size: 28,
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                'Sin notificaciones',
-                                style: theme.textTheme.bodyMedium?.copyWith(
+                      Obx(() {
+                        final notifications = notifCtrl.notifications;
+                        if (notifications.isEmpty)
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 32),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.notifications_none_rounded,
+                                  size: 28,
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
-                              ),
-                            ],
-                          ),
-                        )
-                      else
-                        Flexible(
+                                const SizedBox(height: 10),
+                                Text(
+                                  'Sin notificaciones',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        return Flexible(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 8),
                             child: Scrollbar(
@@ -405,6 +407,12 @@ class _MainScreenState extends State<MainScreen>
                                 itemCount: notifications.length > 5 ? 5 : notifications.length,
                                 itemBuilder: (context, index) {
                                   final item = notifications[index];
+                                  final icon = switch (item.type) {
+                                    IconDataType.health => Icons.health_and_safety_outlined,
+                                    IconDataType.reproduction => Icons.favorite_border,
+                                    IconDataType.warning => Icons.warning_amber_rounded,
+                                    IconDataType.bell => Icons.notifications_outlined,
+                                  };
                                   return ListTile(
                                     dense: true,
                                     contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
@@ -415,7 +423,7 @@ class _MainScreenState extends State<MainScreen>
                                         color: AppTheme.accent.withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
-                                      child: Icon(item.icon, size: 18, color: AppTheme.accent),
+                                      child: Icon(icon, size: 18, color: AppTheme.accent),
                                     ),
                                     title: Text(
                                       item.title,
@@ -434,7 +442,8 @@ class _MainScreenState extends State<MainScreen>
                               ),
                             ),
                           ),
-                        ),
+                        );
+                      }),
                     ],
                   ),
                 ),
@@ -1058,8 +1067,32 @@ class _MainScreenState extends State<MainScreen>
                                   const Spacer(),
                                   IconButton(
                                     tooltip: 'Notificaciones',
-                                    icon: const Icon(
-                                      Icons.notifications_outlined,
+                                    icon: Stack(
+                                      clipBehavior: Clip.none,
+                                      children: [
+                                        const Icon(Icons.notifications_outlined),
+                                        Obx(() {
+                                          final count = Get.find<NotificationController>().unreadCount.value;
+                                          if (count == 0) return const SizedBox.shrink();
+                                          return Positioned(
+                                            right: -4,
+                                            top: -4,
+                                            child: Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: const BoxDecoration(
+                                                color: AppTheme.danger,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                              child: Text(
+                                                count > 9 ? '9+' : '$count',
+                                                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          );
+                                        }),
+                                      ],
                                     ),
                                     onPressed: () => _showNotificationsPanel(context),
                                   ),
