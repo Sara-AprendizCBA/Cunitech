@@ -1153,7 +1153,10 @@ class _MainScreenState extends State<MainScreen>
   ) {
     final theme = Theme.of(context);
     return Container(
-      width: 280,
+      // En pantallas muy angostas el drawer no debe ocupar todo el ancho.
+      width: MediaQuery.of(context).size.width < 320
+          ? MediaQuery.of(context).size.width * 0.85
+          : 280,
       color: theme.brightness == Brightness.dark
           ? const Color(0xFF151210)
           : const Color(0xFFFBF8F3),

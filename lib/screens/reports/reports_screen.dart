@@ -264,20 +264,32 @@ class _ReportsScreenState extends State<ReportsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final titulo = Text(
                 "Crecimiento de Población",
                 style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const Spacer(),
-              Text(
+              );
+              final rango = Text(
                 "Últimos 30 días",
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
-              ),
-            ],
+              );
+              if (constraints.maxWidth < 340) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [titulo, const SizedBox(height: 4), rango],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: titulo),
+                  const Spacer(),
+                  rango,
+                ],
+              );
+            },
           ),
           SizedBox(height: context.isMobile ? 16 : 24),
           SizedBox(
@@ -852,36 +864,59 @@ class _ReportsScreenState extends State<ReportsScreen> {
     IconData icon,
     Color color,
   ) {
-    return Row(
+    final iconWidget = Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, color: color, size: 20),
+    );
+    final textWidget = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 20),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-              Text(
-                subtitle,
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
+        Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
         Text(
-          time,
-          style: TextStyle(fontSize: 13, color: AppTheme.textTertiary),
+          subtitle,
+          style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
         ),
       ],
+    );
+    final timeWidget = Text(
+      time,
+      style: TextStyle(fontSize: 13, color: AppTheme.textTertiary),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // En móvil la fecha baja debajo para que el texto no se corte.
+        if (constraints.maxWidth < 320) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  iconWidget,
+                  const SizedBox(width: 12),
+                  Expanded(child: textWidget),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Padding(padding: const EdgeInsets.only(left: 52), child: timeWidget),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            iconWidget,
+            const SizedBox(width: 12),
+            Expanded(child: textWidget),
+            const SizedBox(width: 12),
+            timeWidget,
+          ],
+        );
+      },
     );
   }
 }

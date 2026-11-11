@@ -309,30 +309,54 @@ class _DashboardScreenState extends State<DashboardScreen>
             borderRadius: BorderRadius.circular(AppTheme.radiusLg),
             border: Border.all(color: foreground.withValues(alpha: 0.2)),
           ),
-          child: Row(
-            children: [
-              Icon(icon, color: foreground, size: 24),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 360;
+              final iconWidget = Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: foreground.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: foreground, size: 22),
+              );
+              final textWidget = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    message,
+                    style: TextStyle(
+                      color: foreground,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${nextBirth.displayId} · $formattedDueDate',
+                    style: TextStyle(color: foreground),
+                  ),
+                ],
+              );
+
+              if (compact) {
+                return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      message,
-                      style: TextStyle(
-                        color: foreground,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${nextBirth.displayId} · $formattedDueDate',
-                      style: TextStyle(color: foreground),
-                    ),
+                    iconWidget,
+                    const SizedBox(height: 10),
+                    textWidget,
                   ],
-                ),
-              ),
-            ],
+                );
+              }
+
+              return Row(
+                children: [
+                  iconWidget,
+                  const SizedBox(width: 14),
+                  Expanded(child: textWidget),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -488,10 +512,33 @@ class _DashboardScreenState extends State<DashboardScreen>
         );
       }
 
-      return Column(
-        children: list.asMap().entries.map((e) {
-          return _buildRabbitCard(context, e.value, e.key);
-        }).toList(),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          // En pantallas anchas las tarjetas se acomodan en rejilla;
+          // en móvil se apilan a lo ancho para evitar desbordes.
+          final columns = constraints.maxWidth >= 900
+              ? 2
+              : (constraints.maxWidth >= 600 ? 2 : 1);
+          if (columns == 1) {
+            return Column(
+              children: [
+                for (final entry in list.asMap().entries)
+                  _buildRabbitCard(context, entry.value, entry.key),
+              ],
+            );
+          }
+          return Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            children: [
+              for (final entry in list.asMap().entries)
+                SizedBox(
+                  width: (constraints.maxWidth - 16) / columns,
+                  child: _buildRabbitCard(context, entry.value, entry.key),
+                ),
+            ],
+          );
+        },
       );
     });
   }

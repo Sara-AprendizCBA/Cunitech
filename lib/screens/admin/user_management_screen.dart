@@ -543,7 +543,9 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
     return AlertDialog(
       title: const Text('Crear usuario'),
       content: SizedBox(
-        width: 420,
+        width: MediaQuery.of(context).size.width < 460
+            ? (MediaQuery.of(context).size.width - 48).clamp(220.0, 420.0)
+            : 420,
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(

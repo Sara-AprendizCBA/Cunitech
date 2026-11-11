@@ -491,7 +491,9 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
     return AlertDialog(
       title: Text(_isEditing ? 'Editar conejo' : 'Nuevo conejo'),
       content: SizedBox(
-        width: 460,
+        width: MediaQuery.of(context).size.width < 500
+            ? (MediaQuery.of(context).size.width - 48).clamp(240.0, 460.0)
+            : 460,
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
