@@ -9,11 +9,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../controllers/reportes_controller.dart';
 import '../models/meta_mensual.dart';
 
-final _marron = PdfColor.fromInt(0xFF6B4F3A);
-final _grisEncabezado = PdfColor.fromInt(0xFFF0EDE9);
-final _grisBorde = PdfColor.fromInt(0xFFCCCCCC);
-final _verde = PdfColor.fromInt(0xFF166534);
-final _rojo = PdfColor.fromInt(0xFF991B1B);
+const _marron = PdfColor.fromInt(0xFF6B4F3A);
+const _grisEncabezado = PdfColor.fromInt(0xFFF0EDE9);
+const _grisBorde = PdfColor.fromInt(0xFFCCCCCC);
+const _verde = PdfColor.fromInt(0xFF166534);
+const _rojo = PdfColor.fromInt(0xFF991B1B);
 
 class PdfService {
   final _supabase = Supabase.instance.client;
@@ -60,9 +60,9 @@ class PdfService {
     );
     doc.addPage(
       pw.MultiPage(
-        pageTheme: pw.PageTheme(
+        pageTheme: const pw.PageTheme(
           pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.fromLTRB(36, 30, 36, 30),
+          margin: pw.EdgeInsets.fromLTRB(36, 30, 36, 30),
         ),
         footer: (context) => _buildFooter(
           fecha: fecha,
@@ -302,7 +302,7 @@ class PdfService {
       },
       children: [
         pw.TableRow(
-          decoration: pw.BoxDecoration(color: _grisEncabezado),
+          decoration: const pw.BoxDecoration(color: _grisEncabezado),
           children: [
             _cell('FECHA DEL INFORME', header: true),
             _cell('RESPONSABLE', header: true),
@@ -344,7 +344,7 @@ class PdfService {
       border: pw.TableBorder.all(color: _grisBorde, width: 0.5),
       children: [
         pw.TableRow(
-          decoration: pw.BoxDecoration(color: _grisEncabezado),
+          decoration: const pw.BoxDecoration(color: _grisEncabezado),
           children: [for (final item in items) _cell(item.$1, header: true)],
         ),
         pw.TableRow(
@@ -416,7 +416,7 @@ class PdfService {
       },
       children: [
         pw.TableRow(
-          decoration: pw.BoxDecoration(color: _grisEncabezado),
+          decoration: const pw.BoxDecoration(color: _grisEncabezado),
           children: [
             _cell('INDICADOR', header: true),
             _cell('VALOR', header: true),
@@ -434,7 +434,7 @@ class PdfService {
                     : '${fila.$3} ${fila.$4! ? '[OK]' : '[X]'}',
                 background: fila.$4 == null
                     ? _grisEncabezado
-                    : (fila.$4! ? PdfColor.fromInt(0xFFE8F5E9) : PdfColor.fromInt(0xFFFDECEC)),
+                    : (fila.$4! ? const PdfColor.fromInt(0xFFE8F5E9) : const PdfColor.fromInt(0xFFFDECEC)),
                 color: fila.$4 == null ? PdfColors.black : (fila.$4! ? _verde : _rojo),
                 bold: fila.$4 != null,
               ),
@@ -468,7 +468,7 @@ class PdfService {
       },
       children: [
         pw.TableRow(
-          decoration: pw.BoxDecoration(color: _grisEncabezado),
+          decoration: const pw.BoxDecoration(color: _grisEncabezado),
           children: [
             _cell('KPI', header: true),
             _cell('ACTUAL', header: true),
@@ -488,8 +488,8 @@ class PdfService {
     final cumple = actual >= meta.valorObjetivo;
     final color = cumple ? _verde : _rojo;
     final fondo = cumple
-        ? PdfColor.fromInt(0xFFE8F5E9)
-        : PdfColor.fromInt(0xFFFDECEC);
+        ? const PdfColor.fromInt(0xFFE8F5E9)
+        : const PdfColor.fromInt(0xFFFDECEC);
     return pw.TableRow(
       children: [
         _cell(meta.kpiLabel),
@@ -607,7 +607,7 @@ class PdfService {
       },
       children: [
         pw.TableRow(
-          decoration: pw.BoxDecoration(color: _grisEncabezado),
+          decoration: const pw.BoxDecoration(color: _grisEncabezado),
           children: [
             _cell('FECHA', header: true),
             _cell('EVENTO', header: true),
@@ -630,7 +630,7 @@ class PdfService {
           for (var i = 0; i < 3; i++)
             pw.Container(
               height: 25,
-              decoration: pw.BoxDecoration(
+              decoration: const pw.BoxDecoration(
                 border: pw.Border(
                   bottom: pw.BorderSide(color: _grisBorde, width: 0.5),
                 ),

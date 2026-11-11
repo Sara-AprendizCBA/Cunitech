@@ -137,7 +137,7 @@ class _VisionScreenState extends State<VisionScreen> {
                     size: 48,
                     color: AppTheme.textTertiary,
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     'Sube una foto para comenzar',
                     style: TextStyle(
@@ -153,6 +153,7 @@ class _VisionScreenState extends State<VisionScreen> {
               fit: BoxFit.contain,
               width: double.infinity,
               height: 300,
+              cacheWidth: 900,
             ),
     );
   }

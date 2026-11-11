@@ -246,6 +246,13 @@ class _RabbitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final photoUrl = rabbit.photoUrl;
+    final genderIcon = Icon(
+      rabbit.gender == 'Macho' ? Icons.male : Icons.female,
+      size: 28,
+      color: AppTheme.accent,
+    );
+
     return AppCard(
       margin: EdgeInsets.only(bottom: context.isMobile ? 12 : 16),
       onTap: onTap,
@@ -254,17 +261,19 @@ class _RabbitCard extends StatelessWidget {
           CircleAvatar(
             radius: 32,
             backgroundColor: AppTheme.accent.withValues(alpha: 0.1),
-            backgroundImage:
-                rabbit.photoUrl != null && rabbit.photoUrl!.isNotEmpty
-                ? NetworkImage(rabbit.photoUrl!)
-                : null,
-            child: rabbit.photoUrl == null || rabbit.photoUrl!.isEmpty
-                ? Icon(
-                    rabbit.gender == 'Macho' ? Icons.male : Icons.female,
-                    size: 28,
-                    color: AppTheme.accent,
+            child: photoUrl != null && photoUrl.isNotEmpty
+                ? ClipOval(
+                    child: Image.network(
+                      photoUrl,
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
+                      cacheWidth: 128,
+                      cacheHeight: 128,
+                      errorBuilder: (_, __, ___) => genderIcon,
+                    ),
                   )
-                : null,
+                : genderIcon,
           ),
           SizedBox(
             width: context.isMobile

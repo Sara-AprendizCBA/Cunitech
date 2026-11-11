@@ -86,16 +86,16 @@ class AppTheme {
     useMaterial3: true,
     brightness: Brightness.light,
 
-    colorScheme: ColorScheme(
+    colorScheme: const ColorScheme(
       brightness: Brightness.light,
       primary: accent,
       onPrimary: Colors.white,
-      primaryContainer: const Color(0xFFD4A76A),
-      onPrimaryContainer: const Color(0xFF1A1A1A),
-      secondary: const Color(0xFF5A5A5A),
+      primaryContainer: Color(0xFFD4A76A),
+      onPrimaryContainer: Color(0xFF1A1A1A),
+      secondary: Color(0xFF5A5A5A),
       onSecondary: Colors.white,
-      secondaryContainer: const Color(0xFFFEFBF7),
-      onSecondaryContainer: const Color(0xFF2C2C2C),
+      secondaryContainer: Color(0xFFFEFBF7),
+      onSecondaryContainer: Color(0xFF2C2C2C),
       tertiary: info,
       onTertiary: Colors.white,
       error: danger,
@@ -104,7 +104,7 @@ class AppTheme {
       onSurface: _textPrimaryBase,
       onSurfaceVariant: _textSecondaryBase,
       outline: _borderLightBase,
-      outlineVariant: const Color(0xFFF0F0EE),
+      outlineVariant: Color(0xFFF0F0EE),
     ),
 
     fontFamily: GoogleFonts.inter().fontFamily,
@@ -154,8 +154,8 @@ class AppTheme {
         borderRadius: BorderRadius.circular(radiusMd),
         borderSide: const BorderSide(color: danger, width: 1),
       ),
-      hintStyle: TextStyle(color: _textTertiaryBase, fontSize: 14),
-      labelStyle: TextStyle(color: _textSecondaryBase, fontSize: 14),
+      hintStyle: const TextStyle(color: _textTertiaryBase, fontSize: 14),
+      labelStyle: const TextStyle(color: _textSecondaryBase, fontSize: 14),
     ),
 
     // Botones Primarios
@@ -269,13 +269,13 @@ class AppTheme {
         color: Color(0xFF5A5A5A),
         size: 24,
       ),
-      selectedLabelTextStyle: TextStyle(
+      selectedLabelTextStyle: const TextStyle(
         color: accent,
         fontSize: 13,
         fontWeight: FontWeight.w600,
       ),
-      unselectedLabelTextStyle: TextStyle(
-        color: const Color(0xFF5A5A5A),
+      unselectedLabelTextStyle: const TextStyle(
+        color: Color(0xFF5A5A5A),
         fontSize: 13,
         fontWeight: FontWeight.w500,
       ),
@@ -305,74 +305,74 @@ class AppTheme {
 
     // Text Theme Refinado
     textTheme: GoogleFonts.interTextTheme(
-      TextTheme(
-        displayLarge: const TextStyle(
+      const TextTheme(
+        displayLarge: TextStyle(
           fontSize: 36,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.6,
           color: Color(0xFF2C2C2C),
         ),
-        displayMedium: const TextStyle(
+        displayMedium: TextStyle(
           fontSize: 28,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.4,
           color: Color(0xFF2C2C2C),
         ),
-        headlineLarge: const TextStyle(
+        headlineLarge: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.4,
           color: Color(0xFF2C2C2C),
         ),
-        headlineMedium: const TextStyle(
+        headlineMedium: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.3,
           color: Color(0xFF2C2C2C),
         ),
-        titleLarge: const TextStyle(
+        titleLarge: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.2,
           color: Color(0xFF2C2C2C),
         ),
-        titleMedium: const TextStyle(
+        titleMedium: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: Color(0xFF2C2C2C),
         ),
-        titleSmall: const TextStyle(
+        titleSmall: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: Color(0xFF2C2C2C),
         ),
-        bodyLarge: const TextStyle(
+        bodyLarge: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w400,
           color: Color(0xFF2C2C2C),
         ),
-        bodyMedium: const TextStyle(
+        bodyMedium: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: Color(0xFF5A5A5A),
         ),
-        bodySmall: const TextStyle(
+        bodySmall: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w400,
           color: Color(0xFF64748B),
         ),
-        labelLarge: const TextStyle(
+        labelLarge: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: Color(0xFF2C2C2C),
         ),
-        labelMedium: const TextStyle(
+        labelMedium: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: Color(0xFF5A5A5A),
           letterSpacing: 0.3,
         ),
-        labelSmall: const TextStyle(
+        labelSmall: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w500,
           color: Color(0xFF64748B),
@@ -387,25 +387,25 @@ class AppTheme {
     useMaterial3: true,
     brightness: Brightness.dark,
 
-    colorScheme: ColorScheme(
+    colorScheme: const ColorScheme(
       brightness: Brightness.dark,
       primary: accent,
       onPrimary: Colors.white,
-      primaryContainer: const Color(0xFF3D3226),
-      onPrimaryContainer: const Color(0xFFD4A76A),
-      secondary: const Color(0xFFB4B2A9),
-      onSecondary: const Color(0xFF1A1A1A),
-      secondaryContainer: const Color(0xFF2C2C2A),
-      onSecondaryContainer: const Color(0xFFD3D1C7),
+      primaryContainer: Color(0xFF3D3226),
+      onPrimaryContainer: Color(0xFFD4A76A),
+      secondary: Color(0xFFB4B2A9),
+      onSecondary: Color(0xFF1A1A1A),
+      secondaryContainer: Color(0xFF2C2C2A),
+      onSecondaryContainer: Color(0xFFD3D1C7),
       tertiary: info,
       onTertiary: Colors.white,
       error: danger,
       onError: Colors.white,
       surface: surfaceDark,
-      onSurface: const Color(0xFFEEEEEC),
-      onSurfaceVariant: const Color(0xFF9A9A98),
+      onSurface: Color(0xFFEEEEEC),
+      onSurfaceVariant: Color(0xFF9A9A98),
       outline: borderDark,
-      outlineVariant: const Color(0xFF222222),
+      outlineVariant: Color(0xFF222222),
     ),
 
     fontFamily: GoogleFonts.inter().fontFamily,

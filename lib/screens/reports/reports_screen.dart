@@ -82,7 +82,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               Obx(
                 () => reportesController.isLoading.value
                     ? Padding(
-                        padding: EdgeInsets.only(top: AppTheme.spacingSm),
+                        padding: const EdgeInsets.only(top: AppTheme.spacingSm),
                         child: LinearProgressIndicator(
                           minHeight: 2,
                           color: AppTheme.accent,
@@ -286,7 +286,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
               final valores = spots.map((spot) => spot.y).toList();
               final maxValor = valores.reduce(math.max);
-              final minY = 0.0;
+              const minY = 0.0;
               final maxY = math.max(10.0, maxValor * 1.1).toDouble();
 
               return LineChart(

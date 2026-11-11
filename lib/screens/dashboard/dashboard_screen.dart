@@ -12,7 +12,6 @@ import '../../controllers/dashboard_controller.dart';
 import '../../models/insight_recomendacion.dart';
 import '../../models/rabbit.dart';
 import '../../services/insight_service.dart';
-import '../chat/voice_assistant_screen.dart';
 import '../rabbits/rabbit_detail_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -60,7 +59,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget build(BuildContext context) {
     final isMobile = context.isMobile;
     final isTablet = ResponsiveBuildContext(context).isTablet;
-    final isDesktop = !isMobile && !isTablet;
 
     return Scaffold(
       backgroundColor: AppTheme.bgLight,
@@ -220,6 +218,10 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildNextBirthBanner(BuildContext context) {
+    return Obx(() => _buildNextBirthBannerContent(context));
+  }
+
+  Widget _buildNextBirthBannerContent(BuildContext context) {
     final nextBirth = dashboardController.getNextExpectedBirth();
     if (nextBirth == null) {
       return Container(

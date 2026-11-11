@@ -193,17 +193,29 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-          return Image.memory(snapshot.data!, fit: BoxFit.cover);
+          return Image.memory(
+            snapshot.data!,
+            fit: BoxFit.cover,
+            cacheWidth: 280,
+            cacheHeight: 280,
+          );
         },
       );
     }
     if (_aiPhotoBytes != null) {
-      return Image.memory(_aiPhotoBytes!, fit: BoxFit.cover);
+      return Image.memory(
+        _aiPhotoBytes!,
+        fit: BoxFit.cover,
+        cacheWidth: 280,
+        cacheHeight: 280,
+      );
     }
     if (_currentPhotoUrl != null && _currentPhotoUrl!.isNotEmpty) {
       return Image.network(
         _currentPhotoUrl!,
         fit: BoxFit.cover,
+        cacheWidth: 280,
+        cacheHeight: 280,
         errorBuilder: (_, __, ___) => Icon(
           Icons.broken_image_rounded,
           size: 40,

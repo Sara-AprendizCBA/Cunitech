@@ -98,9 +98,9 @@ class _AuthScreenState extends State<AuthScreen> {
             Expanded(
               flex: isTablet ? 4 : 5,
               child: Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   image: DecorationImage(
-                    image: const AssetImage('assets/images/Conejos.jpg'),
+                    image: AssetImage('assets/images/Conejos.jpg'),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -359,8 +359,8 @@ class _AuthScreenState extends State<AuthScreen> {
                                     text: isLogin
                                         ? "Regístrate"
                                         : "Inicia sesión",
-                                    style: TextStyle(
-                                      color: const Color(0xFFe0e27c),
+                                    style: const TextStyle(
+                                      color: Color(0xFFe0e27c),
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -416,7 +416,7 @@ class _AuthScreenState extends State<AuthScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'CUNITECH',
                   style: TextStyle(
                     fontSize: 22,
@@ -465,12 +465,12 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        Text(
+        const Text(
           'CUNITECH',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFFe0e27c),
+            color: Color(0xFFe0e27c),
             fontFamily: 'Merriweather',
             letterSpacing: 1,
           ),

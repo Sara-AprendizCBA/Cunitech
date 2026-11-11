@@ -43,6 +43,7 @@ class RabbitDetailScreen extends StatelessWidget {
               ? Image.network(
                   photoUrl,
                   fit: BoxFit.cover,
+                  cacheWidth: 900,
                   errorBuilder: (_, __, ___) => _photoPlaceholder(),
                 )
               : _photoPlaceholder(),

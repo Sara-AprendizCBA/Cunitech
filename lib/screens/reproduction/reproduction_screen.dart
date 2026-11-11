@@ -127,10 +127,13 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
         isScrollable: context.isMobile,
         dividerColor: Colors.transparent,
         indicatorSize: TabBarIndicatorSize.tab,
-        indicator: BoxDecoration(color: AppTheme.accent, borderRadius: BorderRadius.all(Radius.circular(10))),
+        indicator: const BoxDecoration(
+          color: AppTheme.accent,
+          borderRadius: BorderRadius.all(Radius.circular(10)),
+        ),
         labelColor: Colors.white,
         unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
-        tabs: [
+        tabs: const [
           Tab(icon: Icon(Icons.favorite_border_rounded, size: 20), text: 'Montas'),
           Tab(icon: Icon(Icons.child_care_rounded, size: 20), text: 'Nacimientos'),
           Tab(icon: Icon(Icons.pets_rounded, size: 20), text: 'Crías'),
@@ -160,95 +163,106 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
       final isMobile = context.isMobile;
       final theme = Theme.of(context);
 
-      return ListView(
+      return ListView.builder(
         padding: EdgeInsets.fromLTRB(
-          isMobile ? 80 : 24,
+          isMobile ? 16 : 24,
           8,
           isMobile ? 16 : 24,
           isMobile ? 16 : 24,
         ),
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  crossAxisAlignment: WrapCrossAlignment.center,
+        itemCount: filtered.isEmpty ? 1 : filtered.length + 1,
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    _MatingStatCard(
-                      label: 'Servidas',
-                      count: reproController.servidas.length,
-                      color: const Color(0xFFFEF3C7),
-                      foreground: const Color(0xFF92400E),
-                    ),
-                    _MatingStatCard(
-                      label: 'Gestantes',
-                      count: reproController.gestantes.length,
-                      color: const Color(0xFFDCFCE7),
-                      foreground: const Color(0xFF166534),
-                    ),
-                    _MatingStatCard(
-                      label: 'Fallidas',
-                      count: reproController.fallidas.length,
-                      color: const Color(0xFFFEE2E2),
-                      foreground: const Color(0xFF991B1B),
-                    ),
-                    if (reproController.proximasPalpaciones.isNotEmpty)
-                      _MatingStatCard(
-                        label: 'Palpaciones',
-                        count: reproController.proximasPalpaciones.length,
-                        color: const Color(0xFFFFEDD5),
-                        foreground: const Color(0xFF9A3412),
+                    Expanded(
+                      child: Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          _MatingStatCard(
+                            label: 'Servidas',
+                            count: reproController.servidas.length,
+                            color: const Color(0xFFFEF3C7),
+                            foreground: const Color(0xFF92400E),
+                          ),
+                          _MatingStatCard(
+                            label: 'Gestantes',
+                            count: reproController.gestantes.length,
+                            color: const Color(0xFFDCFCE7),
+                            foreground: const Color(0xFF166534),
+                          ),
+                          _MatingStatCard(
+                            label: 'Fallidas',
+                            count: reproController.fallidas.length,
+                            color: const Color(0xFFFEE2E2),
+                            foreground: const Color(0xFF991B1B),
+                          ),
+                          if (reproController.proximasPalpaciones.isNotEmpty)
+                            _MatingStatCard(
+                              label: 'Palpaciones',
+                              count:
+                                  reproController.proximasPalpaciones.length,
+                              color: const Color(0xFFFFEDD5),
+                              foreground: const Color(0xFF9A3412),
+                            ),
+                        ],
                       ),
+                    ),
+                    if (!context.isMobile &&
+                        !authController.isVeterinario) ...[
+                      const SizedBox(width: 12),
+                      PressableScale(
+                        child: FilledButton.icon(
+                          onPressed: () => _showMatingForm(),
+                          icon: const Icon(Icons.add_rounded),
+                          label: const Text('Registrar monta'),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
-              ),
-              if (!context.isMobile && !authController.isVeterinario) ...[
-                const SizedBox(width: 12),
-                PressableScale(
-                  child: FilledButton.icon(
-                    onPressed: () => _showMatingForm(),
-                    icon: const Icon(Icons.add_rounded),
-                    label: const Text('Registrar monta'),
-                  ),
+                SizedBox(height: isMobile ? 16 : 24),
+                Wrap(
+                  spacing: 8,
+                  children: ['Todas', 'Pendientes', 'Gestantes', 'Fallidas']
+                      .map(
+                        (filter) => ChoiceChip(
+                          label: Text(filter),
+                          selected: _matingFilter == filter,
+                          selectedColor: AppTheme.accent,
+                          labelStyle: TextStyle(
+                            color: _matingFilter == filter
+                                ? Colors.white
+                                : theme.colorScheme.onSurfaceVariant,
+                          ),
+                          onSelected: (_) =>
+                              setState(() => _matingFilter = filter),
+                        ),
+                      )
+                      .toList(),
                 ),
+                SizedBox(height: isMobile ? 16 : 20),
+                if (filtered.isEmpty)
+                  _EmptyMatingsState(
+                    hasAnyMatings:
+                        reproController.reproducciones.isNotEmpty,
+                  ),
               ],
-            ],
-          ),
-          SizedBox(height: isMobile ? 16 : 24),
-          Wrap(
-            spacing: 8,
-            children: ['Todas', 'Pendientes', 'Gestantes', 'Fallidas']
-                .map(
-                  (filter) => ChoiceChip(
-                    label: Text(filter),
-                    selected: _matingFilter == filter,
-                    selectedColor: AppTheme.accent,
-                    labelStyle: TextStyle(
-                      color: _matingFilter == filter
-                          ? Colors.white
-                          : theme.colorScheme.onSurfaceVariant,
-                    ),
-                    onSelected: (_) => setState(() => _matingFilter = filter),
-                  ),
-                )
-                .toList(),
-          ),
-          SizedBox(height: isMobile ? 16 : 20),
-          if (filtered.isEmpty)
-            _EmptyMatingsState(
-              hasAnyMatings: reproController.reproducciones.isNotEmpty,
-            )
-          else
-            ...filtered.asMap().entries.map(
-                  (entry) => AnimatedListItem(
-                    index: entry.key,
-                    child: _buildMatingCard(entry.value),
-                  ),
-                ),
-        ],
+            );
+          }
+
+          final i = index - 1;
+          return AnimatedListItem(
+            index: i,
+            child: _buildMatingCard(filtered[i]),
+          );
+        },
       );
     });
   }
@@ -663,11 +677,11 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Row(
+        title: const Row(
           children: [
-            const Icon(Icons.warning_amber_rounded, color: AppTheme.danger),
-            const SizedBox(width: 12),
-            const Text('Eliminar monta'),
+            Icon(Icons.warning_amber_rounded, color: AppTheme.danger),
+            SizedBox(width: 12),
+            Text('Eliminar monta'),
           ],
         ),
         content: Column(

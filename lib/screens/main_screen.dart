@@ -250,31 +250,31 @@ class _MainScreenState extends State<MainScreen>
           ),
         ),
         const PopupMenuDivider(),
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: 'profile',
-          child: const ListTile(
+          child: ListTile(
             leading: Icon(Icons.person_outline),
             title: Text("Ver Perfil"),
           ),
         ),
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: 'settings',
-          child: const ListTile(
+          child: ListTile(
             leading: Icon(Icons.settings_outlined),
             title: Text("Configuración"),
           ),
         ),
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: 'password',
-          child: const ListTile(
+          child: ListTile(
             leading: Icon(Icons.lock_outline),
             title: Text("Cambiar Contraseña"),
           ),
         ),
         const PopupMenuDivider(),
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: 'logout',
-          child: const ListTile(
+          child: ListTile(
             leading: Icon(Icons.logout_rounded, color: AppTheme.danger),
             title: Text(
               "Cerrar Sesión",
