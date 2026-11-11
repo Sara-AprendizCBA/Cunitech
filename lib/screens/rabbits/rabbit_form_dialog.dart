@@ -34,7 +34,7 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
   late final TextEditingController _chapetaCtrl;
   late final TextEditingController _lastWeightCtrl;
 
-  static const List<String> _razasPermitidas = [
+  static const List<String> _razasSugeridas = [
     'Nueva Zelanda',
     'California',
     'Rex',
@@ -43,12 +43,14 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
     'Angora',
     'Gigante de Flandes',
     'Chinchilla',
+    'Híbrido',
     'Otra',
   ];
 
+  final TextEditingController _razaCtrl = TextEditingController();
+
   final List<String> _genders = ['Macho', 'Hembra'];
   final List<String> _states = ['Saludable', 'En Tratamiento', 'Enfermo'];
-  String? _raza;
   late String _gender;
   late String _state;
   DateTime? _birthDate;
@@ -80,8 +82,7 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
     final r = widget.rabbit;
     _currentPhotoUrl = r?.photoUrl;
 
-    final razaActual = (r?.breed ?? '').trim();
-    _raza = _razasPermitidas.contains(razaActual) ? razaActual : null;
+    _razaCtrl = TextEditingController(text: r?.breed ?? '');
     _weightCtrl = TextEditingController(
       text: (r != null && r.weightKg > 0) ? '${r.weightKg}' : '',
     );
@@ -120,6 +121,7 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
   @override
   void dispose() {
     _chapetaCtrl.removeListener(_onChapetaChanged);
+    _razaCtrl.dispose();
     _weightCtrl.dispose();
     _originCtrl.dispose();
     _registryNumberCtrl.dispose();
@@ -247,12 +249,8 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
     );
     if (result == null || !mounted) return;
 
-    final raza = _razasPermitidas.firstWhere(
-      (permitida) =>
-          permitida.toLowerCase() == result.raza.trim().toLowerCase(),
-      orElse: () => '',
-    );
-    if (raza.isEmpty) {
+    final detectedRaza = result.raza.trim();
+    if (detectedRaza.isEmpty) {
       AppSnackbar.error(
         context,
         'La imagen no corresponde a un conejo. Por favor, sube una foto válida',
@@ -265,9 +263,9 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
     setState(() {
       _aiPhotoBytes = result.imagenBytes;
       _pickedPhoto = null;
-      _raza = raza;
+      _razaCtrl.text = detectedRaza;
     });
-    await _sugerirChapeta(raza);
+    await _sugerirChapeta(detectedRaza);
   }
 
   void _onChapetaChanged() {
@@ -374,7 +372,7 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
       final rabbit = Rabbit(
         id: old?.id ?? '',
         name: null,
-        breed: _raza ?? '',
+        breed: _razaCtrl.text.trim(),
         gender: _gender,
         birthDate: _birthDate!,
         weightKg: weightText.isEmpty ? 0 : double.parse(weightText),
@@ -571,30 +569,55 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
                 const SizedBox(height: 12),
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final breedField = DropdownButtonFormField<String>(
-                      key: ValueKey(_raza),
-                      initialValue: _raza,
-                      isExpanded: true,
-                      decoration: const InputDecoration(labelText: 'Raza *'),
-                      items: _razasPermitidas
-                          .map((raza) => DropdownMenuItem<String>(
-                                value: raza,
-                                child: Text(raza),
-                              ))
-                          .toList(),
-                      onChanged: _saving
-                          ? null
-                          : (value) {
-                              if (value == null) return;
-                              setState(() => _raza = value);
-                              if (_chapetaAutoGenerada ||
-                                  _chapetaCtrl.text.trim().isEmpty) {
-                                _sugerirChapeta(value);
-                              }
-                            },
-                      validator: (value) => value == null
-                          ? 'Selecciona una raza'
-                          : null,
+                    final breedField = Autocomplete<String>(
+                      initialValue: TextEditingValue(text: _razaCtrl.text),
+                      optionsBuilder: (TextEditingValue textEditingValue) {
+                        if (textEditingValue.text.isEmpty) {
+                          return _razasSugeridas;
+                        }
+                        final query = textEditingValue.text.toLowerCase();
+                        return _razasSugeridas.where(
+                          (option) => option.toLowerCase().contains(query),
+                        );
+                      },
+                      onSelected: (String selection) {
+                        _razaCtrl.text = selection;
+                        if (_chapetaAutoGenerada ||
+                            _chapetaCtrl.text.trim().isEmpty) {
+                          _sugerirChapeta(selection);
+                        }
+                      },
+                      fieldViewBuilder: (
+                        context,
+                        textEditingController,
+                        focusNode,
+                        onFieldSubmitted,
+                      ) {
+                        if (textEditingController.text != _razaCtrl.text) {
+                          textEditingController.text = _razaCtrl.text;
+                          textEditingController.selection = TextSelection.fromPosition(
+                            TextPosition(offset: textEditingController.text.length),
+                          );
+                        }
+                        textEditingController.addListener(() {
+                          if (_razaCtrl.text != textEditingController.text) {
+                            _razaCtrl.text = textEditingController.text;
+                          }
+                        });
+                        return TextFormField(
+                          controller: textEditingController,
+                          focusNode: focusNode,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: const InputDecoration(labelText: 'Raza *'),
+                          validator: _required,
+                          onChanged: (value) {
+                            if (_chapetaAutoGenerada ||
+                                _chapetaCtrl.text.trim().isEmpty) {
+                              _sugerirChapeta(value);
+                            }
+                          },
+                        );
+                      },
                     );
                     if (!_canUseAI) return breedField;
 
