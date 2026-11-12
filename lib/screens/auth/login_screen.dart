@@ -24,6 +24,13 @@ class _AuthScreenState extends State<AuthScreen> {
   final _passwordController = TextEditingController(text: '');
   final _confirmPasswordController = TextEditingController();
 
+  // Focus nodes explicitos: el foco se conserva aunque el formulario se
+  // reconstruya (por ejemplo al cambiar el estado de carga o de error).
+  final _nameFocusNode = FocusNode();
+  final _emailFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
+  final _confirmPasswordFocusNode = FocusNode();
+
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -69,6 +76,10 @@ class _AuthScreenState extends State<AuthScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _nameFocusNode.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    _confirmPasswordFocusNode.dispose();
     super.dispose();
   }
 
@@ -331,33 +342,6 @@ class _AuthScreenState extends State<AuthScreen> {
           _buildAuthTabs(context),
           const SizedBox(height: 24),
         ],
-        if (_errorMessage != null) ...[
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: errorBackground,
-              border: Border.all(color: errorBorder),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.warning_amber_rounded, color: errorIcon),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(
-                      color: errorText,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
         Form(
           key: _formKey,
           autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -366,6 +350,7 @@ class _AuthScreenState extends State<AuthScreen> {
               if (!isLogin) ...[
                 _buildTextField(
                   controller: _nameController,
+                  focusNode: _nameFocusNode,
                   compact: compact,
                   label: "Nombre de la Granja",
                   hint: "Granja Los Conejos",
@@ -381,12 +366,14 @@ class _AuthScreenState extends State<AuthScreen> {
               ],
               _buildTextField(
                 controller: _emailController,
+                focusNode: _emailFocusNode,
                 compact: compact,
                 label: "Correo electrónico",
                 hint: "Correo electrónico",
                 icon: Icons.email_rounded,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
+                onFieldSubmitted: (_) => _passwordFocusNode.requestFocus(),
                 validator: (value) {
                   final email = value?.trim() ?? '';
                   if (email.isEmpty) {
@@ -401,6 +388,7 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 20),
               _buildPasswordField(
                 controller: _passwordController,
+                focusNode: _passwordFocusNode,
                 compact: compact,
                 label: "Contraseña",
                 obscure: _obscurePassword,
@@ -427,6 +415,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 const SizedBox(height: 20),
                 _buildPasswordField(
                   controller: _confirmPasswordController,
+                  focusNode: _confirmPasswordFocusNode,
                   compact: compact,
                   label: "Confirmar Contraseña",
                   obscure: _obscureConfirmPassword,
@@ -450,6 +439,36 @@ class _AuthScreenState extends State<AuthScreen> {
             ],
           ),
         ),
+        // El mensaje de error va DESPUES del formulario: si se mostrara
+        // arriba, al aparecer desplazaria los campos y en Web el clic
+        // se perderia antes de que el campo reciba el foco.
+        if (_errorMessage != null) ...[
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: errorBackground,
+              border: Border.all(color: errorBorder),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: errorIcon),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(
+                      color: errorText,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 24),
         _buildContactFooter(context),
       ],
@@ -918,6 +937,7 @@ class _AuthScreenState extends State<AuthScreen> {
     required String hint,
     required IconData icon,
     required bool compact,
+    FocusNode? focusNode,
     TextInputType keyboardType = TextInputType.text,
     TextInputAction? textInputAction,
     ValueChanged<String>? onFieldSubmitted,
@@ -950,9 +970,11 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
           child: TextFormField(
             controller: controller,
+            focusNode: focusNode,
             keyboardType: keyboardType,
             textInputAction: textInputAction,
             onFieldSubmitted: onFieldSubmitted,
+            onTapOutside: (_) => FocusScope.of(context).unfocus(),
             validator: validator,
             cursorColor: AppTheme.accent,
             decoration: InputDecoration(
@@ -1013,6 +1035,7 @@ class _AuthScreenState extends State<AuthScreen> {
     required bool obscure,
     required VoidCallback onToggle,
     required bool compact,
+    FocusNode? focusNode,
     TextInputAction? textInputAction,
     ValueChanged<String>? onFieldSubmitted,
     String? Function(String?)? validator,
@@ -1044,9 +1067,11 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
           child: TextFormField(
             controller: controller,
+            focusNode: focusNode,
             obscureText: obscure,
             textInputAction: textInputAction,
             onFieldSubmitted: onFieldSubmitted,
+            onTapOutside: (_) => FocusScope.of(context).unfocus(),
             validator: validator,
             cursorColor: AppTheme.accent,
             decoration: InputDecoration(
@@ -1265,6 +1290,14 @@ class _AuthScreenState extends State<AuthScreen> {
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
+        // Tras un intento fallido el foco vuelve al campo de correo para
+        // que el usuario pueda corregirlo sin tener que volver a hacer clic.
+        if (_errorMessage != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _emailFocusNode.requestFocus();
+          });
+        }
       }
     }
   }
