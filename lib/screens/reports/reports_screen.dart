@@ -90,6 +90,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   Widget _buildContent(BuildContext context) {
+    final isMobile = context.isMobile;
+    final separador = isMobile
+        ? 16.0
+        : (ResponsiveBuildContext(context).isTablet ? 32.0 : 40.0);
+
     return Container(
       color: AppTheme.bgLight,
       child: RefreshIndicator(
@@ -97,6 +102,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
         onRefresh: reportesController.loadAll,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
+          // Padding global reducido en celular (16) para que quepa mas
+          // informacion sin tanto scroll.
           padding: EdgeInsets.all(context.adaptivePadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,33 +121,23 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       )
                     : const SizedBox.shrink(),
               ),
-              SizedBox(
-                height: context.isMobile
-                    ? 24
-                    : (ResponsiveBuildContext(context).isTablet ? 32 : 40),
-              ),
+              SizedBox(height: separador),
 
               // Main Chart
               _buildPopulationChart(context),
-              SizedBox(
-                height: context.isMobile
-                    ? 24
-                    : (ResponsiveBuildContext(context).isTablet ? 32 : 40),
-              ),
+              SizedBox(height: separador),
 
               // Summary Cards
               Text(
                 'Resumen General',
-                style: Theme.of(context).textTheme.titleLarge,
+                style: isMobile
+                    ? Theme.of(context).textTheme.titleMedium
+                    : Theme.of(context).textTheme.titleLarge,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Obx(() => _buildSummaryGrid(context)),
 
-              SizedBox(
-                height: context.isMobile
-                    ? 32
-                    : (ResponsiveBuildContext(context).isTablet ? 40 : 48),
-              ),
+              SizedBox(height: separador),
               LayoutBuilder(
                 builder: (context, constraints) {
                   final isWide = constraints.maxWidth >= 900;
@@ -163,11 +160,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   );
                 },
               ),
-              SizedBox(
-                height: context.isMobile
-                    ? 32
-                    : (ResponsiveBuildContext(context).isTablet ? 40 : 48),
-              ),
+              SizedBox(height: separador),
             ],
           ),
         ),
@@ -186,9 +179,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
               Text(
                 'Cunicultura CBA · '
                 '${_getMonthName(DateTime.now().month)} ${DateTime.now().year}',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(color: AppTheme.textSecondary),
+                style: (context.isMobile
+                        ? Theme.of(context).textTheme.bodyMedium
+                        : Theme.of(context).textTheme.bodyLarge)
+                    ?.copyWith(color: AppTheme.textSecondary),
               ),
             ],
           ),
@@ -256,8 +250,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   Widget _buildPopulationChart(BuildContext context) {
+    final isMobile = context.isMobile;
     return Container(
-      padding: EdgeInsets.all(context.adaptivePadding),
+      padding: EdgeInsets.all(isMobile ? 12 : context.adaptivePadding),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -270,7 +265,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
             builder: (context, constraints) {
               final titulo = Text(
                 "Crecimiento de Población",
-                style: Theme.of(context).textTheme.titleLarge,
+                style: isMobile
+                    ? Theme.of(context).textTheme.titleMedium
+                    : Theme.of(context).textTheme.titleLarge,
               );
               final rango = Text(
                 "Últimos 30 días",
@@ -293,10 +290,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
               );
             },
           ),
-          SizedBox(height: context.isMobile ? 16 : 24),
+          SizedBox(height: isMobile ? 12 : 24),
           SizedBox(
-            height: context.isMobile
-                ? 220
+            // Grafica mas baja en celular: ocupa todo el ancho sin obligar
+            // a hacer scroll de mas.
+            height: isMobile
+                ? 200
                 : (ResponsiveBuildContext(context).isTablet ? 280 : 320),
             child: Obx(() {
               final data = reportesController.poblacionPorDia.toList();
@@ -309,7 +308,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
               if (spots.isEmpty || spots.every((spot) => spot.y == 0)) {
                 return Container(
-                  height: context.isMobile ? 180 : 280,
+                  height: isMobile ? 160 : 280,
                   alignment: Alignment.center,
                   child: Text(
                     'Sin datos para mostrar.\n'
@@ -439,21 +438,33 @@ class _ReportsScreenState extends State<ReportsScreen> {
       ),
     ];
 
-    return context.isMobile
-        ? Column(
+    if (context.isMobile) {
+      // En celular el resumen va a dos columnas: antes cada tarjeta ocupaba
+      // una fila completa y habia que hacer mucho scroll.
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final cardWidth = (constraints.maxWidth - 12) / 2;
+          return Wrap(
+            spacing: 12,
+            runSpacing: 12,
             children: [
-              for (final card in cards) ...[card, const SizedBox(height: 12)],
-            ],
-          )
-        : Row(
-            children: [
-              Expanded(child: cards[0]),
-              const SizedBox(width: 24),
-              Expanded(child: cards[1]),
-              const SizedBox(width: 24),
-              Expanded(child: cards[2]),
+              for (final card in cards)
+                SizedBox(width: cardWidth, child: card),
             ],
           );
+        },
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(child: cards[0]),
+        const SizedBox(width: 24),
+        Expanded(child: cards[1]),
+        const SizedBox(width: 24),
+        Expanded(child: cards[2]),
+      ],
+    );
   }
 
   Widget _buildReportSummary(
@@ -464,34 +475,57 @@ class _ReportsScreenState extends State<ReportsScreen> {
     Color color,
     String trend,
   ) {
+    final isMobile = context.isMobile;
+    final theme = Theme.of(context);
+
     return AppCard(
+      padding: EdgeInsets.all(isMobile ? 12 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(isMobile ? 8 : 12),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, size: 28, color: color),
+            child: Icon(icon, size: isMobile ? 22 : 28, color: color),
           ),
-          SizedBox(height: context.isMobile ? 16 : 24),
+          SizedBox(height: isMobile ? 10 : 24),
           Text(
             value,
-            style:
-                (context.isMobile
-                        ? Theme.of(context).textTheme.titleLarge
-                        : Theme.of(context).textTheme.headlineMedium)
-                    ?.copyWith(fontWeight: FontWeight.w700),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: isMobile
+                ? const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)
+                : (theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ) ??
+                    const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                    )),
           ),
-          const SizedBox(height: 8),
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 16),
+          SizedBox(height: isMobile ? 4 : 8),
+          Text(
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: isMobile
+                ? TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  )
+                : theme.textTheme.titleMedium,
+          ),
+          SizedBox(height: isMobile ? 6 : 16),
           Text(
             trend,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: isMobile ? 11 : 13,
               fontWeight: FontWeight.w500,
               color: color,
             ),
@@ -512,7 +546,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
               Expanded(
                 child: Text(
                   'Metas del Mes',
-                  style: Theme.of(context).textTheme.titleLarge,
+                  style: context.isMobile
+                      ? Theme.of(context).textTheme.titleMedium
+                      : Theme.of(context).textTheme.titleLarge,
                 ),
               ),
               if (metas.isNotEmpty)
@@ -591,6 +627,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     };
 
     return AppCard(
+      padding: EdgeInsets.all(context.isMobile ? 12 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -637,18 +674,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           Text(
             '${actual.toStringAsFixed(1)} / '
             '${meta.valorObjetivo.toStringAsFixed(1)} ${meta.unidad}',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
               value: (progreso / 100).clamp(0.0, 1.0),
-              minHeight: 8,
+              minHeight: context.isMobile ? 6 : 8,
               backgroundColor: AppTheme.borderLight,
               valueColor: AlwaysStoppedAnimation<Color>(colorEstado),
             ),
@@ -825,10 +862,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
         children: [
           Text(
             'Actividad Reciente',
-            style: Theme.of(context).textTheme.titleLarge,
+            style: context.isMobile
+                ? Theme.of(context).textTheme.titleMedium
+                : Theme.of(context).textTheme.titleLarge,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           AppCard(
+            padding: EdgeInsets.all(context.isMobile ? 12 : 16),
             child: recientes.isEmpty
                 ? Text(
                     'Sin actividad reciente. Registra conejos, montas o partos.',
@@ -849,7 +889,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           recientes[i].icono,
                           recientes[i].color,
                         ),
-                        if (i < recientes.length - 1) const Divider(height: 32),
+                        if (i < recientes.length - 1)
+                          Divider(height: context.isMobile ? 20 : 32),
                       ],
                     ],
                   ),
@@ -866,14 +907,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
     IconData icon,
     Color color,
   ) {
+    final isMobile = context.isMobile;
     final iconWidget = Container(
-      width: 40,
-      height: 40,
+      width: isMobile ? 32 : 40,
+      height: isMobile ? 32 : 40,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         shape: BoxShape.circle,
       ),
-      child: Icon(icon, color: color, size: 20),
+      child: Icon(icon, color: color, size: isMobile ? 16 : 20),
     );
     final textWidget = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -881,13 +923,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
         Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
         Text(
           subtitle,
-          style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: AppTheme.textSecondary,
+            fontSize: isMobile ? 13 : 14,
+          ),
         ),
       ],
     );
     final timeWidget = Text(
       time,
-      style: TextStyle(fontSize: 13, color: AppTheme.textTertiary),
+      style: TextStyle(fontSize: isMobile ? 12 : 13, color: AppTheme.textTertiary),
     );
 
     return LayoutBuilder(
@@ -905,7 +952,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 ],
               ),
               const SizedBox(height: 6),
-              Padding(padding: const EdgeInsets.only(left: 52), child: timeWidget),
+              Padding(
+                padding: EdgeInsets.only(left: isMobile ? 44 : 52),
+                child: timeWidget,
+              ),
             ],
           );
         }
