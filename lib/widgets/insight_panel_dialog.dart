@@ -6,7 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_loading.dart';
 import '../../models/insight_recomendacion.dart';
 import '../../services/insight_service.dart';
-import '../../services/tts_service.dart';
+import '../../services/neural_voice.dart';
 
 /// Panel holográfico de CUNITECH Insight.
 ///
@@ -35,7 +35,7 @@ class _InsightPanelDialogState extends State<InsightPanelDialog> {
   @override
   void dispose() {
     // Si el usuario cierra el panel mientras suena, se corta la voz.
-    TtsService.instance.detener();
+    NeuralVoice.instance.detener();
     super.dispose();
   }
 
@@ -51,13 +51,14 @@ class _InsightPanelDialogState extends State<InsightPanelDialog> {
     return partes.join(' ');
   }
 
+  /// Alterna entre reproducir y detener la voz.
   Future<void> _alternarVoz() async {
-    final tts = TtsService.instance;
-    if (tts.hablando.value) {
-      await tts.detener();
+    final voz = NeuralVoice.instance;
+    if (voz.hablando.value) {
+      await voz.detener();
       return;
     }
-    await tts.hablar(_textoParaLeer);
+    await voz.hablar(_textoParaLeer);
   }
 
   @override
@@ -184,7 +185,7 @@ class _InsightPanelDialogState extends State<InsightPanelDialog> {
   /// Aviso de que la voz se esta reproduciendo.
   Widget _buildIndicadorVoz() {
     return ValueListenableBuilder<bool>(
-      valueListenable: TtsService.instance.hablando,
+      valueListenable: NeuralVoice.instance.hablando,
       builder: (context, hablando, _) {
         return AnimatedSize(
           duration: const Duration(milliseconds: 200),
@@ -220,11 +221,16 @@ class _InsightPanelDialogState extends State<InsightPanelDialog> {
 
   /// Botón de voz: reproduce o detiene la lectura del análisis.
   Widget _buildBotonVoz() {
+    final neural = NeuralVoice.instance.hayVozNeural;
     return ValueListenableBuilder<bool>(
-      valueListenable: TtsService.instance.hablando,
+      valueListenable: NeuralVoice.instance.hablando,
       builder: (context, hablando, _) {
         return IconButton(
-          tooltip: hablando ? 'Detener lectura' : 'Leer en voz alta',
+          tooltip: hablando
+              ? 'Detener lectura'
+              : neural
+                  ? 'Leer en voz neural'
+                  : 'Leer en voz alta',
           onPressed: _alternarVoz,
           icon: Icon(
             hablando ? Icons.stop_rounded : Icons.volume_up_rounded,

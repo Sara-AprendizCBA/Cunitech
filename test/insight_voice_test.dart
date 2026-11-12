@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:cunitech/models/insight_recomendacion.dart';
 import 'package:cunitech/services/insight_service.dart';
+import 'package:cunitech/services/neural_voice.dart';
 import 'package:cunitech/services/tts_service.dart';
 import 'package:cunitech/widgets/insight_panel_dialog.dart';
 
@@ -75,7 +76,13 @@ void main() {
     await tester.pump();
 
     expect(find.text('CUNITECH Insight'), findsOneWidget);
-    expect(find.byTooltip('Leer en voz alta'), findsOneWidget);
+    // El boton de voz dice "neural" cuando el motor neuronal esta disponible
+    // (en el VM si lo esta; en Web el motor es el del sistema).
+    final voz = NeuralVoice.instance;
+    expect(
+      find.byTooltip(voz.hayVozNeural ? 'Leer en voz neural' : 'Leer en voz alta'),
+      findsOneWidget,
+    );
     expect(find.textContaining('mortalidad ha subido'), findsOneWidget);
     expect(find.text('Revisar ventilacion'), findsOneWidget);
     expect(tester.takeException(), isNull);
