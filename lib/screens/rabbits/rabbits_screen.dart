@@ -9,6 +9,7 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_loading.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/pressable_scale.dart';
+import '../../services/csv_export_service.dart';
 import '../../models/rabbit.dart';
 import '../../controllers/rabbit_controller.dart';
 import '../../controllers/auth_controller.dart';
@@ -26,6 +27,7 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
   late final RabbitController rabbitController;
   final AuthController authController = Get.find<AuthController>();
   late TextEditingController _searchController;
+  bool _exportando = false;
 
   @override
   void initState() {
@@ -40,6 +42,67 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  /// Exporta a CSV la lista de conejos que se esta viendo (con los filtros
+  /// aplicados).
+  Future<void> _exportarCsv() async {
+    if (_exportando) return;
+
+    final conejos = rabbitController.conejosFiltrados;
+    if (conejos.isEmpty) {
+      AppSnackbar.info(context, 'No hay conejos para exportar');
+      return;
+    }
+
+    setState(() => _exportando = true);
+    try {
+      final exportados = await CsvExportService.exportarConejos(conejos);
+      if (!mounted) return;
+      final filtrado = rabbitController.hayFiltrosActivos ||
+          _searchController.text.isNotEmpty;
+      AppSnackbar.success(
+        context,
+        'CSV generado con $exportados conejos'
+        '${filtrado ? ' (filtro aplicado)' : ''}',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      AppSnackbar.error(context, 'Error al exportar el CSV');
+    } finally {
+      if (mounted) setState(() => _exportando = false);
+    }
+  }
+
+  /// Boton de exportacion a CSV (compacto en celular).
+  Widget _exportButton({required bool isMobile}) {
+    final theme = Theme.of(context);
+    final icono = _exportando
+        ? const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        : const Icon(Icons.download_rounded, size: 18);
+
+    if (isMobile) {
+      return IconButton(
+        tooltip: 'Exportar CSV',
+        onPressed: _exportando ? null : _exportarCsv,
+        icon: icono,
+        style: IconButton.styleFrom(
+          backgroundColor: theme.colorScheme.surface,
+          foregroundColor: AppTheme.accent,
+          side: BorderSide(color: theme.colorScheme.outlineVariant),
+        ),
+      );
+    }
+
+    return OutlinedButton.icon(
+      onPressed: _exportando ? null : _exportarCsv,
+      icon: icono,
+      label: const Text('Exportar CSV'),
+    );
   }
 
   // CREATE (rabbit == null) y UPDATE (rabbit != null)
@@ -154,7 +217,13 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
             child: context.isMobile
                 ? Column(
                     children: [
-                      _searchField(),
+                      Row(
+                        children: [
+                          Expanded(child: _searchField()),
+                          const SizedBox(width: 8),
+                          _exportButton(isMobile: true),
+                        ],
+                      ),
                       const SizedBox(height: 10),
                       _buildFiltros(),
                     ],
@@ -184,6 +253,8 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
                               rabbitController.filtroGenero.value = v,
                         ),
                       ),
+                      const SizedBox(width: 12),
+                      _exportButton(isMobile: false),
                       if (authController.isAdmin) ...[
                         const SizedBox(width: 12),
                         PressableScale(
