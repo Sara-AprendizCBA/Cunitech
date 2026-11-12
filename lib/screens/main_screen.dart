@@ -43,6 +43,7 @@ class _MainScreenState extends State<MainScreen>
   final AuthController authController = Get.find<AuthController>();
   late final AnimationController _pulseController;
   late final Animation<double> _pulseAnimation;
+  late final Animation<double> _softPulseAnimation;
 
   @override
   void initState() {
@@ -52,6 +53,10 @@ class _MainScreenState extends State<MainScreen>
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
     _pulseAnimation = Tween<double>(begin: 0.85, end: 1.2).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+    // Version suave para cuando el orbe vive en la barra superior.
+    _softPulseAnimation = Tween<double>(begin: 0.94, end: 1.06).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
   }
@@ -568,11 +573,15 @@ class _MainScreenState extends State<MainScreen>
     });
   }
 
-  Widget _buildInsightOrb(BuildContext context, {double size = 40}) {
+  Widget _buildInsightOrb(
+    BuildContext context, {
+    double size = 40,
+    bool pulsoSuave = false,
+  }) {
     return Tooltip(
       message: 'CUNITECH Insight',
       child: ScaleTransition(
-        scale: _pulseAnimation,
+        scale: pulsoSuave ? _softPulseAnimation : _pulseAnimation,
         child: Container(
           width: size,
           height: size,
@@ -586,7 +595,7 @@ class _MainScreenState extends State<MainScreen>
             boxShadow: [
               BoxShadow(
                 color: AppTheme.accent.withValues(alpha: 0.45),
-                blurRadius: 18,
+                blurRadius: pulsoSuave ? 8 : 18,
                 spreadRadius: 1,
               ),
             ],
@@ -1068,6 +1077,19 @@ class _MainScreenState extends State<MainScreen>
                                         .headlineMedium,
                                   ),
                                   const Spacer(),
+                                  // El orbe de Insight vive ahora en la barra
+                                  // superior: asi deja de tapar los botones de
+                                  // accion del final de las listas.
+                                  if (authController.isAdmin ||
+                                      authController.isVeterinario)
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: _buildInsightOrb(
+                                        context,
+                                        size: 38,
+                                        pulsoSuave: true,
+                                      ),
+                                    ),
                                   Builder(
                                     builder: (buttonContext) {
                                       return IconButton(
@@ -1130,18 +1152,6 @@ class _MainScreenState extends State<MainScreen>
                       ),
                     ),
                   ],
-                ),
-              if (authController.isAdmin || authController.isVeterinario)
-                Positioned(
-                  // En celular el orbe se hace mas pequeno y sube un poco:
-                  // asi no choca con el FAB de la pantalla (que vive en la
-                  // esquina inferior derecha) y deja menos area tapada.
-                  right: isMobile ? 14 : 20,
-                  bottom: isMobile ? 84 : 80,
-                  child: _buildInsightOrb(
-                    context,
-                    size: isMobile ? 44 : 56,
-                  ),
                 ),
             ],
           ),
@@ -1453,6 +1463,18 @@ class _MainScreenState extends State<MainScreen>
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          // El orbe de Insight va en la barra superior (junto a la campana)
+          // para no tapar los botones de accion del final de las listas.
+          if (Get.find<AuthController>().isAdmin ||
+              Get.find<AuthController>().isVeterinario)
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: _buildInsightOrb(
+                context,
+                size: 32,
+                pulsoSuave: true,
+              ),
+            ),
           IconButton(
             tooltip: 'Notificaciones',
             icon: Stack(
