@@ -107,6 +107,10 @@ class InsightService {
           .lte('fecha_proxima', _dateOnly(en7)),
     );
 
+    // Mortalidad e historial de partos: son los datos que la IA analiza
+    // para detectar tendencias y redactar el diagnóstico.
+    final partos = await _datosMortalidadYPartos(hace30);
+
     return {
       'fecha': _dateOnly(today),
       'total_conejos': totalConejos,
@@ -117,6 +121,77 @@ class InsightService {
       'crias_vivas_total': criasVivas,
       'proximos_partos_7_dias': proximosPartos,
       'tratamientos_proximos_7_dias': tratamientosProximos,
+      ...partos,
+    };
+  }
+
+  /// Mortalidad (%) e historial de camadas desde la fecha indicada.
+  ///
+  /// Devuelve tambien la lista de partos recientes para que la IA pueda
+  /// comparar camadas y ver la evolución.
+  Future<Map<String, dynamic>> _datosMortalidadYPartos(
+    DateTime desde,
+  ) async {
+    try {
+      final rows = await _supabase
+          .from('births')
+          .select(
+            'birth_date, live_kits, dead_kits, adopted_kits, litter_size, '
+            'average_weight',
+          )
+          .gte('birth_date', _dateOnly(desde))
+          .order('birth_date', ascending: false)
+          .limit(40);
+
+      return calcularMortalidad((rows as List).cast<Map<String, dynamic>>());
+    } catch (e) {
+      logger.w('No se pudieron leer los datos de mortalidad', error: e);
+      return calcularMortalidad(const []);
+    }
+  }
+
+  /// Indicadores de mortalidad y supervivencia a partir de los partos.
+  ///
+  /// `mortalidad_porcentaje` = muertas / (vivas + muertas).
+  static Map<String, dynamic> calcularMortalidad(
+    List<Map<String, dynamic>> partos,
+  ) {
+    var vivas = 0;
+    var muertas = 0;
+    var adoptadas = 0;
+    final historial = <Map<String, dynamic>>[];
+
+    for (final parto in partos) {
+      final v = (parto['live_kits'] as num?)?.toInt() ?? 0;
+      final m = (parto['dead_kits'] as num?)?.toInt() ?? 0;
+      final a = (parto['adopted_kits'] as num?)?.toInt() ?? 0;
+      vivas += v;
+      muertas += m;
+      adoptadas += a;
+
+      historial.add({
+        'fecha': parto['birth_date'],
+        'camada': (parto['litter_size'] as num?)?.toInt() ?? (v + m),
+        'vivos': v,
+        'muertos': m,
+        'adoptados': a,
+        'peso_promedio_kg': (parto['average_weight'] as num?)?.toDouble(),
+      });
+    }
+
+    final nacidas = vivas + muertas;
+    return {
+      'mortalidad_porcentaje': nacidas > 0
+          ? double.parse(((muertas / nacidas) * 100).toStringAsFixed(1))
+          : 0.0,
+      'supervivencia_porcentaje': nacidas > 0
+          ? double.parse(((vivas / nacidas) * 100).toStringAsFixed(1))
+          : 0.0,
+      'crias_vivas_30_dias': vivas,
+      'crias_muertas_30_dias': muertas,
+      'crias_adoptadas_30_dias': adoptadas,
+      'camadas_30_dias': partos.length,
+      'historial_partos': historial.take(12).toList(),
     };
   }
 

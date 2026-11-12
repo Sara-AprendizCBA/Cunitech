@@ -68,16 +68,32 @@ const RECOMENDACIONES_FALLBACK: Recomendacion[] = [
 // Panel por defecto (fallback completo con diagnóstico + recomendaciones).
 const PANEL_FALLBACK: PanelInsights = {
   diagnostico_general:
-    'No se pudo contactar al asesor de IA en este momento. Estas son recomendaciones generales mientras tanto.',
+    'Ahora mismo no he podido revisar los datos del criadero, así que te ' +
+    'dejo las recomendaciones generales que mejor funcionan en un momento ' +
+    'como este. En cuanto vuelva a conectarme, te contaré qué veo en la ' +
+    'mortalidad y en los partos de las últimas semanas.',
   recomendaciones: RECOMENDACIONES_FALLBACK,
 }
 
 // Instrucciones y esquema para Gemini (JSON estricto).
 const SYSTEM_PROMPT =
-  `Eres un asesor experto en cunicultura. A partir del contexto del criadero ` +
-  `(JSON) que recibirás, devuelve un diagnóstico general y entre 2 y 3 ` +
-  `recomendaciones concretas y accionables para mejorar la productividad y el ` +
-  `bienestar de los conejos. Responde ÚNICAMENTE con un JSON válido con la forma ` +
+  `Eres el asesor del criadero CUNITECH: alguien con años de experiencia en ` +
+  `cunicultura que conoce a los criadores y habla con ellos de tú a tú, con ` +
+  `calma y cariño, como un colega que quiere ayudar de verdad.\n` +
+  `A partir del contexto del criadero (JSON) que recibirás, escribe:\n` +
+  `1. "diagnostico_general": un párrafo breve (2-4 frases) que analice ` +
+  `ESPECÍFICAMENTE la mortalidad y el historial de partos del periodo, ` +
+  `cuando esos datos estén disponibles. Empieza por lo que has observado ` +
+  `(por ejemplo: "He notado que la mortalidad ha subido un 10%") y termina ` +
+  `dónde conviene empezar. Usa solo cifras que aparezcan en el contexto: ` +
+  `si un dato no está, no lo menciones ni lo inventes.\n` +
+  `2. "recomendaciones": entre 2 y 3 recomendaciones concretas y accionables ` +
+  `para mejorar la productividad y el bienestar de los conejos. Escribe el ` +
+  `"detalle" en frases completas y amables (nada de listas de pasos secos) y ` +
+  `el "impacto" explicando qué se gana con esa acción. Usa "alta" como ` +
+  `prioridad si la recomendación afecta a la mortalidad o al bienestar animal.\n` +
+  `Escribe en español natural, con un máximo de un emoji por texto y sin ` +
+  `markdown. Responde ÚNICAMENTE con un JSON válido con la forma ` +
   `{"diagnostico_general":string,` +
   `"recomendaciones":[{"titulo":string,"detalle":string,` +
   `"prioridad":"alta"|"media"|"baja","impacto":string}]}.`
@@ -150,7 +166,7 @@ async function generarConGemini(
           ],
         }],
         generationConfig: {
-          temperature: 0.7,
+          temperature: 0.8,
           responseMimeType: 'application/json',
           responseSchema: RESPONSE_SCHEMA,
         },
