@@ -196,7 +196,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           isMobile ? 12 : 24,
           // Espacio extra en celular: el boton flotante (orbe / FAB) se
           // superpone sobre la ultima tarjeta si la lista no deja hueco.
-          isMobile ? 100 : 24,
+          isMobile ? 80 : 24,
         ),
         itemCount: filtered.isEmpty ? 1 : filtered.length + 1,
         itemBuilder: (context, index) {
@@ -388,12 +388,30 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
                       ),
                 ),
               ),
-              _MatingStatusBadge(
-                text: badgeText,
-                color: badgeColor,
-                foreground: badgeForeground,
-                compacto: isMobile,
+              // En celular Editar/Eliminar van como botones de icono en la
+              // esquina superior: el pie de la tarjeta queda limpio.
+              Flexible(
+                child: _MatingStatusBadge(
+                  text: badgeText,
+                  color: badgeColor,
+                  foreground: badgeForeground,
+                  compacto: isMobile,
+                ),
               ),
+              if (isMobile && !authController.isVeterinario) ...[
+                _BotonIconoMonta(
+                  icon: Icons.edit_rounded,
+                  tooltip: 'Editar',
+                  color: theme.colorScheme.onSurfaceVariant,
+                  onPressed: () => _showMatingForm(existing: r),
+                ),
+                _BotonIconoMonta(
+                  icon: Icons.delete_outline_rounded,
+                  tooltip: 'Eliminar',
+                  color: AppTheme.danger,
+                  onPressed: () => _confirmDeleteMating(r),
+                ),
+              ],
             ],
           ),
           SizedBox(height: isMobile ? 8 : 16),
@@ -477,32 +495,32 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
 
   /// Acciones de la tarjeta de monta.
   ///
-  /// En celular la accion principal (Registrar parto, Confirmar preñez, ...)
-  /// ocupa una fila completa y Editar/Eliminar van juntos en otra fila: asi
-  /// caben de ancho completo y no quedan debajo del boton flotante.
+  /// En escritorio se mantienen todos los botones agrupados abajo. En celular
+  /// queda un unico boton principal a todo el ancho (Registrar parto, Ver
+  /// detalles, Confirmar preñez...) y Editar/Eliminar se muestran como
+  /// botones de icono en la cabecera de la tarjeta.
   Widget _buildMatingActions(Reproduccion r, {required bool isMobile}) {
     final List<Widget> principales = [];
     final List<Widget> secundarias = [];
     final List<Widget> extras = [];
 
-    if (!authController.isVeterinario) {
+    if (!isMobile && !authController.isVeterinario) {
       secundarias.addAll([
         OutlinedButton.icon(
           onPressed: () => _showMatingForm(existing: r),
           icon: const Icon(Icons.edit_rounded, size: 16),
           label: const Text('Editar'),
-          style: _estiloBotonSecundario(isMobile),
         ),
         OutlinedButton.icon(
           onPressed: () => _confirmDeleteMating(r),
           icon: const Icon(Icons.delete_outline_rounded, size: 16),
           label: const Text('Eliminar'),
-          style: _estiloBotonSecundario(isMobile)?.copyWith(
-                foregroundColor: const WidgetStatePropertyAll(AppTheme.danger),
-                side: WidgetStatePropertyAll(
-                  BorderSide(color: AppTheme.danger.withValues(alpha: 0.3)),
-                ),
-              ),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppTheme.danger,
+            side: BorderSide(
+              color: AppTheme.danger.withValues(alpha: 0.3),
+            ),
+          ),
         ),
       ]);
     }
@@ -578,6 +596,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
       );
     }
 
+    // Movil: una sola accion principal a todo el ancho y con poca altura.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -585,15 +604,6 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           boton,
           const SizedBox(height: 8),
         ],
-        if (secundarias.isNotEmpty)
-          Row(
-            children: [
-              for (var i = 0; i < secundarias.length; i++) ...[
-                if (i > 0) const SizedBox(width: 8),
-                Expanded(child: secundarias[i]),
-              ],
-            ],
-          ),
       ],
     );
   }
@@ -884,7 +894,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           context.isMobile ? 12 : 24,
           8,
           context.isMobile ? 12 : 24,
-          context.isMobile ? 100 : 24,
+          context.isMobile ? 80 : 24,
         ),
         itemCount: reproController.nacimientos.length,
         itemBuilder: (context, index) => AnimatedListItem(
@@ -912,7 +922,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           context.isMobile ? 12 : 24,
           8,
           context.isMobile ? 12 : 24,
-          context.isMobile ? 100 : 24,
+          context.isMobile ? 80 : 24,
         ),
         itemCount: crias.length,
         itemBuilder: (context, index) => AnimatedListItem(
@@ -966,27 +976,11 @@ class _MatingTimeline extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final compacto = context.isMobile;
-        final apilar = compacto && constraints.maxWidth < 360;
 
-        if (apilar) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (var i = 0; i < hitos.length; i++) ...[
-                _hito(hitos[i].$1, hitos[i].$2, i, currentStep,
-                    compacto: true),
-                if (i < hitos.length - 1)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 18),
-                    child: Container(
-                      width: 2,
-                      height: compacto ? 8 : 12,
-                      color: _colorLinea(i, currentStep),
-                    ),
-                  ),
-              ],
-            ],
-          );
+        // En celular la linea de tiempo es una sola fila compacta: la
+        // version vertical ocupaba media pantalla.
+        if (compacto) {
+          return _timelineCompacto(context, hitos, currentStep);
         }
 
         return Row(
@@ -1006,6 +1000,104 @@ class _MatingTimeline extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// Linea de tiempo horizontal compacta para celular.
+  ///
+  /// Una unica fila con los cuatro pasos: [Monta] - [Palpacion] -
+  /// [Parto] - [Destete], con icono y etiqueta pequenos. Las fechas solo se
+  /// muestran si hay ancho de sobra.
+  Widget _timelineCompacto(
+    BuildContext context,
+    List<(String, DateTime)> hitos,
+    int currentStep,
+  ) {
+    final mostrarFechas = MediaQuery.sizeOf(context).width >= 340;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < hitos.length; i++) ...[
+          if (i > 0)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Container(
+                  height: 2,
+                  color: _colorLinea(i - 1, currentStep),
+                ),
+              ),
+            ),
+          Flexible(
+            child: _hitoCompacto(
+              hitos[i].$1,
+              hitos[i].$2,
+              i,
+              currentStep,
+              mostrarFecha: mostrarFechas,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _hitoCompacto(
+    String label,
+    DateTime fecha,
+    int index,
+    int current, {
+    required bool mostrarFecha,
+  }) {
+    final (color, icono) = _estadoHito(index, current);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(icono, style: const TextStyle(fontSize: 11)),
+              const SizedBox(width: 3),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (mostrarFecha)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              '${fecha.day}',
+              style: TextStyle(fontSize: 10, color: color),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// Color e icono de un hito segun el paso actual.
+  (Color, String) _estadoHito(int index, int current) {
+    if (index < current) {
+      return (AppTheme.success, '✅');
+    }
+    if (index == current) {
+      final diasDesdeMonta = r.diasDesdeMonta ?? 0;
+      final esPalpacionVencida =
+          index == 1 && r.estado == 'Servida' && diasDesdeMonta > 16;
+      return esPalpacionVencida
+          ? (const Color(0xFF991B1B), '⚠️')
+          : (AppTheme.warning, '⏳');
+    }
+    return (AppTheme.textTertiary, '○');
   }
 
   Widget _hito(
@@ -1140,8 +1232,8 @@ class _MatingStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: EdgeInsets.symmetric(
-          horizontal: compacto ? 8 : 10,
-          vertical: compacto ? 3 : 6,
+          horizontal: compacto ? 6 : 10,
+          vertical: compacto ? 2 : 6,
         ),
         decoration: BoxDecoration(
           color: color,
@@ -1149,12 +1241,39 @@ class _MatingStatusBadge extends StatelessWidget {
         ),
         child: Text(
           text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: foreground,
-            fontSize: compacto ? 10.5 : 12,
+            fontSize: compacto ? 10 : 12,
             fontWeight: FontWeight.w600,
           ),
         ),
+      );
+}
+
+/// Boton de icono compacto para la cabecera de la tarjeta en celular.
+class _BotonIconoMonta extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final Color color;
+  final VoidCallback onPressed;
+
+  const _BotonIconoMonta({
+    required this.icon,
+    required this.tooltip,
+    required this.color,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        icon: Icon(icon, size: 17, color: color),
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+        visualDensity: VisualDensity.compact,
       );
 }
 
