@@ -103,8 +103,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           // Padding global reducido en celular (16) para que quepa mas
-          // informacion sin tanto scroll.
-          padding: EdgeInsets.all(context.adaptivePadding),
+          // informacion sin tanto scroll. Abajo se reserva un hueco extra
+          // (mas alto que el orbe) para que el boton flotante no tape el
+          // final de la pantalla.
+          padding: EdgeInsets.fromLTRB(
+            context.adaptivePadding,
+            context.adaptivePadding,
+            context.adaptivePadding,
+            isMobile ? 132 : context.adaptivePadding,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

@@ -1133,9 +1133,15 @@ class _MainScreenState extends State<MainScreen>
                 ),
               if (authController.isAdmin || authController.isVeterinario)
                 Positioned(
-                  right: 20,
-                  bottom: 80,
-                  child: _buildInsightOrb(context, size: 56),
+                  // En celular el orbe se hace mas pequeno y sube un poco:
+                  // asi no choca con el FAB de la pantalla (que vive en la
+                  // esquina inferior derecha) y deja menos area tapada.
+                  right: isMobile ? 14 : 20,
+                  bottom: isMobile ? 84 : 80,
+                  child: _buildInsightOrb(
+                    context,
+                    size: isMobile ? 44 : 56,
+                  ),
                 ),
             ],
           ),

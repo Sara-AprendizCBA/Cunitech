@@ -196,7 +196,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           isMobile ? 12 : 24,
           // Espacio extra en celular: el boton flotante (orbe / FAB) se
           // superpone sobre la ultima tarjeta si la lista no deja hueco.
-          isMobile ? 100 : 24,
+          isMobile ? 132 : 24,
         ),
         itemCount: filtered.isEmpty ? 1 : filtered.length + 1,
         itemBuilder: (context, index) {
@@ -867,7 +867,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           context.isMobile ? 12 : 24,
           8,
           context.isMobile ? 12 : 24,
-          context.isMobile ? 100 : 24,
+          context.isMobile ? 132 : 24,
         ),
         itemCount: reproController.nacimientos.length,
         itemBuilder: (context, index) => AnimatedListItem(
@@ -895,7 +895,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
           context.isMobile ? 12 : 24,
           8,
           context.isMobile ? 12 : 24,
-          context.isMobile ? 100 : 24,
+          context.isMobile ? 132 : 24,
         ),
         itemCount: crias.length,
         itemBuilder: (context, index) => AnimatedListItem(

@@ -172,9 +172,14 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
               return RefreshIndicator(
                 onRefresh: rabbitController.loadAllRabbits,
                 child: ListView.builder(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: context.isMobile ? 16 : (isTablet ? 24 : 32),
-                  ).copyWith(bottom: context.isMobile ? 80 : 0),
+                  padding: EdgeInsets.fromLTRB(
+                    context.isMobile ? 16 : (isTablet ? 24 : 32),
+                    0,
+                    context.isMobile ? 16 : (isTablet ? 24 : 32),
+                    // Hueco inferior en celular para que el orbe flotante
+                    // no tape el ultimo conejo de la lista.
+                    context.isMobile ? 132 : 0,
+                  ),
                   itemCount: rabbits.length,
                   itemBuilder: (context, index) {
                     final rabbit = rabbits[index];
