@@ -1,8 +1,8 @@
 // lib/services/voice_service.dart
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../core/utils/logger.dart';
+import 'tts_service.dart';
 
 class VoiceService {
   static final VoiceService _instance = VoiceService._internal();
@@ -10,7 +10,6 @@ class VoiceService {
   VoiceService._internal();
 
   final stt.SpeechToText _speechToText = stt.SpeechToText();
-  final FlutterTts _flutterTts = FlutterTts();
 
   bool _inicializado = false;
 
@@ -18,23 +17,12 @@ class VoiceService {
     if (_inicializado) return true;
     try {
       final disponible = await _speechToText.initialize();
-      await _configurarTts();
+      await TtsService.instance.inicializar();
       _inicializado = disponible;
       return disponible;
     } catch (e) {
       logger.e('Error inicializando VoiceService', error: e);
       return false;
-    }
-  }
-
-  Future<void> _configurarTts() async {
-    try {
-      await _flutterTts.setLanguage('es_ES');
-      await _flutterTts.setPitch(1.0);
-      await _flutterTts.setSpeechRate(0.5);
-      await _flutterTts.setVolume(1.0);
-    } catch (e) {
-      logger.e('Error configurando FlutterTts', error: e);
     }
   }
 
@@ -72,24 +60,16 @@ class VoiceService {
   }
 
   Future<void> hablar(String texto) async {
-    if (texto.trim().isEmpty) return;
-    try {
-      if (!_inicializado) {
-        await _configurarTts();
-      }
-      await _flutterTts.speak(texto);
-    } catch (e) {
-      logger.e('Error hablando con TTS', error: e);
-    }
+    await TtsService.instance.hablar(texto);
   }
 
   Future<void> detener() async {
     try {
       await _speechToText.stop();
-      await _flutterTts.stop();
     } catch (e) {
-      logger.e('Error deteniendo VoiceService', error: e);
+      logger.e('Error deteniendo el reconocimiento de voz', error: e);
     }
+    await TtsService.instance.detener();
   }
 
   bool get escuchando => _speechToText.isListening;
