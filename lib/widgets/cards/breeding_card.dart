@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/mating.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/responsive.dart';
 
 class BreedingCard extends StatelessWidget {
   final Mating mating;
@@ -12,9 +13,11 @@ class BreedingCard extends StatelessWidget {
     final daysToBirth = mating.expectedBirthDate?.difference(DateTime.now()).inDays;
 
     final bool isUrgent = daysToBirth != null && daysToBirth <= 7;
+    // En celular la tarjeta se compacta (padding e icono mas pequenos).
+    final isMobile = context.isMobile;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: isMobile ? 10 : 16),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -27,24 +30,24 @@ class BreedingCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
           onTap: () {},
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(isMobile ? 12 : 24),
             child: Row(
               children: [
                 // Icon
                 Container(
-                  width: 64,
-                  height: 64,
+                  width: isMobile ? 44 : 64,
+                  height: isMobile ? 44 : 64,
                   decoration: BoxDecoration(
                     color: AppTheme.accent.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.favorite_rounded,
-                    size: 32,
+                    size: isMobile ? 22 : 32,
                     color: AppTheme.accent,
                   ),
                 ),
-                const SizedBox(width: 24),
+                SizedBox(width: isMobile ? 12 : 24),
 
                 // Main Content
                 Expanded(
@@ -53,37 +56,50 @@ class BreedingCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            "Monta ${mating.id}",
-                            style: Theme.of(context).textTheme.titleLarge,
+                          Expanded(
+                            child: Text(
+                              "Monta ${mating.id}",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontSize: isMobile ? 15 : null,
+                                  ),
+                            ),
                           ),
-                          const Spacer(),
                           _StatusChip(status: mating.status),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: isMobile ? 8 : 12),
                       Text(
                         "Coneja: ${mating.doeId}   •   Macho: ${mating.buckId}",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               color: AppTheme.textSecondary,
+                              fontSize: isMobile ? 12 : null,
                             ),
                       ),
                       if (daysToBirth != null) ...[
-                        const SizedBox(height: 12),
+                        SizedBox(height: isMobile ? 8 : 12),
                         Row(
                           children: [
                             Icon(
                               Icons.event_rounded,
-                              size: 18,
+                              size: isMobile ? 16 : 18,
                               color: isUrgent ? AppTheme.danger : AppTheme.accent,
                             ),
                             const SizedBox(width: 8),
-                            Text(
-                              "Parto estimado: en $daysToBirth días",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: isUrgent ? AppTheme.danger : AppTheme.accent,
+                            Expanded(
+                              child: Text(
+                                "Parto estimado: en $daysToBirth días",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: isMobile ? 12 : 14,
+                                  fontWeight: FontWeight.w600,
+                                  color:
+                                      isUrgent ? AppTheme.danger : AppTheme.accent,
+                                ),
                               ),
                             ),
                           ],

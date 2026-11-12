@@ -512,12 +512,14 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
         principales.add(
           FilledButton(
             onPressed: () => _confirmPregnancy(r),
+            style: _estiloBotonPrimario(isMobile),
             child: const Text('Confirmar preñez'),
           ),
         );
         extras.add(
           OutlinedButton(
             onPressed: () => _registerFailure(r),
+            style: _estiloBotonSecundario(isMobile),
             child: const Text('Registrar falla'),
           ),
         );
@@ -525,6 +527,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
         principales.add(
           OutlinedButton(
             onPressed: () => _showMatingDetails(r),
+            style: _estiloBotonSecundario(isMobile),
             child: const Text('Ver detalles'),
           ),
         );
@@ -533,6 +536,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
       principales.add(
         OutlinedButton(
           onPressed: () => _showMatingDetails(r),
+          style: _estiloBotonSecundario(isMobile),
           child: const Text('Ver detalles'),
         ),
       );
@@ -541,6 +545,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
         principales.add(
           FilledButton(
             onPressed: () => _showBirthForm(r),
+            style: _estiloBotonPrimario(isMobile),
             child: const Text('Registrar parto'),
           ),
         );
@@ -597,9 +602,21 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
   ButtonStyle? _estiloBotonSecundario(bool isMobile) {
     if (!isMobile) return null;
     return OutlinedButton.styleFrom(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       visualDensity: VisualDensity.compact,
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      textStyle: const TextStyle(fontSize: 13),
+    );
+  }
+
+  /// Boton principal mas compacto en celular.
+  ButtonStyle? _estiloBotonPrimario(bool isMobile) {
+    if (!isMobile) return null;
+    return FilledButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      visualDensity: VisualDensity.compact,
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      textStyle: const TextStyle(fontSize: 13),
     );
   }
 

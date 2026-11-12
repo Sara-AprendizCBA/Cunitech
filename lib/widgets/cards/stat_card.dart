@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/responsive.dart';
 
 class StatCard extends StatelessWidget {
   final String title;
@@ -22,8 +23,12 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // En celular la tarjeta se compacta: padding, icono y numeros mas
+    // pequenos para que no se vea una caja gigante.
+    final isMobile = context.isMobile;
+
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: EdgeInsets.all(isMobile ? 12 : 28),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -34,33 +39,36 @@ class StatCard extends StatelessWidget {
         children: [
           // Icon Container
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(isMobile ? 8 : 14),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(icon, size: 32, color: color),
+            child: Icon(icon, size: isMobile ? 22 : 32, color: color),
           ),
 
-          const SizedBox(height: 32),
+          SizedBox(height: isMobile ? 12 : 32),
 
           // Value
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                   fontWeight: FontWeight.w700,
-                  fontSize: 36,
+                  fontSize: isMobile ? 22 : 36,
                   height: 1.0,
                 ),
           ),
 
-          const SizedBox(height: 8),
+          SizedBox(height: isMobile ? 4 : 8),
 
           // Title
           Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: AppTheme.textSecondary,
+                  fontSize: isMobile ? 13 : null,
                 ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -68,21 +76,25 @@ class StatCard extends StatelessWidget {
 
           // Trend
           if (trend != null) ...[
-            const SizedBox(height: 16),
+            SizedBox(height: isMobile ? 8 : 16),
             Row(
               children: [
                 Icon(
                   isNegative ? Icons.trending_down_rounded : Icons.trending_up_rounded,
-                  size: 16,
+                  size: isMobile ? 14 : 16,
                   color: isNegative ? AppTheme.danger : AppTheme.success,
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  trend!,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isNegative ? AppTheme.danger : AppTheme.success,
+                Expanded(
+                  child: Text(
+                    trend!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: isMobile ? 12 : 13,
+                      fontWeight: FontWeight.w600,
+                      color: isNegative ? AppTheme.danger : AppTheme.success,
+                    ),
                   ),
                 ),
               ],

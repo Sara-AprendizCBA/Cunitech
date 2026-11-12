@@ -451,13 +451,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
       return LayoutBuilder(
         builder: (context, constraints) {
           final cardWidth = (constraints.maxWidth - 12) / 2;
-          return Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              for (final card in cards)
-                SizedBox(width: cardWidth, child: card),
-            ],
+          // Altura fija calculada a partir del ancho real de cada celda:
+          // asi el texto largo nunca desborda la tarjeta.
+          const cardHeight = 190.0;
+          return GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: cardWidth / cardHeight,
+            children: cards,
           );
         },
       );
@@ -504,7 +508,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: isMobile
-                ? const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)
+                ? const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)
                 : (theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ) ??
@@ -520,7 +524,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             overflow: TextOverflow.ellipsis,
             style: isMobile
                 ? TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: theme.colorScheme.onSurface,
                   )
@@ -532,7 +536,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: isMobile ? 11 : 13,
+              fontSize: isMobile ? 12 : 13,
               fontWeight: FontWeight.w500,
               color: color,
             ),
