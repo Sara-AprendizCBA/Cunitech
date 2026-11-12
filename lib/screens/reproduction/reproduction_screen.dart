@@ -119,6 +119,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
 
   Widget _buildTabs(BuildContext context) {
     final theme = Theme.of(context);
+    final isMobile = context.isMobile;
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -126,19 +127,42 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: TabBar(
-        isScrollable: context.isMobile,
+        isScrollable: isMobile,
         dividerColor: Colors.transparent,
         indicatorSize: TabBarIndicatorSize.tab,
+        // En celular los tabs ocupan menos alto: padding y fuente reducidos.
+        labelPadding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 16),
+        indicatorPadding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 12),
+        labelStyle: TextStyle(
+          fontSize: isMobile ? 12 : 14,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontSize: isMobile ? 12 : 14,
+          fontWeight: FontWeight.w600,
+        ),
         indicator: const BoxDecoration(
           color: AppTheme.accent,
           borderRadius: BorderRadius.all(Radius.circular(10)),
         ),
         labelColor: Colors.white,
         unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
-        tabs: const [
-          Tab(icon: Icon(Icons.favorite_border_rounded, size: 20), text: 'Montas'),
-          Tab(icon: Icon(Icons.child_care_rounded, size: 20), text: 'Nacimientos'),
-          Tab(icon: Icon(Icons.pets_rounded, size: 20), text: 'Crías'),
+        tabs: [
+          Tab(
+            icon: Icon(
+              Icons.favorite_border_rounded,
+              size: isMobile ? 16 : 20,
+            ),
+            text: 'Montas',
+          ),
+          Tab(
+            icon: Icon(Icons.child_care_rounded, size: isMobile ? 16 : 20),
+            text: 'Nacimientos',
+          ),
+          Tab(
+            icon: Icon(Icons.pets_rounded, size: isMobile ? 16 : 20),
+            text: 'Crías',
+          ),
         ],
       ),
     );
@@ -167,10 +191,12 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
 
       return ListView.builder(
         padding: EdgeInsets.fromLTRB(
-          isMobile ? 16 : 24,
+          isMobile ? 12 : 24,
           8,
-          isMobile ? 16 : 24,
-          isMobile ? 16 : 24,
+          isMobile ? 12 : 24,
+          // Espacio extra en celular: el boton flotante (orbe / FAB) se
+          // superpone sobre la ultima tarjeta si la lista no deja hueco.
+          isMobile ? 100 : 24,
         ),
         itemCount: filtered.isEmpty ? 1 : filtered.length + 1,
         itemBuilder: (context, index) {
@@ -278,6 +304,7 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
     final (phaseTitle, phaseSubtitle) = _faseActualInfo(r);
     final partoInminente = r.estado == 'Gestante' && _dentroDelRangoDeParto(r);
     final theme = Theme.of(context);
+    final isMobile = context.isMobile;
 
 
     late IconData headerIcon;
@@ -321,8 +348,8 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
     }
 
     return Container(
-      margin: EdgeInsets.only(bottom: context.isMobile ? 12 : 16),
-      padding: EdgeInsets.all(context.isMobile ? 16 : 24),
+      margin: EdgeInsets.only(bottom: isMobile ? 10 : 16),
+      padding: EdgeInsets.all(isMobile ? 12 : 24),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -347,37 +374,49 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
         children: [
           Row(
             children: [
-              Icon(headerIcon, color: headerIconColor),
-              const SizedBox(width: 12),
+              Icon(
+                headerIcon,
+                color: headerIconColor,
+                size: isMobile ? 18 : 24,
+              ),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   'Monta',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: isMobile ? 14 : null,
+                      ),
                 ),
               ),
               _MatingStatusBadge(
                 text: badgeText,
                 color: badgeColor,
                 foreground: badgeForeground,
+                compacto: isMobile,
               ),
             ],
           ),
-          SizedBox(height: context.isMobile ? 12 : 16),
+          SizedBox(height: isMobile ? 8 : 16),
           Row(
             children: [
               Expanded(
                 child: Text(
                   doe,
-                  style: Theme.of(context).textTheme.titleLarge,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: isMobile ? 16 : 22,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Text(
                   '×',
                   style: TextStyle(
                     color: AppTheme.accent,
-                    fontSize: 26,
+                    fontSize: isMobile ? 18 : 26,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -385,12 +424,17 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
               Expanded(
                 child: Text(
                   buck,
-                  style: Theme.of(context).textTheme.titleLarge,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: isMobile ? 16 : 22,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             '📅 ${_formatMatingDate(r.fechaMonta)} · Hace $days días',
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
@@ -424,71 +468,139 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
             SizedBox(height: context.isMobile ? 12 : 16),
             _SmartPredictorLine(reproduccion: r, predictor: predictor),
           ],
-          SizedBox(height: context.isMobile ? 12 : 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              if (!authController.isVeterinario) ...[
-                OutlinedButton.icon(
-                  onPressed: () => _showMatingForm(existing: r),
-                  icon: const Icon(Icons.edit_rounded, size: 16),
-                  label: const Text('Editar'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => _confirmDeleteMating(r),
-                  icon: const Icon(Icons.delete_outline_rounded, size: 16),
-                  label: const Text('Eliminar'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.danger,
-                    side: BorderSide(
-                      color: AppTheme.danger.withValues(alpha: 0.3),
-                    ),
-                  ),
-                ),
-              ],
-              if (r.estado == 'Servida' && r.tocaPalpacion) ...[
-                if (!authController.isVeterinario) ...[
-                  FilledButton(
-                    onPressed: () => _confirmPregnancy(r),
-                    child: const Text('Confirmar preñez'),
-                  ),
-                  OutlinedButton(
-                    onPressed: () => _registerFailure(r),
-                    child: const Text('Registrar falla'),
-                  ),
-                ] else
-                  OutlinedButton(
-                    onPressed: () => _showMatingDetails(r),
-                    child: const Text('Ver detalles'),
-                  ),
-              ] else if (r.estado == 'Servida') ...[
-                OutlinedButton(
-                  onPressed: () => _showMatingDetails(r),
-                  child: const Text('Ver detalles'),
-                ),
-              ] else if (r.estado == 'Gestante') ...[
-                if (authController.isAdmin || authController.isAyudante)
-                  FilledButton(
-                    onPressed: () => _showBirthForm(r),
-                    child: const Text('Registrar parto'),
-                  ),
-              ] else if (r.estado == 'Fallida') ...[
-                if (!authController.isVeterinario)
-                  OutlinedButton.icon(
-                    onPressed: () => _showMatingForm(
-                      initialDoeId: r.idConeja,
-                      initialBuckId: r.idConejopadre,
-                    ),
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: const Text('Reintentar'),
-                  ),
-              ],
-            ],
-          ),
+          SizedBox(height: isMobile ? 10 : 16),
+          _buildMatingActions(r, isMobile: isMobile),
         ],
       ),
     ).animate().fadeIn(duration: 250.ms);
+  }
+
+  /// Acciones de la tarjeta de monta.
+  ///
+  /// En celular la accion principal (Registrar parto, Confirmar preñez, ...)
+  /// ocupa una fila completa y Editar/Eliminar van juntos en otra fila: asi
+  /// caben de ancho completo y no quedan debajo del boton flotante.
+  Widget _buildMatingActions(Reproduccion r, {required bool isMobile}) {
+    final List<Widget> principales = [];
+    final List<Widget> secundarias = [];
+    final List<Widget> extras = [];
+
+    if (!authController.isVeterinario) {
+      secundarias.addAll([
+        OutlinedButton.icon(
+          onPressed: () => _showMatingForm(existing: r),
+          icon: const Icon(Icons.edit_rounded, size: 16),
+          label: const Text('Editar'),
+          style: _estiloBotonSecundario(isMobile),
+        ),
+        OutlinedButton.icon(
+          onPressed: () => _confirmDeleteMating(r),
+          icon: const Icon(Icons.delete_outline_rounded, size: 16),
+          label: const Text('Eliminar'),
+          style: _estiloBotonSecundario(isMobile)?.copyWith(
+                foregroundColor: const WidgetStatePropertyAll(AppTheme.danger),
+                side: WidgetStatePropertyAll(
+                  BorderSide(color: AppTheme.danger.withValues(alpha: 0.3)),
+                ),
+              ),
+        ),
+      ]);
+    }
+
+    if (r.estado == 'Servida' && r.tocaPalpacion) {
+      if (!authController.isVeterinario) {
+        principales.add(
+          FilledButton(
+            onPressed: () => _confirmPregnancy(r),
+            child: const Text('Confirmar preñez'),
+          ),
+        );
+        extras.add(
+          OutlinedButton(
+            onPressed: () => _registerFailure(r),
+            child: const Text('Registrar falla'),
+          ),
+        );
+      } else {
+        principales.add(
+          OutlinedButton(
+            onPressed: () => _showMatingDetails(r),
+            child: const Text('Ver detalles'),
+          ),
+        );
+      }
+    } else if (r.estado == 'Servida') {
+      principales.add(
+        OutlinedButton(
+          onPressed: () => _showMatingDetails(r),
+          child: const Text('Ver detalles'),
+        ),
+      );
+    } else if (r.estado == 'Gestante') {
+      if (authController.isAdmin || authController.isAyudante) {
+        principales.add(
+          FilledButton(
+            onPressed: () => _showBirthForm(r),
+            child: const Text('Registrar parto'),
+          ),
+        );
+      }
+    } else if (r.estado == 'Fallida') {
+      if (!authController.isVeterinario) {
+        principales.add(
+          OutlinedButton.icon(
+            onPressed: () => _showMatingForm(
+              initialDoeId: r.idConeja,
+              initialBuckId: r.idConejopadre,
+            ),
+            icon: const Icon(Icons.refresh_rounded, size: 16),
+            label: const Text('Reintentar'),
+            style: _estiloBotonSecundario(isMobile),
+          ),
+        );
+      }
+    }
+
+    if (principales.isEmpty && secundarias.isEmpty && extras.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    if (!isMobile) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [...secundarias, ...principales, ...extras],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final boton in [...principales, ...extras]) ...[
+          boton,
+          const SizedBox(height: 8),
+        ],
+        if (secundarias.isNotEmpty)
+          Row(
+            children: [
+              for (var i = 0; i < secundarias.length; i++) ...[
+                if (i > 0) const SizedBox(width: 8),
+                Expanded(child: secundarias[i]),
+              ],
+            ],
+          ),
+      ],
+    );
+  }
+
+  /// Botones secundarios mas compactos en celular.
+  ButtonStyle? _estiloBotonSecundario(bool isMobile) {
+    if (!isMobile) return null;
+    return OutlinedButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      visualDensity: VisualDensity.compact,
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
   }
 
   (String, String) _faseActualInfo(Reproduccion r) {
@@ -752,10 +864,10 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
       }
       return ListView.builder(
         padding: EdgeInsets.fromLTRB(
-          context.isMobile ? 16 : 24,
+          context.isMobile ? 12 : 24,
           8,
-          context.isMobile ? 16 : 24,
-          context.isMobile ? 16 : 24,
+          context.isMobile ? 12 : 24,
+          context.isMobile ? 100 : 24,
         ),
         itemCount: reproController.nacimientos.length,
         itemBuilder: (context, index) => AnimatedListItem(
@@ -780,10 +892,10 @@ class _ReproductionScreenState extends State<ReproductionScreen> {
       }
       return ListView.builder(
         padding: EdgeInsets.fromLTRB(
-          context.isMobile ? 16 : 24,
+          context.isMobile ? 12 : 24,
           8,
-          context.isMobile ? 16 : 24,
-          context.isMobile ? 16 : 24,
+          context.isMobile ? 12 : 24,
+          context.isMobile ? 100 : 24,
         ),
         itemCount: crias.length,
         itemBuilder: (context, index) => AnimatedListItem(
@@ -851,7 +963,7 @@ class _MatingTimeline extends StatelessWidget {
                     padding: const EdgeInsets.only(left: 18),
                     child: Container(
                       width: 2,
-                      height: 12,
+                      height: compacto ? 8 : 12,
                       color: _colorLinea(i, currentStep),
                     ),
                   ),
@@ -864,13 +976,13 @@ class _MatingTimeline extends StatelessWidget {
           children: [
             _hito(hitos[0].$1, hitos[0].$2, 0, currentStep,
                 compacto: compacto),
-            _linea(0, currentStep),
+            _linea(0, currentStep, compacto: compacto),
             _hito(hitos[1].$1, hitos[1].$2, 1, currentStep,
                 compacto: compacto),
-            _linea(1, currentStep),
+            _linea(1, currentStep, compacto: compacto),
             _hito(hitos[2].$1, hitos[2].$2, 2, currentStep,
                 compacto: compacto),
-            _linea(2, currentStep),
+            _linea(2, currentStep, compacto: compacto),
             _hito(hitos[3].$1, hitos[3].$2, 3, currentStep,
                 compacto: compacto),
           ],
@@ -910,17 +1022,17 @@ class _MatingTimeline extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: compacto ? 8 : 10,
+            fontSize: compacto ? 9 : 10,
             color: color,
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 4),
-        Text(icono, style: TextStyle(fontSize: compacto ? 12 : 14)),
-        const SizedBox(height: 2),
+        SizedBox(height: compacto ? 2 : 4),
+        Text(icono, style: TextStyle(fontSize: compacto ? 11 : 14)),
+        SizedBox(height: compacto ? 1 : 2),
         Text(
           compacto ? '${fecha.day}' : '${fecha.day} ${_monthShort(fecha.month)}',
-          style: TextStyle(fontSize: compacto ? 8 : 10, color: color),
+          style: TextStyle(fontSize: compacto ? 9 : 10, color: color),
         ),
       ],
     );
@@ -934,10 +1046,10 @@ class _MatingTimeline extends StatelessWidget {
     return AppTheme.borderLight;
   }
 
-  Widget _linea(int index, int current) {
+  Widget _linea(int index, int current, {required bool compacto}) {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 20),
+        padding: EdgeInsets.only(bottom: compacto ? 14 : 20),
         child: Container(height: 2, color: _colorLinea(index, current)),
       ),
     );
@@ -958,45 +1070,62 @@ class _MatingStatCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => Container(
-        constraints: const BoxConstraints(minWidth: 100),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(label, style: TextStyle(color: foreground, fontSize: 12)),
-            const SizedBox(height: 4),
-            Text(
-              '$count',
-              style: TextStyle(
-                color: foreground,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
+  Widget build(BuildContext context) {
+    final compacto = context.isMobile;
+    return Container(
+      constraints: const BoxConstraints(minWidth: 100),
+      padding: EdgeInsets.symmetric(
+        horizontal: compacto ? 10 : 14,
+        vertical: compacto ? 8 : 12,
+      ),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: foreground,
+              fontSize: compacto ? 11 : 12,
             ),
-          ],
-        ),
-      );
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '$count',
+            style: TextStyle(
+              color: foreground,
+              fontSize: compacto ? 17 : 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _MatingStatusBadge extends StatelessWidget {
   final String text;
   final Color color;
   final Color foreground;
+  final bool compacto;
 
   const _MatingStatusBadge({
     required this.text,
     required this.color,
     required this.foreground,
+    this.compacto = false,
   });
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: EdgeInsets.symmetric(
+          horizontal: compacto ? 8 : 10,
+          vertical: compacto ? 3 : 6,
+        ),
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(999),
@@ -1005,7 +1134,7 @@ class _MatingStatusBadge extends StatelessWidget {
           text,
           style: TextStyle(
             color: foreground,
-            fontSize: 12,
+            fontSize: compacto ? 10.5 : 12,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -1882,8 +2011,8 @@ class _BirthCard extends StatelessWidget {
     final weaningDate = date?.add(const Duration(days: 30));
 
     return Container(
-      margin: EdgeInsets.only(bottom: context.isMobile ? 12 : 16),
-      padding: EdgeInsets.all(context.isMobile ? 16 : 20),
+      margin: EdgeInsets.only(bottom: context.isMobile ? 10 : 16),
+      padding: EdgeInsets.all(context.isMobile ? 12 : 20),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -1964,8 +2093,8 @@ class _KitCard extends StatelessWidget {
     final statusLabel = isDead ? 'Muerto' : isWeaned ? 'Destetado' : 'Vivo';
 
     return Container(
-      margin: EdgeInsets.only(bottom: context.isMobile ? 12 : 16),
-      padding: EdgeInsets.all(context.isMobile ? 16 : 20),
+      margin: EdgeInsets.only(bottom: context.isMobile ? 10 : 16),
+      padding: EdgeInsets.all(context.isMobile ? 12 : 20),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
