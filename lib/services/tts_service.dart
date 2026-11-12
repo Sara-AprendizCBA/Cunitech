@@ -19,11 +19,26 @@ class TtsService {
   /// `true` mientras el motor está leyendo en voz alta.
   final ValueNotifier<bool> hablando = ValueNotifier<bool>(false);
 
+  /// Nombre de la voz que se ha elegido (vacio si se usa la del sistema).
+  String _vozSeleccionada = '';
+
+  /// Voz con la que se esta leyendo. Sirve para diagnostico.
+  String get vozSeleccionada => _vozSeleccionada;
+
   /// Idiomas que se prueban, en orden, para quedarse con el primero que
   /// soporte el motor (varia entre Android, Web, Windows...).
   static const List<String> _idiomas = ['es-ES', 'es_MX', 'es_ES', 'es'];
 
-  /// Prepara el motor: voz en español, velocidad y tono amables.
+  /// Velocidad natural: la de por defecto (0.5) suena algo apresurada.
+  static const double _velocidad = 0.45;
+
+  /// Tono un poco mas calido que el estandar (1.0).
+  static const double _tono = 1.05;
+
+  static const double _volumen = 1.0;
+
+  /// Prepara el motor: voz en español, velocidad y tono amables y la mejor
+  /// voz disponible en el dispositivo.
   Future<void> inicializar() async {
     if (_inicializado) return;
 
@@ -33,15 +48,98 @@ class TtsService {
     }
 
     // Cada ajuste por separado: en Web el motor puede no soportar alguno.
-    await _intentar(() => _tts.setSpeechRate(0.5));
-    await _intentar(() => _tts.setPitch(1.0));
-    await _intentar(() => _tts.setVolume(1.0));
+    await _intentar(() => _tts.setSpeechRate(_velocidad));
+    await _intentar(() => _tts.setPitch(_tono));
+    await _intentar(() => _tts.setVolume(_volumen));
+
+    await _seleccionarMejorVoz();
 
     _tts.setCompletionHandler(() => hablando.value = false);
     _tts.setCancelHandler(() => hablando.value = false);
     _tts.setErrorHandler((_) => hablando.value = false);
 
     _inicializado = true;
+  }
+
+  /// Busca la mejor voz en español del dispositivo y la activa.
+  ///
+  /// Si el dispositivo no expone la lista de voces, o no hay ninguna en
+  /// español, o el motor no acepta `setVoice` (caso tipico en Web), se sigue
+  /// adelante con la voz por defecto: nunca debe romper la lectura.
+  Future<void> _seleccionarMejorVoz() async {
+    try {
+      final voces = await _tts.getVoices;
+      final mejor = elegirMejorVoz(voces is List ? voces : const []);
+      if (mejor == null) return;
+
+      final ok = await _intentar(
+        () => _tts.setVoice({
+          'name': (mejor['name'] ?? '').toString(),
+          'locale': (mejor['locale'] ?? '').toString(),
+        }),
+      );
+      if (ok == true) {
+        _vozSeleccionada = (mejor['name'] ?? '').toString();
+      }
+    } catch (e) {
+      logger.w('No se pudo elegir la voz del dispositivo', error: e);
+    }
+  }
+
+  /// Elige la mejor voz en español de la lista de voces del dispositivo.
+  ///
+  /// Devuelve `null` si no hay ninguna voz en español.
+  static Map<String, dynamic>? elegirMejorVoz(List<dynamic> voces) {
+    final candidatas = <Map<String, dynamic>>[];
+    for (final voz in voces) {
+      if (voz is! Map) continue;
+      final locale = (voz['locale'] ?? '').toString();
+      if (!locale.toLowerCase().startsWith('es')) continue;
+      candidatas.add(voz.cast<String, dynamic>());
+    }
+    if (candidatas.isEmpty) return null;
+
+    candidatas.sort((a, b) => puntuarVoz(b).compareTo(puntuarVoz(a)));
+
+    final mejor = candidatas.first;
+    return (mejor['name'] ?? '').toString().isEmpty ? null : mejor;
+  }
+
+  /// Puntua una voz: cuanto mas natural, mas alto.
+  ///
+  /// Prioriza las voces de red del sistema (las que suenan mas naturales),
+  /// luego la calidad y la region, y desempata con el nombre mas descriptivo.
+  static int puntuarVoz(Map<String, dynamic> voz) {
+    final nombre = (voz['name'] ?? '').toString().toLowerCase();
+    final locale = (voz['locale'] ?? '').toString().toLowerCase();
+    final calidad = (voz['quality'] ?? '').toString().toLowerCase();
+
+    var puntos = 0;
+
+    // Voces "network" / "neural" / "premium": las mas naturales del sistema.
+    if (nombre.contains('network')) puntos += 12;
+    if (nombre.contains('neural')) puntos += 12;
+    if (nombre.contains('premium')) puntos += 10;
+
+    // Calidad (solo la informan iOS y macOS).
+    if (calidad == 'enhanced') {
+      puntos += 8;
+    } else if (calidad == 'high') {
+      puntos += 6;
+    } else if (calidad == 'normal') {
+      puntos += 2;
+    }
+
+    // Region preferida.
+    if (locale == 'es-es') {
+      puntos += 5;
+    } else if (locale == 'es-mx' || locale == 'es_419') {
+      puntos += 3;
+    }
+
+    // Desempate: el nombre mas descriptivo.
+    puntos += nombre.length.clamp(0, 10);
+    return puntos;
   }
 
   /// Lee un texto en voz alta.

@@ -120,6 +120,7 @@ class _InsightPanelDialogState extends State<InsightPanelDialog> {
                             ),
                           ],
                         ),
+                        _buildIndicadorVoz(),
                         const SizedBox(height: 16),
                         Flexible(
                           child: SingleChildScrollView(
@@ -177,6 +178,43 @@ class _InsightPanelDialogState extends State<InsightPanelDialog> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Aviso de que la voz se esta reproduciendo.
+  Widget _buildIndicadorVoz() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: TtsService.instance.hablando,
+      builder: (context, hablando, _) {
+        return AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          alignment: Alignment.topLeft,
+          child: hablando
+              ? const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppTheme.accentLight,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Reproduciendo voz…',
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                )
+              : const SizedBox.shrink(),
+        );
+      },
     );
   }
 
