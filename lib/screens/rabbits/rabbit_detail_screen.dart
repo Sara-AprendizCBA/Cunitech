@@ -8,6 +8,7 @@ import '../../models/rabbit.dart';
 import '../../controllers/rabbit_controller.dart';
 import '../../controllers/auth_controller.dart';
 import 'rabbit_form_dialog.dart';
+import 'rabbit_weight_history_section.dart';
 
 // ─────────────────────────────────────────────
 // DETALLE DEL CONEJO
@@ -127,6 +128,7 @@ class RabbitDetailScreen extends StatelessWidget {
     final sections = <Widget>[
       _buildIdentitySection(context, rabbit),
       _buildBirthSection(context, rabbit),
+      RabbitWeightHistorySection(rabbit: rabbit),
       if (rabbit.gender == 'Hembra')
         _buildReproductiveSection(context, rabbit),
       _buildHealthSection(context, rabbit),
