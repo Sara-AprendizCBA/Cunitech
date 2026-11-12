@@ -348,7 +348,7 @@ class _AuthScreenState extends State<AuthScreen> {
           child: Column(
             children: [
               if (!isLogin) ...[
-                _buildTextField(
+                _buildFormField(
                   controller: _nameController,
                   focusNode: _nameFocusNode,
                   compact: compact,
@@ -362,9 +362,8 @@ class _AuthScreenState extends State<AuthScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 20),
               ],
-              _buildTextField(
+              _buildFormField(
                 controller: _emailController,
                 focusNode: _emailFocusNode,
                 compact: compact,
@@ -385,22 +384,23 @@ class _AuthScreenState extends State<AuthScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 20),
-              _buildPasswordField(
+              _buildFormField(
                 controller: _passwordController,
                 focusNode: _passwordFocusNode,
                 compact: compact,
                 label: "Contraseña",
+                hint: "••••••••",
+                icon: Icons.lock_rounded,
                 obscure: _obscurePassword,
+                onToggleObscure: () => setState(
+                  () => _obscurePassword = !_obscurePassword,
+                ),
                 textInputAction: TextInputAction.done,
                 onFieldSubmitted: (_) {
                   if (!_isLoading) {
                     _authenticate();
                   }
                 },
-                onToggle: () => setState(
-                  () => _obscurePassword = !_obscurePassword,
-                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Ingresa tu contraseña';
@@ -412,16 +412,16 @@ class _AuthScreenState extends State<AuthScreen> {
                 },
               ),
               if (!isLogin) ...[
-                const SizedBox(height: 20),
-                _buildPasswordField(
+                _buildFormField(
                   controller: _confirmPasswordController,
                   focusNode: _confirmPasswordFocusNode,
                   compact: compact,
                   label: "Confirmar Contraseña",
+                  hint: "••••••••",
+                  icon: Icons.lock_rounded,
                   obscure: _obscureConfirmPassword,
-                  onToggle: () => setState(
-                    () => _obscureConfirmPassword =
-                        !_obscureConfirmPassword,
+                  onToggleObscure: () => setState(
+                    () => _obscureConfirmPassword = !_obscureConfirmPassword,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -439,36 +439,43 @@ class _AuthScreenState extends State<AuthScreen> {
             ],
           ),
         ),
-        // El mensaje de error va DESPUES del formulario: si se mostrara
-        // arriba, al aparecer desplazaria los campos y en Web el clic
-        // se perderia antes de que el campo reciba el foco.
-        if (_errorMessage != null) ...[
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: errorBackground,
-              border: Border.all(color: errorBorder),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.warning_amber_rounded, color: errorIcon),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(
-                      color: errorText,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+        // El mensaje de error va DESPUES del formulario y dentro de un espacio
+        // de altura RESERVADA: si apareciera o desapareciera, el contenido
+        // centrado cambiaria de alto, los campos se desplazarian y en Web el
+        // clic se perderia antes de que el campo reciba el foco.
+        SizedBox(
+          height: _errorSlotHeight,
+          child: _errorMessage == null
+              ? null
+              : Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: errorBackground,
+                    border: Border.all(color: errorBorder),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.warning_amber_rounded, color: errorIcon),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: errorText,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-        ],
+        ),
         const SizedBox(height: 24),
         _buildContactFooter(context),
       ],
@@ -930,210 +937,168 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  // ========== CUSTOM TEXT FIELD ==========
-  Widget _buildTextField({
+  // ========== CAMPOS DEL FORMULARIO ==========
+
+  /// Altura reservada para el mensaje de validacion de cada campo.
+  ///
+  /// El mensaje se dibuja DENTRO de este espacio y nunca debajo del campo.
+  /// Si el campo creciera al aparecer el error, los campos de abajo se
+  /// desplazarian y el clic del usuario aterrizaria en otro widget: por eso
+  /// el campo "parecia congelado" y el cursor no aparecia.
+  static const double _validationSlotHeight = 30;
+
+  /// Altura reservada para el mensaje de error general del formulario.
+  /// Mismo motivo que [_validationSlotHeight]: el alto del contenido no puede
+  /// cambiar cuando el mensaje aparece o desaparece.
+  static const double _errorSlotHeight = 80;
+
+  Widget _buildFormField({
     required TextEditingController controller,
+    required FocusNode focusNode,
     required String label,
     required String hint,
     required IconData icon,
     required bool compact,
-    FocusNode? focusNode,
+    bool obscure = false,
+    VoidCallback? onToggleObscure,
     TextInputType keyboardType = TextInputType.text,
     TextInputAction? textInputAction,
     ValueChanged<String>? onFieldSubmitted,
     String? Function(String?)? validator,
   }) {
     final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurfaceVariant,
-            letterSpacing: 0.2,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 4,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: TextFormField(
-            controller: controller,
-            focusNode: focusNode,
-            keyboardType: keyboardType,
-            textInputAction: textInputAction,
-            onFieldSubmitted: onFieldSubmitted,
-            onTapOutside: (_) => FocusScope.of(context).unfocus(),
-            validator: validator,
-            cursorColor: AppTheme.accent,
-            decoration: InputDecoration(
-              hintText: hint,
-              prefixIcon: Icon(
-                icon,
-                color: AppTheme.accent.withValues(alpha: 0.85),
-                size: 20,
-              ),
-              filled: true,
-              fillColor: theme.brightness == Brightness.dark
-                  ? Colors.white.withValues(alpha: 0.06)
-                  : Colors.white.withValues(alpha: 0.74),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.45),
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.45),
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: AppTheme.accent,
-                  width: 1.6,
-                ),
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: compact ? 18 : 20,
-              ),
-              hintStyle: TextStyle(
-                color: theme.colorScheme.onSurfaceVariant.withValues(
-                  alpha: 0.65,
-                ),
-                fontSize: 14,
+
+    return FormField<String>(
+      initialValue: controller.text,
+      validator: validator,
+      builder: (FormFieldState<String> field) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurfaceVariant,
+                letterSpacing: 0.2,
               ),
             ),
-            style: TextStyle(
-              fontSize: 14,
-              color: theme.colorScheme.onSurface,
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: controller,
+                focusNode: focusNode,
+                keyboardType: keyboardType,
+                textInputAction: textInputAction,
+                obscureText: obscure,
+                onSubmitted: onFieldSubmitted,
+                onChanged: field.didChange,
+                // El foco se pide explicitamente: en Web el teclado virtual
+                // solo se abre si el nodo de foco gana la peticion.
+                onTap: () => focusNode.requestFocus(),
+                // Solo se suelta el foco de ESTE campo. Usar
+                // FocusScope.of(context).unfocus() limpienia el ambito
+                // completo y podia robarle el foco al campo que el usuario
+                // acababa de pulsar.
+                onTapOutside: (_) => focusNode.unfocus(),
+                cursorColor: AppTheme.accent,
+                decoration: InputDecoration(
+                  hintText: hint,
+                  prefixIcon: Icon(
+                    icon,
+                    color: AppTheme.accent.withValues(alpha: 0.85),
+                    size: 20,
+                  ),
+                  suffixIcon: onToggleObscure == null
+                      ? null
+                      : IconButton(
+                          onPressed: onToggleObscure,
+                          icon: Icon(
+                            obscure
+                                ? Icons.visibility_off_rounded
+                                : Icons.visibility_rounded,
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.7),
+                            size: 20,
+                          ),
+                        ),
+                  filled: true,
+                  fillColor: theme.brightness == Brightness.dark
+                      ? Colors.white.withValues(alpha: 0.06)
+                      : Colors.white.withValues(alpha: 0.74),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.45),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.45),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: AppTheme.accent,
+                      width: 1.6,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: compact ? 18 : 20,
+                  ),
+                  hintStyle: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.65,
+                    ),
+                    fontSize: 14,
+                  ),
+                ),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
+            _buildValidationSlot(field.errorText, theme.colorScheme.error),
+          ],
+        );
+      },
     );
   }
 
-  // ========== PASSWORD FIELD ==========
-  Widget _buildPasswordField({
-    required TextEditingController controller,
-    required String label,
-    required bool obscure,
-    required VoidCallback onToggle,
-    required bool compact,
-    FocusNode? focusNode,
-    TextInputAction? textInputAction,
-    ValueChanged<String>? onFieldSubmitted,
-    String? Function(String?)? validator,
-  }) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurfaceVariant,
-            letterSpacing: 0.2,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 4,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: TextFormField(
-            controller: controller,
-            focusNode: focusNode,
-            obscureText: obscure,
-            textInputAction: textInputAction,
-            onFieldSubmitted: onFieldSubmitted,
-            onTapOutside: (_) => FocusScope.of(context).unfocus(),
-            validator: validator,
-            cursorColor: AppTheme.accent,
-            decoration: InputDecoration(
-              hintText: "••••••••",
-              prefixIcon: Icon(
-                Icons.lock_rounded,
-                color: AppTheme.accent.withValues(alpha: 0.85),
-                size: 20,
-              ),
-              suffixIcon: IconButton(
-                onPressed: onToggle,
-                icon: Icon(
-                  obscure
-                      ? Icons.visibility_off_rounded
-                      : Icons.visibility_rounded,
-                  color: theme.colorScheme.onSurfaceVariant.withValues(
-                    alpha: 0.7,
-                  ),
-                  size: 20,
+  /// Espacio de altura fija donde se dibuja el error de validacion del campo.
+  Widget _buildValidationSlot(String? errorText, Color errorColor) {
+    return SizedBox(
+      height: _validationSlotHeight,
+      child: errorText == null
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(top: 5, left: 2),
+              child: Text(
+                errorText,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: errorColor,
+                  fontSize: 12,
+                  height: 1.25,
                 ),
-              ),
-              filled: true,
-              fillColor: theme.brightness == Brightness.dark
-                  ? Colors.white.withValues(alpha: 0.06)
-                  : Colors.white.withValues(alpha: 0.74),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.45),
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.45),
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: AppTheme.accent,
-                  width: 1.6,
-                ),
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: compact ? 18 : 20,
-              ),
-              hintStyle: TextStyle(
-                color: theme.colorScheme.onSurfaceVariant.withValues(
-                  alpha: 0.65,
-                ),
-                fontSize: 14,
               ),
             ),
-            style: TextStyle(
-              fontSize: 14,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -1289,15 +1254,12 @@ class _AuthScreenState extends State<AuthScreen> {
       _setError('No se pudo conectar. Revisa tu conexión e intenta de nuevo.');
     } finally {
       if (mounted) {
+        // El estado de carga SIEMPRE vuelve a false, exista o no error.
         setState(() => _isLoading = false);
-        // Tras un intento fallido el foco vuelve al campo de correo para
-        // que el usuario pueda corregirlo sin tener que volver a hacer clic.
-        if (_errorMessage != null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            _emailFocusNode.requestFocus();
-          });
-        }
+        // NO se roba el foco aqui: en Web un requestFocus tras el fallo abria
+        // el teclado y desplazaba la vista, de modo que el siguiente clic
+        // aterrizaba fuera del campo. El foco se queda donde el usuario lo
+        // dejo y cada campo vuelve a ser editable con un simple clic.
       }
     }
   }
