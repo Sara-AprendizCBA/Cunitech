@@ -61,7 +61,68 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         ),
       ),
-      onChanged: (value) => setState(() {}),
+      onChanged: (value) => rabbitController.busqueda.value = value,
+    );
+  }
+
+  /// Desplegable compacto de filtro (estado / genero).
+  Widget _filtroSelect({
+    required List<String> opciones,
+    required String valor,
+    required IconData icono,
+    required ValueChanged<String> onChanged,
+  }) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: valor,
+          isDense: true,
+          isExpanded: true,
+          icon: Icon(icono, size: 16, color: theme.colorScheme.onSurfaceVariant),
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface),
+          items: [
+            for (final opcion in opciones)
+              DropdownMenuItem(value: opcion, child: Text(opcion)),
+          ],
+          onChanged: (nuevo) {
+            if (nuevo != null) onChanged(nuevo);
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Filtros de estado y genero (se aplican sobre la lista en memoria).
+  Widget _buildFiltros() {
+    return Row(
+      children: [
+        Expanded(
+          child: _filtroSelect(
+            opciones: RabbitController.estadosFiltro,
+            valor: rabbitController.filtroEstado.value,
+            icono: Icons.health_and_safety_outlined,
+            onChanged: (v) => rabbitController.filtroEstado.value = v,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _filtroSelect(
+            opciones: RabbitController.generosFiltro,
+            valor: rabbitController.filtroGenero.value,
+            icono: Icons.pets_outlined,
+            onChanged: (v) => rabbitController.filtroGenero.value = v,
+          ),
+        ),
+      ],
     );
   }
 
@@ -95,28 +156,33 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
                     children: [
                       _searchField(),
                       const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: TextButton.icon(
-                              onPressed: () {},
-                              icon: const Icon(Icons.filter_list_rounded),
-                              label: const Text('Filtrar'),
-                            ),
-                          ),
-                        ],
-                      ),
+                      _buildFiltros(),
                     ],
                   )
                 : Row(
                     children: [
                       Expanded(child: _searchField()),
                       const SizedBox(width: 12),
-                      TextButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.filter_list_rounded),
-                        label: const Text('Filtrar'),
+                      SizedBox(
+                        width: 180,
+                        child: _filtroSelect(
+                          opciones: RabbitController.estadosFiltro,
+                          valor: rabbitController.filtroEstado.value,
+                          icono: Icons.health_and_safety_outlined,
+                          onChanged: (v) =>
+                              rabbitController.filtroEstado.value = v,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      SizedBox(
+                        width: 150,
+                        child: _filtroSelect(
+                          opciones: RabbitController.generosFiltro,
+                          valor: rabbitController.filtroGenero.value,
+                          icono: Icons.pets_outlined,
+                          onChanged: (v) =>
+                              rabbitController.filtroGenero.value = v,
+                        ),
                       ),
                       if (authController.isAdmin) ...[
                         const SizedBox(width: 12),
@@ -142,9 +208,9 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
                 );
               }
 
-              final rabbits = _searchController.text.isEmpty
-                  ? rabbitController.rabbits
-                  : rabbitController.searchRabbits(_searchController.text);
+              final rabbits = rabbitController.conejosFiltrados;
+              final hayFiltros = rabbitController.hayFiltrosActivos ||
+                  _searchController.text.isNotEmpty;
 
               if (rabbits.isEmpty) {
                 return RefreshIndicator(
@@ -159,7 +225,7 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
                           ),
                           child: Center(
                             child: _EmptyRabbitsState(
-                              isSearching: _searchController.text.isNotEmpty,
+                              isSearching: hayFiltros,
                             ),
                           ),
                         ),
@@ -431,7 +497,7 @@ class _EmptyRabbitsState extends StatelessWidget {
           ? 'No se encontraron resultados'
           : 'Aún no hay conejos registrados',
       subtitle: isSearching
-          ? 'Prueba con otro término de búsqueda.'
+          ? 'Prueba con otro término de búsqueda o cambia los filtros.'
           : 'Los conejos que registres aparecerán aquí.',
     );
   }

@@ -135,6 +135,61 @@ class RabbitController extends GetxController {
     return rabbits.where((r) => r.healthStatus == health).toList();
   }
 
+  /// Texto de busqueda actual (chapeta, id o raza).
+  final busqueda = ''.obs;
+
+  /// Filtro por estado de salud: Todos / Saludable / En Tratamiento / Enfermo.
+  final filtroEstado = 'Todos'.obs;
+
+  /// Filtro por genero: Todos / Macho / Hembra.
+  final filtroGenero = 'Todos'.obs;
+
+  /// Opciones disponibles para los filtros de la pantalla de conejos.
+  static const List<String> estadosFiltro = [
+    'Todos',
+    'Saludable',
+    'En Tratamiento',
+    'Enfermo',
+  ];
+
+  static const List<String> generosFiltro = ['Todos', 'Macho', 'Hembra'];
+
+  /// Hay algun filtro activo (sin contar la busqueda).
+  bool get hayFiltrosActivos =>
+      filtroEstado.value != 'Todos' || filtroGenero.value != 'Todos';
+
+  /// Quita todos los filtros y la busqueda.
+  void limpiarFiltros() {
+    busqueda.value = '';
+    filtroEstado.value = 'Todos';
+    filtroGenero.value = 'Todos';
+  }
+
+  /// Conejos que pasan la busqueda y los filtros.
+  ///
+  /// Todo se aplica sobre la lista ya cargada en memoria (sin llamadas a la
+  /// base de datos) para que los filtros responde al instante.
+  List<Rabbit> get conejosFiltrados {
+    final query = busqueda.value.trim().toLowerCase();
+    final estado = filtroEstado.value;
+    final genero = filtroGenero.value;
+
+    return rabbits.where((r) {
+      if (query.isNotEmpty) {
+        final coincide = r.displayId.toLowerCase().contains(query) ||
+            r.id.toLowerCase().contains(query) ||
+            r.breed.toLowerCase().contains(query);
+        if (!coincide) return false;
+      }
+      if (estado != 'Todos' &&
+          r.healthStatus.toLowerCase() != estado.toLowerCase()) {
+        return false;
+      }
+      if (genero != 'Todos' && r.gender != genero) return false;
+      return true;
+    }).toList();
+  }
+
   /// Buscar conejos
   List<Rabbit> searchRabbits(String query) {
     return rabbits
