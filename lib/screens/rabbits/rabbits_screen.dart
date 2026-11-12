@@ -369,7 +369,10 @@ class _RabbitsScreenState extends State<RabbitsScreen> {
                 );
               }
             },
-            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Eliminar',
+              style: TextStyle(color: AppTheme.danger),
+            ),
           ),
         ],
       ),
@@ -492,9 +495,12 @@ class _RabbitCard extends StatelessWidget {
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete, color: Colors.red),
+                      Icon(Icons.delete, color: AppTheme.danger),
                       SizedBox(width: 8),
-                      Text('Eliminar', style: TextStyle(color: Colors.red)),
+                      Text(
+                        'Eliminar',
+                        style: TextStyle(color: AppTheme.danger),
+                      ),
                     ],
                   ),
                 ),

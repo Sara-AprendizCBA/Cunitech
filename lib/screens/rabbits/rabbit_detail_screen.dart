@@ -20,16 +20,21 @@ class RabbitDetailScreen extends StatelessWidget {
 
   String _fmt(DateTime d) => '${d.day}/${d.month}/${d.year}';
 
-  Widget _buildPhotoColumn(Rabbit rabbit) {
+  Widget _buildPhotoColumn(BuildContext context, Rabbit rabbit) {
     final photoUrl = rabbit.photoUrl;
+    final theme = Theme.of(context);
     final photo = Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        // El color viene del tema: con Colors.white fijo el texto claro del
+        // modo oscuro quedaba invisible sobre fondo blanco.
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
         border: Border.all(color: AppTheme.borderLight),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(
+              alpha: theme.brightness == Brightness.dark ? 0.35 : 0.04,
+            ),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -62,12 +67,12 @@ class RabbitDetailScreen extends StatelessWidget {
               .scale(begin: const Offset(0.95, 0.95)),
         ),
         const SizedBox(height: 16),
-        _buildSummaryCard(rabbit),
+        _buildSummaryCard(context, rabbit),
       ],
     );
   }
 
-  Widget _buildSummaryCard(Rabbit rabbit) {
+  Widget _buildSummaryCard(BuildContext context, Rabbit rabbit) {
     final rows = [
       _infoRow('Chapeta', rabbit.displayId),
       _infoRow('Raza', _displayValue(rabbit.breed)),
@@ -75,15 +80,20 @@ class RabbitDetailScreen extends StatelessWidget {
       _infoRow('Edad', _age(rabbit.birthDate)),
     ];
 
+    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        // Color del tema (no blanco fijo) para que en modo oscuro el texto
+        // siga siendo legible.
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         border: Border.all(color: AppTheme.borderLight),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(
+              alpha: theme.brightness == Brightness.dark ? 0.35 : 0.04,
+            ),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -227,15 +237,20 @@ class RabbitDetailScreen extends StatelessWidget {
     required String title,
     required List<Widget> rows,
   }) {
+    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        // Color del tema (no blanco fijo) para que en modo oscuro el texto
+        // siga siendo legible.
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         border: Border.all(color: AppTheme.borderLight),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(
+              alpha: theme.brightness == Brightness.dark ? 0.35 : 0.04,
+            ),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -467,7 +482,7 @@ class RabbitDetailScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildPhotoColumn(rabbit),
+        _buildPhotoColumn(context, rabbit),
         const SizedBox(height: 24),
         _buildInfoColumn(context, rabbit),
       ],
@@ -482,7 +497,7 @@ class RabbitDetailScreen extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(flex: 4, child: _buildPhotoColumn(rabbit)),
+        Expanded(flex: 4, child: _buildPhotoColumn(context, rabbit)),
         SizedBox(width: isTablet ? 24 : 32),
         Expanded(flex: 6, child: _buildInfoColumn(context, rabbit)),
       ],

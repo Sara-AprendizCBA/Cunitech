@@ -709,7 +709,10 @@ class _RabbitFormDialogState extends State<RabbitFormDialog> {
                     if (snapshot.hasError) {
                       return Text(
                         'No se pudieron cargar las granjas: ${snapshot.error}',
-                        style: const TextStyle(color: Colors.red),
+                        // Color de error del tema (legible en claro y oscuro).
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
                       );
                     }
                     final farms = snapshot.data ?? [];
