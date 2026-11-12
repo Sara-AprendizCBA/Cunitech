@@ -110,7 +110,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             context.adaptivePadding,
             context.adaptivePadding,
             context.adaptivePadding,
-            isMobile ? 132 : context.adaptivePadding,
+            isMobile ? 100 : context.adaptivePadding,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
