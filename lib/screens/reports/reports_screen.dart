@@ -11,6 +11,7 @@ import '../../core/utils/responsive.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_loading.dart';
 import '../../models/meta_mensual.dart';
+import '../../services/excel_export_service.dart';
 import '../../services/pdf_service.dart';
 
 String _getMonthName(int month) => const [
@@ -196,57 +197,117 @@ class _ReportsScreenState extends State<ReportsScreen> {
         ),
         const SizedBox(width: AppTheme.spacingMd),
         if (!context.isMobile)
-          ElevatedButton.icon(
-            onPressed: _exportando ? null : () => _exportarReporte(),
-            icon: _exportando
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Icon(Icons.download_rounded),
-            label: Text(_exportando ? 'Generando…' : 'Exportar Reporte'),
+          PopupMenuButton<bool>(
+            enabled: !_exportando,
+            tooltip: 'Exportar reporte',
+            onSelected: (excel) => _exportarReporte(excel: excel),
+            itemBuilder: (context) => const [
+              PopupMenuItem<bool>(
+                value: false,
+                child: ListTile(
+                  leading: Icon(Icons.picture_as_pdf_rounded),
+                  title: Text('Exportar PDF'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem<bool>(
+                value: true,
+                child: ListTile(
+                  leading: Icon(Icons.table_chart_rounded),
+                  title: Text('Exportar a Excel (XLSX)'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
+            child: IgnorePointer(
+              child: ElevatedButton.icon(
+                onPressed: _exportando ? null : () {},
+                icon: _exportando
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.download_rounded),
+                label: Text(_exportando ? 'Generando…' : 'Exportar Reporte'),
+              ),
+            ),
           )
         else
-          IconButton(
+          PopupMenuButton<bool>(
+            enabled: !_exportando,
             tooltip: 'Exportar reporte',
-            onPressed: _exportando ? null : () => _exportarReporte(),
-            style: IconButton.styleFrom(
-              backgroundColor: AppTheme.surfaceLight,
-              foregroundColor: AppTheme.accent,
-              side: BorderSide(color: AppTheme.borderLight),
+            onSelected: (excel) => _exportarReporte(excel: excel),
+            itemBuilder: (context) => const [
+              PopupMenuItem<bool>(
+                value: false,
+                child: ListTile(
+                  leading: Icon(Icons.picture_as_pdf_rounded),
+                  title: Text('Exportar PDF'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem<bool>(
+                value: true,
+                child: ListTile(
+                  leading: Icon(Icons.table_chart_rounded),
+                  title: Text('Exportar a Excel (XLSX)'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
+            child: IgnorePointer(
+              child: IconButton(
+                tooltip: 'Exportar reporte',
+                onPressed: _exportando ? null : () {},
+                style: IconButton.styleFrom(
+                  backgroundColor: AppTheme.surfaceLight,
+                  foregroundColor: AppTheme.accent,
+                  side: BorderSide(color: AppTheme.borderLight),
+                ),
+                icon: _exportando
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppTheme.accent,
+                        ),
+                      )
+                    : const Icon(Icons.download_rounded, size: 20),
+              ),
             ),
-            icon: _exportando
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppTheme.accent,
-                    ),
-                  )
-                : const Icon(Icons.download_rounded, size: 20),
           ),
       ],
     );
   }
 
-  Future<void> _exportarReporte() async {
+  Future<void> _exportarReporte({required bool excel}) async {
     if (_exportando) return;
     setState(() => _exportando = true);
 
     try {
       await reportesController.loadAll();
 
-      await PdfService().exportarReporte(
-        controller: reportesController,
-        nombreCriadero: 'Cunicultura CBA',
-      );
+      if (excel) {
+        await ExcelExportService().exportarReporte(
+          controller: reportesController,
+          nombreCriadero: 'Cunicultura CBA',
+        );
+      } else {
+        await PdfService().exportarReporte(
+          controller: reportesController,
+          nombreCriadero: 'Cunicultura CBA',
+        );
+      }
       if (!mounted) return;
-      AppSnackbar.success(context, 'Reporte descargado');
+      AppSnackbar.success(
+        context,
+        excel ? 'Excel descargado' : 'Reporte descargado',
+      );
     } catch (e) {
       logger.e('Error exportando reporte', error: e);
       if (!mounted) return;
