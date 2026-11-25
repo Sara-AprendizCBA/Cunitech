@@ -40,7 +40,7 @@ class PdfService {
     final bold = await PdfGoogleFonts.robotoBold();
     pw.MemoryImage? logo;
     try {
-      final data = await rootBundle.load('assets/images/logo.png');
+      final data = await rootBundle.load('assets/images/Logo.png');
       logo = pw.MemoryImage(data.buffer.asUint8List());
     } catch (_) {
       // El encabezado conserva el texto institucional aunque falte el logo.

@@ -730,67 +730,22 @@ class _AuthScreenState extends State<AuthScreen> {
 
   // ========== HERO LOGO ==========
   Widget _buildHeroLogo({bool compact = false}) {
-    final iconBox = Container(
-      width: compact ? 48 : 64,
-      height: compact ? 48 : 64,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(compact ? 14 : 18),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.24),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.22),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Icon(
-        Icons.pets_rounded,
-        color: AppTheme.accentLight,
-        size: compact ? 28 : 38,
+    final logo = SizedBox(
+      height: compact ? 56 : 72,
+      child: Image.asset(
+        'assets/images/Logo.png',
+        fit: BoxFit.contain,
       ),
     )
         .animate(onPlay: (controller) => controller.repeat(reverse: true))
         .scale(
-          begin: const Offset(0.96, 0.96),
-          end: const Offset(1.04, 1.04),
+          begin: const Offset(0.98, 0.98),
+          end: const Offset(1.02, 1.02),
           duration: 2800.ms,
           curve: Curves.easeInOut,
         );
 
-    return Row(
-      children: [
-        iconBox,
-        SizedBox(width: compact ? 12 : 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'CUNITECH',
-              style: TextStyle(
-                fontSize: compact ? 19 : 23,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-                fontFamily: 'Merriweather',
-                letterSpacing: 1.4,
-              ),
-            ),
-            Text(
-              compact ? 'Cunicultura inteligente' : 'Rabbit Farm Management',
-              style: TextStyle(
-                fontSize: compact ? 11 : 12,
-                color: Colors.white.withValues(alpha: 0.78),
-                letterSpacing: 0.3,
-              ),
-            ),
-          ],
-        ),
-      ],
-    ).animate().fadeIn(duration: 600.ms);
+    return logo.animate().fadeIn(duration: 600.ms);
   }
 
   // ========== HERO STATS ==========
