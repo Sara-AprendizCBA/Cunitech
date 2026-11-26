@@ -9,6 +9,10 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./backend
 
     steps:
     - name: Checkout del código
@@ -29,6 +33,6 @@ jobs:
       run: |
         python -c "from app.main import app"
         
-    - name: Construir la imagen de Docker (Prueba de despliegue)
+    - name: Construir la imagen de Docker
       run: |
         docker build -t cunitech-api:test .
