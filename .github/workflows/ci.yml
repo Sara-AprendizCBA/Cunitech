@@ -1,22 +1,15 @@
-name: Backend CI
+name: Backend CI Debug
 
 on:
   push:
     branches: [ "backend" ]
-  pull_request:
-    branches: [ "backend" ]
 
 jobs:
-  build-and-test:
+  test:
     runs-on: ubuntu-latest
-    
     defaults:
       run:
         working-directory: ./backend
-
-    env:
-      SUPABASE_URL: "https://dummy.supabase.co"
-      SUPABASE_KEY: "dummy_key"
 
     steps:
     - name: Checkout del código
@@ -27,21 +20,16 @@ jobs:
       with:
         python-version: "3.12"
 
-    - name: Verificar contenido de requirements
+    - name: "MIRAR EL ARCHIVO REAL EN GITHUB"
       run: |
-        echo "Imprimiendo el archivo requirements.txt:"
+        echo "======================================"
+        echo "ESTE ES EL ARCHIVO QUE GITHUB ESTÁ LEYENDO:"
         cat requirements.txt
+        echo "======================================"
+        echo "LÍNEA POR LÍNEA:"
+        cat -n requirements.txt
 
-    - name: Instalar dependencias
+    - name: Instalar dependencias (Aquí es donde falla)
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest httpx
-
-    - name: Validar que la API importa correctamente
-      run: |
-        python -c "from app.main import app"
-        
-    - name: Construir la imagen de Docker
-      run: |
-        docker build -t cunitech-api:test .
